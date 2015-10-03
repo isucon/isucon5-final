@@ -42,5 +42,9 @@
 - hosts: all
   gather_facts: no
   tasks:
-    # java
-    - apt: name=openjdk-8-jdk state=present
+    - apt_repository: repo='ppa:webupd8team/java'
+    - name: Autoaccept license for Java8
+      debconf: name='oracle-java8-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+    - apt: name=oracle-java8-installer update_cache=yes
+    - apt: name=ca-certificates
+    - apt: name=oracle-java8-set-default
