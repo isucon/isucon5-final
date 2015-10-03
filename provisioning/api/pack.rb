@@ -16,7 +16,8 @@ class CLI < Thor
   option :maintenance_policy, default: 'TERMINATE'
   option :scopes, default: ['https://www.googleapis.com/auth/devstorage.read_write', 'https://www.googleapis.com/auth/logging.write']
   option :tags, default: ['http-server']
-  option :image, default: 'https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20150909a'
+  # option :image, default: 'https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20150909a'
+  option :image, default: 'api-image-test1'
   option :boot_disk_size, default: 16
   option :boot_disk_type, default: 'pd-standard'
   option :boot_disk_device_name, default: 'base1'
@@ -65,7 +66,7 @@ class CLI < Thor
     run_playbooks 'ansible/_cleanup.yml'
   end
 
-  desc 'terminate', 'Terminate the instance'
+  desc 'terminate', 'Terminate the instance, with deleting disks'
   def terminate
     instance = instance_info
     command = ['gcloud', 'compute', '--project', instance['project'], 'instances', 'delete', '--delete-disks', 'all', '--zone', instance['zone'], instance['name']].join(' ')
@@ -73,10 +74,22 @@ class CLI < Thor
     exec command
   end
 
-  desc 'create_image', 'Create GCP Image from the instance'
+  desc 'delete', 'Terminate the instance without deleting disks (to create image)'
+  def delete
+    instance = instance_info
+    command = ['gcloud', 'compute', '--project', instance['project'], 'instances', 'delete', '--keep-disks', 'all', '--zone', instance['zone'], instance['name']].join(' ')
+    say_status 'delete', command
+    exec command
+  end
+
+  desc 'create_image', 'Create GCP Image from the instance disk'
+  option :name, required: true
   def create_image
-    raise NotImplementedError
-    # gcloud compute images create ?
+    image_name = options[:name]
+    instance = instance_info
+    command = ['gcloud', 'compute', '--project', instance['project'], 'images', 'create', image_name, '--source-disk', instance['name'], '--source-disk-zone', instance['zone']].join(' ')
+    say_status 'create_image', command
+    exec command
   end
 
   desc 'ssh', 'Login the instance via ssh'
