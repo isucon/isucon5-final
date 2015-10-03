@@ -7,7 +7,6 @@
     - copy: src=../files/nginx.conf dest=/etc/nginx/nginx.conf owner=root mode=644
       notify:
         - reload nginx
-    - copy: src=../files/nginx.php.conf dest=/etc/nginx/nginx.php.conf owner=root mode=644
     # - apt: name=mysql-server-5.6 state=present
     # - file: path=/var/run/mysqld state=directory owner=mysql mode=775
     # - name: copy my.cnf
