@@ -8,20 +8,25 @@
       notify:
         - reload nginx
     - copy: src=../files/nginx.php.conf dest=/etc/nginx/nginx.php.conf owner=root mode=644
-    #
-    # - apt: name=postres
-    #
-    # - apt: name=mysql-server-5.6 state=present
-    # - file: path=/var/run/mysqld state=directory owner=mysql mode=775
-    # - name: copy my.cnf
-    #   copy: src=../files/my.cnf dest=/etc/mysqld/my.cnf owner=root mode=644
-    #   notify:
-    #     - restart mysqld
-    # - service: name=mysql state=running enabled=true
-    # - apt: name=python-mysqldb state=present
-    # - mysql_user: name=isucon password=isucon priv=*.*:ALL state=present
+    - apt: name=libpq-dev state=present
+    - apt: name=python-psycopg2 state=present
+    - apt: name=postgresql state=present
+    - apt: name=postgresql-contrib state=present
+    - name: copy postgresql configurations
+      copy: src=../files/postgresql.conf dest=/etc/postgresql/9.3/main/postgresql.conf owner=postgres group=postgres mode=644
+      notify:
+        - restart postgresql
+    - service: name=postgresql state=running enabled=true
   handlers:
-    # - name: restart mysqld
-    #   action: service name=mysql state=restarted
+    - name: restart postgresql
+      action: service name=postgresql state=restarted
     - name: reload nginx
       action: service name=nginx state=restarted
+
+- hosts: all
+  gather_facts: no
+  sudo: yes
+  sudo_user: postgres
+  tasks:
+    - postgresql_db: name=isucon5final
+    - postgresql_user: db=isucon5final name=isucon priv=ALL
