@@ -2,6 +2,7 @@ require 'sinatra/base'
 require 'pg'
 require 'tilt/erubis'
 require 'erubis'
+require 'json'
 
 # bundle config build.pg --with-pg-config=<path to pg_config>
 # bundle install
@@ -87,7 +88,7 @@ SQL
 
 # * `GET /signup` サインアップ用フォーム表示
   get '/signup' do
-    # TODO: write view
+    session.clear
     erb :signup
   end
 
@@ -117,8 +118,7 @@ SQL
 # * `GET /login` ログインフォームを含むHTMLを返す
   get '/login' do
     session.clear
-    # TODO: write view
-    # erb :login, layout: false, locals: { message: '高負荷に耐えられるSNSコミュニティサイトへようこそ!' }
+    erb :login
   end
 
 # * `POST /login` ログインに成功したら `/`、失敗したら `/login` にリダイレクト
@@ -134,7 +134,10 @@ SQL
 
 # * `GET /` HTMLを返す、この段階では外部APIへのリクエストは発生しない (未ログインの場合 `/signup` にリダイレクト)
   get '/' do
-    authenticated!
+    unless current_user
+      return redirect '/login'
+    end
+
     # TODO: write view
     'ok'
   end
