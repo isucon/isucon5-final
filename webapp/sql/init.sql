@@ -52,6 +52,6 @@ CREATE TABLE subscriptions (
 
 INSERT INTO subscriptions (user_id, arg)
 VALUES
-(1, '{"ken":{"keys":["6900014"]},"ken2":{"params":{"zipcode":"1530042"}}}')
+(1, '{"ken":{"keys":["6900014"]},"ken2":{"params":{"zipcode":"1530042"}}}'),
 (2, '{"ken":{"keys":["6900014"]},"ken2":{"params":{"zipcode":"1530042"}}}')
 ;
