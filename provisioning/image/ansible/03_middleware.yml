@@ -28,5 +28,5 @@
   sudo: yes
   sudo_user: postgres
   tasks:
-    - postgresql_db: name=isucon5final
-    - postgresql_user: db=isucon5final name=isucon priv=ALL
+    - postgresql_db: name=isucon5f
+    - postgresql_user: db=isucon5f name=isucon priv=ALL
