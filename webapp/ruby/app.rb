@@ -52,12 +52,12 @@ class Isucon5f::WebApp < Sinatra::Base
 
     def authenticate(email, password)
       query = <<SQL
-SELECT id::integer, grade FROM users WHERE email=$1 AND passhash=digest(salt || $2, 'sha512')
+SELECT id, email, grade FROM users WHERE email=$1 AND passhash=digest(salt || $2, 'sha512')
 SQL
       user = nil
       db.exec_params(query, [email, password]) do |result|
         result.each do |tuple|
-          user = {id: tuple['id'].to_i, grade: tuple['grade']}
+          user = {id: tuple['id'].to_i, email: tuple['email'], grade: tuple['grade']}
         end
       end
       session[:user_id] = user[:id]
@@ -68,9 +68,9 @@ SQL
       return @user if @user
       return nil unless session[:user_id]
       @user = nil
-      db.exec_params('SELECT id,grade FROM users WHERE id=$1', [session[:user_id]]) do |r|
+      db.exec_params('SELECT id,email,grade FROM users WHERE id=$1', [session[:user_id]]) do |r|
         r.each do |tuple|
-          @user = {id: tuple['id'].to_i, grade: tuple['grade']}
+          @user = {id: tuple['id'].to_i, email: tuple['email'], grade: tuple['grade']}
         end
       end
       session.clear unless @user
@@ -86,13 +86,11 @@ SQL
     end
   end
 
-# * `GET /signup` サインアップ用フォーム表示
   get '/signup' do
     session.clear
     erb :signup
   end
 
-# * `POST /signup` サインアップ、成功したら `/login` にリダイレクト
   post '/signup' do
     email, password, grade = params['email'], params['password'], params['grade']
     salt = generate_salt
@@ -110,18 +108,15 @@ SQL
     redirect '/login'
   end
 
-# * `POST /cancel` 解約、そのユーザのデータをすべて削除する、完了したら `/signup` にリダイレクト
   post '/cancel' do
     redirect '/signup'
   end
 
-# * `GET /login` ログインフォームを含むHTMLを返す
   get '/login' do
     session.clear
     erb :login
   end
 
-# * `POST /login` ログインに成功したら `/`、失敗したら `/login` にリダイレクト
   post '/login' do
     authenticate params['email'], params['password']
     redirect '/'
@@ -132,14 +127,11 @@ SQL
     redirect '/login'
   end
 
-# * `GET /` HTMLを返す、この段階では外部APIへのリクエストは発生しない (未ログインの場合 `/signup` にリダイレクト)
   get '/' do
     unless current_user
       return redirect '/login'
     end
-
-    # TODO: write view
-    'ok'
+    erb :main, locals: {user: current_user}
   end
 
 # * `GET /user.js` ユーザごとにAPIリクエスト用のjsを返す
