@@ -19,17 +19,17 @@ require 'sinatra/contrib'
 get '/' do
   addrs = data[params['zipcode']]
   if addrs
-    json({addresses: addrs})
+    json({zipcode: params['zipcode'], addresses: addrs})
   else
-    json({addresses: []})
+    json({zipcode: params['zipcode'], addresses: []})
   end
 end
 
 get '/:zipcode' do
   addrs = data[params['zipcode']]
   if addrs
-    json({addresses: addrs})
+    json({zipcode: params['zipcode'], addresses: addrs})
   else
-    json({addresses: []})
+    json({zipcode: params['zipcode'], addresses: []})
   end
 end
