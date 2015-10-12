@@ -1,8 +1,10 @@
 require 'sinatra/base'
+require 'sinatra/contrib'
 require 'pg'
 require 'tilt/erubis'
 require 'erubis'
 require 'json'
+require 'httpclient'
 
 # bundle config build.pg --with-pg-config=<path to pg_config>
 # bundle install
@@ -119,6 +121,7 @@ SQL
 
   post '/login' do
     authenticate params['email'], params['password']
+    halt 403 unless current_user
     redirect '/'
   end
 
@@ -134,34 +137,31 @@ SQL
     erb :main, locals: {user: current_user}
   end
 
-# * `GET /user.js` ユーザごとにAPIリクエスト用のjsを返す
-#   * ユーザ情報のgradeを見て異なる auto refresh の間隔が入ったjavascriptを返す
-#   * 実際には jQuery + 各grade向けのrefresh interval部分のみ
-#   * 高速化のためにはgradeごとにjsを予め生成しておいてそこにredirectすればよいようにする
-#   * minify されたときのチェックをどうするか？(するな、とレギュレーションを調整するか？)
   get '/user.js' do
-    # TODO: write view
-    erb :userjs, content_type: 'application/javascript', locals: {}
+    halt 403 unless current_user
+    erb :userjs, content_type: 'application/javascript', locals: {grade: current_user[:grade]}
   end
 
-# * `GET /modify` APIアクセス情報変更画面を表示
   get '/modify' do
     user = current_user
-    select_query = <<SQL
+    halt 403 unless user
+
+    query = <<SQL
 SELECT arg FROM subscriptions WHERE user_id=$1 FOR UPDATE
 SQL
-    # TODO: write view
-    erb :modify, locals: {}
+    arg = db.exec_params(query, [user[:id]]).values.first[0]
+    erb :modify, locals: {user: user, arg: arg}
   end
 
-# * `POST /modify` APIアクセス情報の変更を行う
   post '/modify' do
     user = current_user
-    service = params[:service]
-    token = params.has_key?(:token) ? params[:token].strip : nil
-    keys = params.has_key?(:keys) ? params[:keys].strip.split(/\s+/) : nil
-    param_name = params.has_key?(:param_name) ? params[:param_name].strip : nil
-    param_value = params.has_key?(:param_value) ? params[:param_value].strip : nil
+    halt 403 unless user
+
+    service = params["service"]
+    token = params.has_key?("token") ? params["token"].strip : nil
+    keys = params.has_key?("keys") ? params["keys"].strip.split(/\s+/) : nil
+    param_name = params.has_key?("param_name") ? params["param_name"].strip : nil
+    param_value = params.has_key?("param_value") ? params["param_value"].strip : nil
     select_query = <<SQL
 SELECT arg FROM subscriptions WHERE user_id=$1 FOR UPDATE
 SQL
@@ -179,9 +179,45 @@ SQL
     redirect '/modify'
   end
 
-# * `GET /data` ユーザがsubscribeしているAPIすべてにアクセスし、結果をまとめてjsonで返す
+  def fetch_api(method, uri, headers, params)
+    client = HTTPClient.new
+    if uri.start_with? "https://" #TODO: create private cert store
+      client.ssl_config.set_trust_ca(ca_file_or_hashed_dir)
+    end
+    fetcher = case method
+              when 'GET' then client.method(:get_content)
+              when 'POST' then client.method(:post_content)
+              else
+                raise "unknown method #{method}"
+              end
+    res = fetcher.call(uri, params, headers)
+    JSON.parse(res.body)
+  end
+
   get '/data' do
-    
+    unless user = current_user
+      halt 403
+    end
+
+    arg_json = db.exec_params("SELECT arg FROM subscriptions WHERE user_id=$1", [user[:id]]).values.first[0]
+    arg = JSON.parse(arg_json)
+
+    data = []
+
+    arg.each_pair do |service, conf|
+      row = db.exec_params("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=$1", [service]).values.first
+      method, token_type, token_key, uri_template = row
+      headers = {}
+      params = conf['params'].dup
+      case token_type
+      when 'header' then headers[token_key] = conf['token']
+      when 'param' then params[token_key] = conf['token']
+      end
+      uri = sprintf(uri_template, conf['keys'])
+      data << {"service" => service, "data" => fetch_api(method, uri, headers, params)}
+    end
+
+    json data
   end
 
 # * `GET /initialize` データの初期化用ハンドラ

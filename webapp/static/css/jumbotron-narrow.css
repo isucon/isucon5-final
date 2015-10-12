@@ -47,16 +47,16 @@ body {
   border-bottom: 1px solid #e5e5e5;
 }
 .jumbotron .btn {
-  padding: 14px 24px;
-  font-size: 21px;
+  padding: 6px 10px;
+  font-size: 14px;
 }
 
 /* Supporting marketing content */
 .marketing {
-  margin: 40px 0;
+  margin: 10px 0;
 }
 .marketing p + h4 {
-  margin-top: 28px;
+  margin-top: 12px;
 }
 
 /* Responsive: Portrait tablets and up */
@@ -75,5 +75,7 @@ body {
   /* Remove the bottom border on the jumbotron for visual effect */
   .jumbotron {
     border-bottom: 0;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 }
