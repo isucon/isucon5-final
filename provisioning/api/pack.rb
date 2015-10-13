@@ -13,6 +13,7 @@ class CLI < Thor
   option :zone, default: 'asia-east1-c'
   option :machine_type, default: 'n1-highcpu-8'
   option :network, default: 'default'
+  option :address, default: nil # specify this for static ip
   option :maintenance_policy, default: 'TERMINATE'
   option :scopes, default: ['https://www.googleapis.com/auth/devstorage.read_write', 'https://www.googleapis.com/auth/logging.write']
   option :tags, default: ['http-server']
@@ -58,6 +59,19 @@ class CLI < Thor
     end
 
     playbooks = Dir.glob('ansible/*.yml').reject{|x| x =~ %r!/_[^/]+\.yml$! }.sort
+    run_playbooks playbooks
+  end
+
+  desc 'deploy', 'Run just a playbook to deploy application'
+  option :address, default: nil
+  def deploy
+    # ansible/_xxxx.yml is for special purpose
+    # ansible/\d\d_xxxx.yml is for normal purpose
+    if options[:address]
+      @public_ip_address = options[:address]
+    end
+
+    playbooks = Dir.glob('ansible/05_api_servers.yml').reject{|x| x =~ %r!/_[^/]+\.yml$! }.sort
     run_playbooks playbooks
   end
 
