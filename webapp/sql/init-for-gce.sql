@@ -1,10 +1,4 @@
--- cat init-for-gce.sql | psql postgres
-DROP DATABASE isucon5f;
-
-CREATE DATABASE isucon5f OWNER isucon ENCODING 'utf8';
-
-\connect isucon5f
-
+-- cat init-for-gce.sql | psql isucon5f
 CREATE TYPE grades AS ENUM ('micro', 'small', 'standard', 'premium');
 
 CREATE TABLE users (
@@ -14,8 +8,6 @@ CREATE TABLE users (
   passhash bytea NOT NULL, -- SHA2 512
   grade grades
 );
-
-CREATE EXTENSION pgcrypto;
 
 INSERT INTO users (email, salt, passhash, grade) VALUES
 ('moris@tagomor.is',  '111111', digest('111111' || 'moris', 'sha512'), 'premium'), -- 1
