@@ -11,6 +11,8 @@ import java.io.IOException;
 @Controller
 @SuppressWarnings("unused")
 public class SearchController {
+    private static final int MAX_NUM = 10;
+
     public SearchController() {
         try {
             SurnameIndex.init();
@@ -23,7 +25,7 @@ public class SearchController {
     public
     @ResponseBody
     Result searchSurname(@RequestParam(value = "q", required = true) String query) {
-        return new Result(query, SurnameIndex.searchName(query));
+        return new Result(query, SurnameIndex.searchName(query, MAX_NUM));
     }
 
     @RequestMapping(value = "/givenname", method = RequestMethod.GET)

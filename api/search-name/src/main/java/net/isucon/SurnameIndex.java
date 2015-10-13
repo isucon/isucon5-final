@@ -25,15 +25,20 @@ class SurnameIndex {
         }
     }
 
-    public static Name[] searchName(String query) {
+    public static Name[] searchName(String query, int maxNum) {
         if (surnames == null) {
             throw new IllegalStateException("Not initialized yet.");
         }
         final String q = normKana(query);
         final List<Name> ret = new ArrayList<>();
+        int i = 0;
         for (Surname n : surnames) {
             if (n.yomi.startsWith(q) || n.normName.startsWith(q)) {
                 ret.add(new Name(n.yomi, n.name));
+                i++;
+                if (i >= maxNum) {
+                    break;
+                }
             }
         }
         return ret.toArray(new Name[ret.size()]);
