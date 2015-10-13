@@ -19,7 +19,7 @@ class SurnameIndex {
             while (kvr.next()) {
                 final String yomi = kvr.get().key();
                 final String name = kvr.get().value();
-                list.add(new Surname(normKana(yomi), name, Normalizer.normalize(name, Normalizer.Form.NFKD)));
+                list.add(new Surname(normKana(yomi), name, Normalizer.normalize(name, Normalizer.Form.NFKC)));
             }
             surnames = list.toArray(new Surname[list.size()]);
         }
@@ -40,7 +40,7 @@ class SurnameIndex {
     }
 
     private static String normKana(String str) {
-        final StringBuffer sb = new StringBuffer(Normalizer.normalize(str, Normalizer.Form.NFKD));
+        final StringBuffer sb = new StringBuffer(Normalizer.normalize(str, Normalizer.Form.NFKC));
         for (int i = 0; i < sb.length(); i++) {
             char c = sb.charAt(i);
             if (c >= 'ぁ' && c <= 'ん') {
