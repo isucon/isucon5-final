@@ -61,6 +61,19 @@ class CLI < Thor
     run_playbooks playbooks
   end
 
+  desc 'deploy', 'Run just a playbook to deploy webapp applications'
+  option :address, default: nil
+  def deploy
+    # ansible/_xxxx.yml is for special purpose
+    # ansible/\d\d_xxxx.yml is for normal purpose
+    if options[:address]
+      @public_ip_address = options[:address]
+    end
+
+    playbooks = Dir.glob('ansible/04_deploy_application.yml').reject{|x| x =~ %r!/_[^/]+\.yml$! }.sort
+    run_playbooks playbooks
+  end
+
   desc 'cleanup', 'Delete log files from the instance'
   def cleanup
     run_playbooks 'ansible/_cleanup.yml'

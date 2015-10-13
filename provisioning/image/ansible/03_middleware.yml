@@ -16,6 +16,10 @@
       copy: src=../files/postgresql.conf dest=/etc/postgresql/9.3/main/postgresql.conf owner=postgres group=postgres mode=644
       notify:
         - restart postgresql
+    - name: copy postgres connection controls
+      copy: src=../files/pg_hba.conf dest=/etc/postgresql/9.3/main/pg_hba.conf owner=postgres group=postgres mode=640
+      notify:
+        - restart postgresql
     - service: name=postgresql state=running enabled=true
   handlers:
     - name: restart postgresql
@@ -28,5 +32,6 @@
   sudo: yes
   sudo_user: postgres
   tasks:
-    - postgresql_db: name=isucon5f
-    - postgresql_user: db=isucon5f name=isucon priv=ALL
+    - postgresql_user: name=isucon
+    - postgresql_db: name=isucon5f owner=isucon encoding=utf8
+    - postgresql_ext: name=pgcrypto db=isucon5f
