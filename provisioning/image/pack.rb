@@ -16,8 +16,8 @@ class CLI < Thor
   option :maintenance_policy, default: 'TERMINATE'
   option :scopes, default: ['https://www.googleapis.com/auth/devstorage.read_write', 'https://www.googleapis.com/auth/logging.write']
   option :tags, default: ['http-server']
-  # option :image, default: 'https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20150909a'
-  option :image, default: 'final-image-test1'
+  option :image, default: 'https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20150909a'
+  # option :image, default: 'final-image-test2'
   option :boot_disk_size, default: 16
   option :boot_disk_type, default: 'pd-standard'
   option :boot_disk_device_name, default: 'base1'

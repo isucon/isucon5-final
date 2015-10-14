@@ -147,7 +147,7 @@ SQL
     halt 403 unless user
 
     query = <<SQL
-SELECT arg FROM subscriptions WHERE user_id=$1 FOR UPDATE
+SELECT arg FROM subscriptions WHERE user_id=$1
 SQL
     arg = db.exec_params(query, [user[:id]]).values.first[0]
     erb :modify, locals: {user: user, arg: arg}
