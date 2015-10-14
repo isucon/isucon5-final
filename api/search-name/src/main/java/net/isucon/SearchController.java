@@ -11,28 +11,27 @@ import java.io.IOException;
 @Controller
 @SuppressWarnings("unused")
 public class SearchController {
+    private final NameIndex surnameIndex;
+    private final NameIndex givennameIndex;
     private static final int MAX_NUM = 10;
 
-    public SearchController() {
-        try {
-            SurnameIndex.init();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public SearchController() throws IOException {
+        surnameIndex = new NameIndex("surname.csv");
+        givennameIndex = new NameIndex("givenname.csv");
     }
 
     @RequestMapping(value = "/surname", method = RequestMethod.GET)
     public
     @ResponseBody
     Result searchSurname(@RequestParam(value = "q", required = true) String query) {
-        return new Result(query, SurnameIndex.searchName(query, MAX_NUM));
+        return new Result(query, surnameIndex.searchName(query, MAX_NUM));
     }
 
     @RequestMapping(value = "/givenname", method = RequestMethod.GET)
     public
     @ResponseBody
     Result searchGivenName(@RequestParam(value = "q", required = true) String query) {
-        return null;
+        return new Result(query, givennameIndex.searchName(query, MAX_NUM));
     }
 
     private static final class Result {
