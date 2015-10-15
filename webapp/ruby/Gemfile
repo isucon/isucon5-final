@@ -1,8 +1,8 @@
 source "https://rubygems.org"
 
-
 gem "sinatra"
-gem "mysql2"
-gem "mysql2-cs-bind"
+gem "sinatra-contrib"
+gem "pg"
 gem "erubis"
 gem "unicorn"
+gem "httpclient"

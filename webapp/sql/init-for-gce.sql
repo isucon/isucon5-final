@@ -1,13 +1,4 @@
--- cat init.sql | psql postgres
-DROP DATABASE isucon5f;
-DROP USER isucon;
-
-CREATE USER isucon;
-
-CREATE DATABASE isucon5f OWNER isucon ENCODING 'utf8';
-
-\connect isucon5f
-
+-- cat init-for-gce.sql | psql isucon5f
 CREATE TYPE grades AS ENUM ('micro', 'small', 'standard', 'premium');
 
 CREATE TABLE users (
@@ -17,8 +8,6 @@ CREATE TABLE users (
   passhash bytea NOT NULL, -- SHA2 512
   grade grades
 );
-
-CREATE EXTENSION pgcrypto;
 
 INSERT INTO users (email, salt, passhash, grade) VALUES
 ('moris@tagomor.is',  '111111', digest('111111' || 'moris', 'sha512'), 'premium'), -- 1
@@ -42,8 +31,8 @@ CREATE TABLE endpoints (
 
 INSERT INTO endpoints (service, meth, token_type, token_key, uri)
 VALUES
-('ken', 'GET', NULL, NULL, 'http://127.0.0.1:8080/%s'),
-('ken2', 'GET', NULL, NULL, 'http://127.0.0.1:8080/');
+('ken', 'GET', NULL, NULL, 'http://104.155.223.217:8080/%s'),
+('ken2', 'GET', NULL, NULL, 'http://104.155.223.217:8080/');
 
 CREATE TABLE subscriptions (
   user_id INTEGER REFERENCES users (id) NOT NULL PRIMARY KEY,

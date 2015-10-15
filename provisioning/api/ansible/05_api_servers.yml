@@ -11,13 +11,19 @@
         dest=/home/isucon/isucon5-final
         key_file=/home/isucon/.ssh/deploy_id_rsa
         accept_hostkey=yes
-    # TODO: module setup of each server software
-    # - name: ruby
-    #   shell: PATH=/home/isucon/.local/ruby/bin:$PATH bundle install
-    #   args:
-    #     chdir: /home/isucon/isucon5-final/api/tenki
+    - copy: src=../files/env.sh dest=/home/isucon/env.sh owner=isucon mode=755
+    - name: KEN_ALL API
+      shell: PATH=/home/isucon/.local/ruby/bin:$PATH bundle install
+      args:
+        chdir: /home/isucon/isucon5-final/api/ken
 
-## supervisord ?
-# - hosts: all
-#   gather_facts: no
-#   tasks:
+- hosts: all
+  gather_facts: no
+  tasks:
+    - apt: name=supervisor state=present
+    # In ubuntu default /etc/supervisor/supervisord.conf
+    # [include]
+    # files = /etc/supervisor/conf.d/*.conf
+    - copy: src=../files/supervisor.ken.conf dest=/etc/supervisor/conf.d/ken.conf
+    - supervisorctl: name=ken state=present
+    - supervisorctl: name=ken state=restarted
