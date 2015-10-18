@@ -191,7 +191,7 @@ SQL
                 raise "unknown method #{method}"
               end
     res = fetcher.call(uri, params, headers)
-    JSON.parse(res.body)
+    JSON.parse(res)
   end
 
   get '/data' do
