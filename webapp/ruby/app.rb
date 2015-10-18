@@ -208,7 +208,7 @@ SQL
       row = db.exec_params("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=$1", [service]).values.first
       method, token_type, token_key, uri_template = row
       headers = {}
-      params = conf['params'].dup
+      params = (conf['params'] && conf['params'].dup) || {}
       case token_type
       when 'header' then headers[token_key] = conf['token']
       when 'param' then params[token_key] = conf['token']
