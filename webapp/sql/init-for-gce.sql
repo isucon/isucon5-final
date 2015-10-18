@@ -32,7 +32,9 @@ CREATE TABLE endpoints (
 INSERT INTO endpoints (service, meth, token_type, token_key, uri)
 VALUES
 ('ken', 'GET', NULL, NULL, 'http://104.155.223.217:8080/%s'),
-('ken2', 'GET', NULL, NULL, 'http://104.155.223.217:8080/');
+('ken2', 'GET', NULL, NULL, 'http://104.155.223.217:8080/'),
+('surname', 'GET', NULL, NULL, 'http://104.155.223.217:8081/surname'),
+('givenname', 'GET', NULL, NULL, 'http://104.155.223.217:8081/givenname');
 
 CREATE TABLE subscriptions (
   user_id INTEGER REFERENCES users (id) NOT NULL PRIMARY KEY,
@@ -41,6 +43,6 @@ CREATE TABLE subscriptions (
 
 INSERT INTO subscriptions (user_id, arg)
 VALUES
-(1, '{"ken":{"keys":["6900014"]},"ken2":{"params":{"zipcode":"1530042"}}}'),
+(1, '{"ken":{"keys":["6900014"]},"ken2":{"params":{"zipcode":"1530042"}},"surname":{"params":{"q":"神"}},"givenname":{"params":{"q":"さと"}}}'),
 (2, '{"ken":{"keys":["6900014"]},"ken2":{"params":{"zipcode":"1530042"}}}')
 ;
