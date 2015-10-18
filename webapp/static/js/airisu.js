@@ -7,10 +7,10 @@ $(function(){
 });
 
 function render(list) {
-  $('#api-response-container api-result').remove();
+  $('#api-response-container .api-result').remove();
   var api_results = [];
   list.forEach(function(item){
-    var element = $('#api-result-template-container api-result').clone();
+    var element = $('#api-result-template-container .api-result').clone();
     switch(item.service) {
       case 'ken':
       case 'ken2': render_ken(element, item.data); break;
