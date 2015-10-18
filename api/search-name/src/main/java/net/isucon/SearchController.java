@@ -13,7 +13,7 @@ import java.io.IOException;
 public class SearchController {
     private final NameIndex surnameIndex;
     private final NameIndex givennameIndex;
-    private static final int MAX_NUM = 10;
+    private static final int MAX_NUM = 30;
 
     public SearchController() throws IOException {
         surnameIndex = new NameIndex("surname.csv");
