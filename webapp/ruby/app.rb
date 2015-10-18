@@ -213,7 +213,7 @@ SQL
       when 'header' then headers[token_key] = conf['token']
       when 'param' then params[token_key] = conf['token']
       end
-      uri = sprintf(uri_template, conf['keys'])
+      uri = sprintf(uri_template, *conf['keys'])
       data << {"service" => service, "data" => fetch_api(method, uri, headers, params)}
     end
 
