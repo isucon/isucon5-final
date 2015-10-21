@@ -24,7 +24,7 @@ public class Runner {
   private static final int MAX_CONNECTIONS_PER_DEST = 2048;
   private static final int MAX_QUEUED_REQUESTS_PER_DEST = 512;
 
-  private static final String DEFAULT_PARAMETER_CLASS = "net.isucon.isucon5q.bench.I5Parameter";
+  private static final String DEFAULT_PARAMETER_CLASS = "net.isucon.isucon5q.bench.scenario.I5FParameter";
 
   private Class rootClass;
 

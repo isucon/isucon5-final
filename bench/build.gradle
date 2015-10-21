@@ -34,6 +34,6 @@ run {
     } else {
         // default check target
         // gradle run -Pargs="net.isucon.isucon5q.bench.scenario.Isucon5Qualification 127.0.0.1"
-        args "net.isucon.isucon5q.bench.scenario.Isucon5Qualification 127.0.0.1".split('\\s+')
+        args "net.isucon.isucon5q.bench.scenario.Isucon5Final 127.0.0.1".split('\\s+')
     }
 }
