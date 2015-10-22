@@ -2,6 +2,9 @@ package net.isucon.isucon5q.bench.scenario;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Random;
 
 public class I5FParameter extends Parameter {
     private static String[] KEYS = new String[]{
@@ -41,5 +44,57 @@ public class I5FParameter extends Parameter {
         public String token;
         public List<String> keys;
         public Map<String,String> params;
+    }
+
+    private static I5FService dummyServiceKen(Random random) {
+        I5FService s = new I5FService();
+        s.keys = new ArrayList<String>();
+        s.keys.add(I5FZipcodes.list[random.nextInt(I5FZipcodes.list.length)]);
+        return s;
+    }
+
+    private static I5FService dummyServiceKen2(Random random) {
+        I5FService s = new I5FService();
+        s.params = new HashMap<String,String>();
+        s.params.put("zipcode", I5FZipcodes.list[random.nextInt(I5FZipcodes.list.length)]);
+        return s;
+    }
+
+    private static I5FService dummyServiceGivenname(Random random) {
+        I5FService s = new I5FService();
+        s.params = new HashMap<String,String>();
+        //s.params.put("q", I5FGivennames.list[random.nextInt(I5FGivennames.list.length)]);
+        return s;
+    }
+
+    private static I5FService dummyServiceSurname(Random random) {
+        I5FService s = new I5FService();
+        s.params = new HashMap<String,String>();
+        //s.params.put("q", I5FSurnames.list[random.nextInt(I5FSurnames.list.length)]);
+        return s;
+    }
+
+    public void putDummySubscriptions() {
+        Random rand = new Random();
+        int index = random.nextInt(4) * 3;
+
+        Map<String,I5FService> subs = new HashMap<String,I5FService>();
+        switch (grade) {
+        case "premium":
+            // set premium only service
+        case "standard":
+            // set standard or premium
+        case "small":
+            // ...
+        case "micro":
+            subs.put("ken", dummyServiceKen(rand));
+            subs.put("ken2", dummyServiceKen2(rand));
+            // "givenname":{"params":{"q":"さと"}}
+            // "surname":{"params":{"q":"神"}},}
+            break;
+        default:
+            throw new IllegalArgumentException("Undefined grade:" + grade);
+        }
+        this.subscriptions = subs;
     }
 }
