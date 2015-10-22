@@ -24,7 +24,8 @@ public class Checker {
     private long responseTime;
     private Response response;
 
-    private String contentBodyHtml;
+    private String contentBodyChecksum;
+    private String contentBody;
     private Document parsedDocument;
 
     private Matcher lastMatch;
@@ -36,26 +37,35 @@ public class Checker {
         this.responseTime = responseTime;
         this.response = response;
 
-        this.contentBodyHtml = null;
+        this.contentBodyChecksum = null; // SHA-1 checksum
+        this.contentBody = null;
         this.parsedDocument = null;
     }
 
-    public void setContentBodyHtml(String html) {
-        this.contentBodyHtml = html;
+    public void setContentBodyChecksum(String sha1sum) {
+        this.contentBodyChecksum = sha1sum;
+    }
+
+    public void setContentBody(String body) {
+        this.contentBody = body;
     }
 
     public Response response() {
         return response;
     }
 
+    public String contentBody() {
+        return contentBody;
+    }
+
     public Document document() {
-        if (contentBodyHtml == null) {
+        if (contentBody == null) {
             throw new IllegalStateException();
         }
         if (parsedDocument != null) {
             return parsedDocument;
         }
-        parsedDocument = Jsoup.parse(contentBodyHtml);
+        parsedDocument = Jsoup.parse(contentBody);
         return parsedDocument;
     }
 
@@ -131,10 +141,33 @@ public class Checker {
         }
     }
 
+    public void isContentBodyChecksum(String checksum) {
+        if (contentBodyChecksum.equals(checksum)) {
+            // ok
+        } else {
+            addViolation(String.format("パス %s のcontent bodyの内容が一致しません", response.getRequest().getPath()));
+        }
+    }
+
     public void hasStyleSheet(String path) {
         Elements es = document().head().getElementsByTag("link");
         if (es.stream().noneMatch(e -> e.attr("rel").equals("stylesheet") && e.attr("href").equals(path))) {
             addViolation(String.format("スタイルシートのパス %s への参照がありません", path));
+        }
+    }
+
+    public void hasJavaScript(String path) {
+        Elements es = document().head().getElementsByTag("script");
+        if (es.stream().noneMatch(e -> e.attr("src").equals(path))) {
+            addViolation(String.format("JavaScriptファイルのパス %s への参照がありません", path));
+        }
+    }
+
+    public void contentMatch(String regexp) {
+        if (Pattern.compile(regexp).matcher(contentBody()).matches()) {
+            // ok
+        } else {
+            addViolation(String.format("Content bodyに文字列パターン %s がみつかりません", regexp));
         }
     }
 

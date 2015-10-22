@@ -9,6 +9,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.concurrent.TimeUnit;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.xml.bind.DataTypeConverter;
+
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
@@ -41,6 +45,8 @@ public class Driver {
     private long DRIVER_WATCH_BLOCK_INTERVAL = 3;
 
     private int DRIVER_CONTENT_BUFFER_SIZE = 1 * 1024 * 1024;
+
+    private String CHECKSUM_ALGORITHM = "SHA-1";
 
     public static class ScenarioAbortException extends RuntimeException {
     }
@@ -219,6 +225,12 @@ public class Driver {
         Consumer<Checker> checkerCallback)
         {
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            MessageDigest md;
+            try {
+                md = MessageDigest.getInstance(CHECKSUM_ALGORITHM);
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException("Checksum algorithm not found:" + CHECKSUM_ALGORITHM);
+            }
 
             BiConsumer<Response, ByteBuffer> hookCallback = (request, buffer) -> {
                 while (buffer.hasRemaining()) {
@@ -226,11 +238,13 @@ public class Driver {
                     int readLength = buffer.remaining() < DRIVER_CONTENT_BUFFER_SIZE ? buffer.remaining() : DRIVER_CONTENT_BUFFER_SIZE;
                     buffer.get(bytes, 0, readLength);
                     stream.write(bytes, 0, readLength);
+                    md.update(bytes);
                 }
             };
 
             Consumer<Checker> wrapperCallback = (check) -> {
-                check.setContentBodyHtml(stream.toString()); // system default encoding
+                check.setContentBodyChecksum(DatatypeConverter.printHexBinary(md.digest()));
+                check.setContentBody(stream.toString()); // system default encoding
                 checkerCallback.accept(check);
             };
 
