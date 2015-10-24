@@ -21,7 +21,7 @@ import net.isucon.isucon5q.bench.Session;
 public class Isucon5FinalLoad extends Isucon5FinalBase {
     private static long DURATION_MILLIS = 60 * 1000;
 
-    public Isucon5Load(Long timeout) {
+    public Isucon5FinalLoad(Long timeout) {
         super(timeout);
     }
 

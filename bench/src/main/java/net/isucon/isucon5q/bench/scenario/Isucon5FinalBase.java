@@ -13,16 +13,16 @@ import net.isucon.isucon5q.bench.Parameter;
 import net.isucon.isucon5q.bench.Session;
 
 public class Isucon5FinalBase extends Scenario {
-    public Isucon5BaseScenario(Long timeout) {
+    public Isucon5FinalBase(Long timeout) {
         super(timeout);
     }
 
-    protected String accountName(Session session) {
-        return ((I5Parameter) session.param()).accountName;
+    protected String email(Session session) {
+        return ((I5FParameter) session.param()).email;
     }
 
     protected Map formLogin(Session session) {
-        I5Parameter p = (I5Parameter) session.param();
+        I5FParameter p = (I5FParameter) session.param();
         Map form = new HashMap();
 
         form.put("email", p.email);

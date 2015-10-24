@@ -60,7 +60,7 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
 
     private static Session testData() {
         Random rand = new Random();
-        int index = random.nextInt(4) * 3;
+        int index = rand.nextInt(4) * 3;
 
         I5FParameter param = new I5FParameter();
         param.email = BOOTSTRAP_TEST_DATA[index];
@@ -89,11 +89,11 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
                 });
             getAndCheck(session, "/css/bootstrap.min.css", "BOOTSTRAP CSS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("xxxxxx"); //TODO: fix this
+                    check.isContentBodyChecksum("08df9a96752852f2cbd310c30facd934e348c2c5");
                 });
             getAndCheck(session, "/css/signin.css", "SIGNIN CSS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("xxxxx"); //TODO: fix this
+                    check.isContentBodyChecksum("702783cc5eff3d8d3532e339ddd15c57f7a08776");
                 });
         }
         {
@@ -108,11 +108,11 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
                 });
             getAndCheck(session, "/css/bootstrap.min.css", "BOOTSTRAP CSS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("xxxxxx"); //TODO: fix this
+                    check.isContentBodyChecksum("08df9a96752852f2cbd310c30facd934e348c2c5");
                 });
             getAndCheck(session, "/css/signin.css", "SIGNIN CSS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("xxxxx"); //TODO: fix this
+                    check.isContentBodyChecksum("702783cc5eff3d8d3532e339ddd15c57f7a08776");
                 });
             
             Map form = new HashMap();
@@ -134,11 +134,11 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
                 });
             getAndCheck(session, "/css/bootstrap.min.css", "BOOTSTRAP CSS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("xxxxxx"); //TODO: fix this
+                    check.isContentBodyChecksum("08df9a96752852f2cbd310c30facd934e348c2c5");
                 });
             getAndCheck(session, "/css/signin.css", "SIGNIN CSS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("xxxxx"); //TODO: fix this
+                    check.isContentBodyChecksum("702783cc5eff3d8d3532e339ddd15c57f7a08776");
                 });
 
             Map form = new HashMap();
@@ -146,50 +146,53 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
             form.put("email", param.email);
             form.put("password", param.password);
 
-            postAndCheck(session3, "/login", form, "POST LOGIN AFTER SIGNUP", (check) -> {
+            postAndCheck(session, "/login", form, "POST LOGIN AFTER SIGNUP", (check) -> {
                     check.isRedirect("/");
                 });
         }
 
         {
+            I5FParameter param = (I5FParameter) session.param();
             getAndCheck(session, "/", "INDEX AFTER LOGIN", (check) -> {
                     check.isStatus(200);
+                    check.exist(".container .header.clearfix ul.nav li.presentation a[href=/modify]");
+                    check.content(".container .header h3", String.format("AirISU: %s", param.email));
+
                     check.hasStyleSheet("/css/bootstrap.min.css");
                     check.hasStyleSheet("/css/jumbotron-narrow.css");
                     check.hasJavaScript("/js/jquery-1.11.3.js");
                     check.hasJavaScript("/js/bootstrap.js");
                     check.hasJavaScript("/user.js");
                     check.hasJavaScript("/js/airisu.js");
-                    //TODO: add content check on HTML
                 });
             getAndCheck(session, "/css/bootstrap.min.css", "BOOTSTRAP CSS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("xxxxxx"); //TODO: fix this
+                    check.isContentBodyChecksum("08df9a96752852f2cbd310c30facd934e348c2c5");
                 });
             getAndCheck(session, "/css/jumbotron-narrow.css", "ADDITIONAL STYLE CSS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("xxxxxx"); //TODO: fix this
+                    check.isContentBodyChecksum("d55e584b9bb64d574c09ab02e361a4e49a1e6b5f");
                 });
             getAndCheck(session, "/js/jquery-1.11.3.js", "JQUERY JS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("xxxxxx"); //TODO: fix this
+                    check.isContentBodyChecksum("96c73f3774471cc8378c77a64ecf09b7f625d8b7");
                 });
             getAndCheck(session, "/js/bootstrap.js", "BOOTSTRAP JS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("xxxxxx"); //TODO: fix this
+                    check.isContentBodyChecksum("bbf55e20f1ebb6368522799f29db39830a08ef93");
                 });
             getAndCheck(session, "/js/airisu.js", "AIR-ISU JS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("xxxxxx"); //TODO: fix this
+                    check.isContentBodyChecksum("11f090f858fcc93fc83504281ceea03eb03bff46");
                 });
-            String interval = null;
-            I5FParameter param = (I5FParameter) session.param();
+            String intervalVal = null;
             switch (param.grade) {
-            case "micro":    interval = "30000"; break;
-            case "small":    interval = "30000"; break;
-            case "standard": interval = "20000"; break;
-            case "premium":  interval = "10000"; break;
+            case "micro":    intervalVal = "30000"; break;
+            case "small":    intervalVal = "30000"; break;
+            case "standard": intervalVal = "20000"; break;
+            case "premium":  intervalVal = "10000"; break;
             }
+            final String interval = intervalVal;
             getAndCheck(session, "/user.js", "JQUERY JS", (check) -> {
                     check.isStatus(200);
                     // micro 30000, small 30000, standard 20000, premium 10000
@@ -199,6 +202,7 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
 
         {
             // TODO: get first /data (blank)
+            //getAndCheck
         }
 
         {

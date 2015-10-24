@@ -1,6 +1,7 @@
 package net.isucon.isucon5q.bench;
 
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
 import java.io.IOException;
 
@@ -53,7 +54,7 @@ public abstract class Parameter {
         for (String k : p.objects()) {
             JsonNode j = n.get(k);
             if (j != null)
-                p.put(k, (Map) j.get(k));
+                p.putObject(k, (Map) j.get(k));
         }
         return p;
     }

@@ -1,7 +1,7 @@
 package net.isucon.isucon5q.bench.scenario;
 
 public class I5FZipcodes {
-    public static String[] list = {
+    public static String[][] list = {
         {"1006334", "東京都 千代田区 丸の内丸の内ビルディング　３４階"},
         {"1600022", "東京都 新宿区 新宿"},
         {"3771711", "群馬県 吾妻郡草津町 草津"},

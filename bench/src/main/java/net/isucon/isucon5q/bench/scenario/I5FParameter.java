@@ -6,11 +6,13 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Random;
 
+import net.isucon.isucon5q.bench.Parameter;
+
 public class I5FParameter extends Parameter {
     private static String[] KEYS = new String[]{
         "email", "password", "grade",
     };
-    private statishc String[] OBJECT_KEYS = new String[]{
+    private static String[] OBJECT_KEYS = new String[]{
          "subscriptions",
     };
 
@@ -34,13 +36,13 @@ public class I5FParameter extends Parameter {
         }
     }
 
-    public void putObjecct(String name, Map value) {
+    public void putObject(String name, Map value) {
         switch (name) {
         case "subscriptions": this.subscriptions = (Map<String,I5FService>) value; break;
         }
     }
 
-    private class I5FService {
+    public static class I5FService {
         public String token;
         public List<String> keys;
         public Map<String,String> params;
@@ -49,14 +51,14 @@ public class I5FParameter extends Parameter {
     private static I5FService dummyServiceKen(Random random) {
         I5FService s = new I5FService();
         s.keys = new ArrayList<String>();
-        s.keys.add(I5FZipcodes.list[random.nextInt(I5FZipcodes.list.length)]);
+        s.keys.add(I5FZipcodes.list[random.nextInt(I5FZipcodes.list.length)][0]);
         return s;
     }
 
     private static I5FService dummyServiceKen2(Random random) {
         I5FService s = new I5FService();
         s.params = new HashMap<String,String>();
-        s.params.put("zipcode", I5FZipcodes.list[random.nextInt(I5FZipcodes.list.length)]);
+        s.params.put("zipcode", I5FZipcodes.list[random.nextInt(I5FZipcodes.list.length)][0]);
         return s;
     }
 
@@ -76,7 +78,7 @@ public class I5FParameter extends Parameter {
 
     public void putDummySubscriptions() {
         Random rand = new Random();
-        int index = random.nextInt(4) * 3;
+        int index = rand.nextInt(4) * 3;
 
         Map<String,I5FService> subs = new HashMap<String,I5FService>();
         switch (grade) {
