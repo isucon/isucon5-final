@@ -1,3 +1,7 @@
 *~
 #*#
 *.swp
+.idea
+*.iml
+target
+build
