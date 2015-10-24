@@ -239,7 +239,7 @@ public class Driver {
                     int readLength = buffer.remaining() < DRIVER_CONTENT_BUFFER_SIZE ? buffer.remaining() : DRIVER_CONTENT_BUFFER_SIZE;
                     buffer.get(bytes, 0, readLength);
                     stream.write(bytes, 0, readLength);
-                    md.update(bytes);
+                    md.update(bytes, 0, readLength);
                 }
             };
 
