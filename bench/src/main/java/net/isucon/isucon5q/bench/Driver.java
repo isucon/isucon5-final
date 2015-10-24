@@ -11,7 +11,8 @@ import java.util.concurrent.TimeUnit;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.xml.bind.DataTypeConverter;
+
+import javax.xml.bind.DatatypeConverter;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -309,7 +310,7 @@ public class Driver {
                     r.addResponse(ResponseType.ERROR);
                 }
                 if (checkerCallback != null) {
-                    Checker check = new Checker(r, type, config, args.responseTime(), res);
+                    Checker check = Checker.create(r, type, config, args.responseTime(), res);
                     checkerCallback.accept(check);
                 }
             }
