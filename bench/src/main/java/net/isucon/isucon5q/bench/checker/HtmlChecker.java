@@ -55,7 +55,7 @@ public class HtmlChecker extends Checker {
     }
 
     public void hasJavaScript(String path) {
-        Elements es = document().head().getElementsByTag("script");
+        Elements es = document().body().getElementsByTag("script");
         if (es.stream().noneMatch(e -> e.attr("src").equals(path))) {
             addViolation(String.format("JavaScriptファイルのパス %s への参照がありません", path));
         }
