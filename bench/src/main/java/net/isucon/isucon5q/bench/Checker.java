@@ -175,9 +175,10 @@ public class Checker {
         addViolation("正しいJSONコンテンツではありません");
     }
 
-    public void contentMatch(String regexp) {
-        if (! Pattern.compile(regexp).matcher(contentBody()).matches()) {
-            addViolation(String.format("Content bodyに文字列パターン %s がみつかりません", regexp));
+    public void contentMatch(String pattern) {
+        String contentBody = contentBody();
+        if (contentBody.indexOf(pattern) < 0 && ! Pattern.compile(pattern).matcher(contentBody()).matches()) {
+            addViolation(String.format("Content bodyに文字列パターン '%s' がみつかりません", pattern));
         }
     }
 
