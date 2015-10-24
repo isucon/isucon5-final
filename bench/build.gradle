@@ -23,7 +23,7 @@ compileJava {
     options.encoding = 'UTF-8'
 }
 
-mainClassName = 'net.isucon.isucon5q.bench.Runner'
+mainClassName = 'net.isucon.bench.Runner'
 
 run {
     // pass stdin to application
@@ -35,7 +35,7 @@ run {
         args project.args.split('\\s+')
     } else {
         // default check target
-        // gradle run -Pargs="net.isucon.isucon5q.bench.scenario.Isucon5Qualification 127.0.0.1"
-        args "net.isucon.isucon5q.bench.scenario.Isucon5Final 127.0.0.1".split('\\s+')
+        // gradle run -Pargs="net.isucon.isucon5f.bench.Bootstrap 127.0.0.1"
+        args "net.isucon.isucon5f.bench.Full 127.0.0.1".split('\\s+')
     }
 }

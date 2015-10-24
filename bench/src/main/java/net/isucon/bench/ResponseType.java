@@ -1,4 +1,4 @@
-package net.isucon.isucon5q.bench;
+package net.isucon.bench;
 
 enum ResponseType {
     SUCCESS,

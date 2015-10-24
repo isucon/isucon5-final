@@ -1,17 +1,17 @@
-package net.isucon.isucon5q.bench.scenario;
+package net.isucon.isucon5f.bench;
 
 import java.util.List;
 
-import net.isucon.isucon5q.bench.Scenario;
-import net.isucon.isucon5q.bench.Step;
-import net.isucon.isucon5q.bench.Result;
-import net.isucon.isucon5q.bench.Parameter;
-import net.isucon.isucon5q.bench.Session;
+import net.isucon.bench.Scenario;
+import net.isucon.bench.Step;
+import net.isucon.bench.Result;
+import net.isucon.bench.Parameter;
+import net.isucon.bench.Session;
 
-public class Isucon5FinalInit extends Scenario {
+public class Init extends Scenario {
     private static long DURATION_MILLIS = 33 * 1000;
 
-    public Isucon5FinalInit(Long timeout) {
+    public Init(Long timeout) {
         super(timeout);
     }
 

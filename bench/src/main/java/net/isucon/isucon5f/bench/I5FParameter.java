@@ -1,4 +1,4 @@
-package net.isucon.isucon5q.bench.scenario;
+package net.isucon.isucon5f.bench;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Random;
 
-import net.isucon.isucon5q.bench.Parameter;
+import net.isucon.bench.Parameter;
 
 public class I5FParameter extends Parameter {
     private static String[] KEYS = new String[]{

@@ -1,4 +1,4 @@
-package net.isucon.isucon5q.bench.checker;
+package net.isucon.bench.checker;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -14,10 +14,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import net.isucon.isucon5q.bench.Checker;
+import net.isucon.bench.Checker;
 
-import net.isucon.isucon5q.bench.Result;
-import net.isucon.isucon5q.bench.Config;
+import net.isucon.bench.Result;
+import net.isucon.bench.Config;
 
 public class HtmlChecker extends Checker {
     private Document parsedDocument;

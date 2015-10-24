@@ -1,4 +1,4 @@
-package net.isucon.isucon5q.bench;
+package net.isucon.bench;
 
 import java.util.Map;
 import java.util.List;

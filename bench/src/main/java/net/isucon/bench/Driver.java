@@ -1,4 +1,4 @@
-package net.isucon.isucon5q.bench;
+package net.isucon.bench;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -31,8 +31,8 @@ import org.eclipse.jetty.util.Fields;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import net.isucon.isucon5q.bench.Result;
-import net.isucon.isucon5q.bench.Session;
+import net.isucon.bench.Result;
+import net.isucon.bench.Session;
 
 public class Driver {
     private HttpClient client;

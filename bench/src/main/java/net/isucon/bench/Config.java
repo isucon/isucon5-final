@@ -1,4 +1,4 @@
-package net.isucon.isucon5q.bench;
+package net.isucon.bench;
 
 public class Config {
     public static final long MAX_RUNNING_TIME = 3 * 60 * 1000;

@@ -1,4 +1,4 @@
-package net.isucon.isucon5q.bench;
+package net.isucon.bench;
 
 import java.util.List;
 import java.util.Map;
@@ -70,11 +70,6 @@ public abstract class Parameter {
     }
 
     public static List<Parameter> dummyParameters(String className) throws ClassNotFoundException {
-        String dummy = "[" +
-            "{\"account_name\":\"tagomoris\",\"nick_name\":\"モリス\",\"email\":\"moris@tagomor.is\",\"password\":\"moris11\",\"first_name\":\"さとし\",\"last_name\":\"たごもり\",\"birthday\":\"2001-08-18\",\"sex\":\"男性\",\"pref\":\"北海道\"}" + "," +
-            "{\"account_name\":\"kamipo\",\"nick_name\":\"かみぽ\",\"email\":\"kamipo@kamipopo.po\",\"password\":\"po1\",\"first_name\":\"りゅうた\",\"last_name\":\"かみぞの\",\"birthday\":\"2011-06-13\",\"sex\":\"その他\",\"pref\":\"山形県\"}" + "," +
-            "{\"account_name\":\"bbbbbbb\",\"nick_name\":\"b\",\"email\":\"b@b.net\",\"password\":\"bb\",\"first_name\":\"もう\",\"last_name\":\"つかれてきた\",\"birthday\":\"2008-12-03\",\"sex\":\"その他\",\"pref\":\"北海道\"}" +
-            "]";
-        return generate(className, dummy);
-  }
+        throw new RuntimeException("not implemented");
+    }
 }

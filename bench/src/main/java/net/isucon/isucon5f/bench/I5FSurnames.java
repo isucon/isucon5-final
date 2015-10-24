@@ -1,4 +1,4 @@
-package net.isucon.isucon5q.bench.scenario;
+package net.isucon.isucon5f.bench;
 
 public class I5FSurnames {
     public static String[] list = {

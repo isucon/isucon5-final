@@ -1,19 +1,19 @@
-package net.isucon.isucon5q.bench.scenario;
+package net.isucon.isucon5f.bench;
 
 import java.util.List;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
-import net.isucon.isucon5q.bench.Scenario;
-import net.isucon.isucon5q.bench.Step;
-import net.isucon.isucon5q.bench.Result;
-import net.isucon.isucon5q.bench.Parameter;
-import net.isucon.isucon5q.bench.Session;
+import net.isucon.bench.Scenario;
+import net.isucon.bench.Step;
+import net.isucon.bench.Result;
+import net.isucon.bench.Parameter;
+import net.isucon.bench.Session;
 
-public class Isucon5Final extends Scenario {
+public class Full extends Scenario {
     private static long DURATION_MILLIS = 120 * 1000;
 
-    public Isucon5Final(Long timeout) {
+    public Full(Long timeout) {
         super(timeout);
     }
 
@@ -52,9 +52,9 @@ public class Isucon5Final extends Scenario {
     @Override
     public Step[] steps() {
         Step[] steps = new Step[3];
-        steps[0] = new Step(35000L, Isucon5FinalInit.class);
-        steps[1] = new Step(60000L, Isucon5FinalBootstrap.class);
-        steps[2] = new Step(70000L, Isucon5FinalChecker.class, Isucon5FinalLoad.class, Isucon5FinalLoad.class, Isucon5FinalLoad.class, Isucon5FinalLoad.class);
+        steps[0] = new Step(35000L, Init.class);
+        steps[1] = new Step(60000L, Bootstrap.class);
+        steps[2] = new Step(70000L, Checker.class, Load.class, Load.class, Load.class, Load.class);
 
         return steps;
     }

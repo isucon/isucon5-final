@@ -1,4 +1,4 @@
-package net.isucon.isucon5q.bench;
+package net.isucon.bench;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,8 +12,8 @@ import org.eclipse.jetty.client.api.Response;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import net.isucon.isucon5q.bench.checker.HtmlChecker;
-import net.isucon.isucon5q.bench.checker.JsonChecker;
+import net.isucon.bench.checker.HtmlChecker;
+import net.isucon.bench.checker.JsonChecker;
 
 public class Checker {
     private Result result;

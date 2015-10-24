@@ -1,4 +1,4 @@
-package net.isucon.isucon5q.bench.scenario;
+package net.isucon.isucon5f.bench;
 
 import java.util.List;
 import java.util.Map;
@@ -12,16 +12,16 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.ChronoField;
 
-import net.isucon.isucon5q.bench.Scenario;
-import net.isucon.isucon5q.bench.Step;
-import net.isucon.isucon5q.bench.Result;
-import net.isucon.isucon5q.bench.Parameter;
-import net.isucon.isucon5q.bench.Session;
+import net.isucon.bench.Scenario;
+import net.isucon.bench.Step;
+import net.isucon.bench.Result;
+import net.isucon.bench.Parameter;
+import net.isucon.bench.Session;
 
-public class Isucon5FinalChecker extends Isucon5FinalBase {
+public class Checker extends Base {
     private static long DURATION_MILLIS = 60 * 1000;
 
-    public Isucon5FinalChecker(Long timeout) {
+    public Checker(Long timeout) {
         super(timeout);
     }
 
