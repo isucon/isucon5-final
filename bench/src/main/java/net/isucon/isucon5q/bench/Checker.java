@@ -156,7 +156,7 @@ public class Checker {
     }
 
     public void isContentBodyChecksum(String checksum) {
-        if (! contentBodyChecksum.equals(checksum)) {
+        if (! contentBodyChecksum.toUpperCase().equals(checksum.toUpperCase())) {
             addViolation(String.format("パス %s のcontent bodyの内容が一致しません", response.getRequest().getPath()));
         }
     }
