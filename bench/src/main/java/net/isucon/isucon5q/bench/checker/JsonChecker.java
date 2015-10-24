@@ -3,6 +3,7 @@ package net.isucon.isucon5q.bench.checker;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+import java.util.List;
 import java.util.Arrays;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -58,20 +59,49 @@ public class JsonChecker extends Checker {
     */
 
     public void exist(String selector) {
+        if (((List) JsonPath.read(parsed(), selector)).size() > 0) {
+            addViolation(String.format("要素 %s が存在するはずですが、存在しません", selector));
+        }
     }
 
     public void exist(String selector, int num) {
+        if (((List) JsonPath.read(parsed(), selector)).size() != num) {
+            addViolation(String.format("要素 %s が %d オブジェクト存在するはずですが、異なっています", selector, num));
+            System.err.println(contentBody());
+        }
     }
 
     public void missing(String selector) {
+        if (((List) JsonPath.read(parsed(), selector)).size() != 0) {
+            addViolation(String.format("要素 %s が存在しないはずですが、存在します", selector));
+        }
     }
 
     public void content(String selector, String text) {
+        if (((String) JsonPath.read(parsed(), selector)).equals(text)) {
+            addViolation(String.format("要素 %s の内容が %s ではありません", selector, text));
+        }
     }
 
-    public void contentMissing(String selector, String text) {
-    }
+    // public void contentMissing(String selector, String text) {
+    // }
 
-    public void contentMatch(String selector, String regexp) {
+    public void contentMatch(String selector, String value) {
+        List<String> list = JsonPath.read(parsed(), selector);
+        if (list.size() == 1) {
+            if (! list.get(0).equals(value)) {
+                addViolation(String.format("リスト %s の要素が '%s' と一致しません", selector, value));
+            }
+        } else {
+            boolean match = false;
+            for (String s : list) {
+                if (s.equals(value)) {
+                    match = true;
+                    break;
+                }
+            }
+            if (! match)
+                addViolation(String.format("リスト %s の要素の中に '%s' と一致するものがありません", selector, value));
+        }
     }
 }

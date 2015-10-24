@@ -80,6 +80,7 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
             getAndCheck(session, "/", "GET INDEX BEFORE SIGNUP", (check) -> { check.isRedirect("/login"); });
             getAndCheck(session, "/login", "GET LOGIN BEFORE SIGNUP", (check) -> {
                     check.isStatus(200);
+                    check.isContentType("text/html");
                     check.exist("form.form-signin[action=/login]");
                     check.exist("input[name=email]");
                     check.exist("input[name=password]");
@@ -89,6 +90,7 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
                 });
             getAndCheck(session, "/css/bootstrap.min.css", "BOOTSTRAP CSS", (check) -> {
                     check.isStatus(200);
+                    check.isContentLength(122540);
                     check.isContentBodyChecksum("08df9a96752852f2cbd310c30facd934e348c2c5");
                 });
             getAndCheck(session, "/css/signin.css", "SIGNIN CSS", (check) -> {
@@ -99,6 +101,7 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
         {
             getAndCheck(session, "/signup", "GET SIGNUP PAGE", (check) -> {
                     check.isStatus(200);
+                    check.isContentType("text/html");
                     check.exist("form.form-signin[action=/signup]");
                     check.exist("input[name=email]");
                     check.exist("input[name=password]");
@@ -125,10 +128,10 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
                 });
         }
 
-
         {
             getAndCheck(session, "/login", "GET LOGIN PAGE AFTER SIGNUP", (check) -> {
                     check.isStatus(200);
+                    check.isContentType("text/html");
                     check.hasStyleSheet("/css/bootstrap.min.css");
                     check.hasStyleSheet("/css/signin.css");
                 });
@@ -155,7 +158,8 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
             I5FParameter param = (I5FParameter) session.param();
             getAndCheck(session, "/", "INDEX AFTER LOGIN", (check) -> {
                     check.isStatus(200);
-                    check.exist(".container .header.clearfix ul.nav li.presentation a[href=/modify]");
+                    check.isContentType("text/html");
+                    check.exist(".container .header.clearfix nav ul.nav li a[href=/modify]");
                     check.content(".container .header h3", String.format("AirISU: %s", param.email));
 
                     check.hasStyleSheet("/css/bootstrap.min.css");
@@ -195,24 +199,87 @@ public class Isucon5FinalBootstrap extends Isucon5FinalBase {
             final String interval = intervalVal;
             getAndCheck(session, "/user.js", "JQUERY JS", (check) -> {
                     check.isStatus(200);
-                    // micro 30000, small 30000, standard 20000, premium 10000
                     check.contentMatch(String.format("var AIR_ISU_REFRESH_INTERVAL = %s;", interval));
                 });
         }
 
         {
-            // TODO: get first /data (blank)
-            //getAndCheck
+            getAndCheck(session, "/data", "DATA FOR BLANK SUBSCRIPTIONS", (check) -> {
+                    check.isStatus(200);
+                    check.isContentType("application/json");
+                    check.isValidJson();
+                    check.missing("$..*");
+                });
         }
 
         {
-            // TODO: get /modify
-            // TODO: post /modify
-            // TODO: get /modify and check response
+            I5FParameter param = (I5FParameter) session.param();
+            final String email = param.email;
+            final String grade = param.grade;
+            getAndCheck(session, "/modify", "GET MODIFY PAGE", (check) -> {
+                    check.isStatus(200);
+                    check.attribute(".container", "data-grade", grade);
+                    check.content(".container .header h3", String.format("AirISU 設定変更: %s", email));
+                    switch (grade) {
+                    case "premium":
+                        // highest grade
+                    case "standard":
+                        // next
+                    case "small":
+                        // yay
+                    default:
+                        check.exist(".api-form[data-service=ken]");
+                        check.exist(".api-form[data-service=ken2]");
+                        check.exist(".api-form[data-service=surname]");
+                        check.exist(".api-form[data-service=givenname]");
+                    }
+                });
+            {
+                HashMap<String,String> form = new HashMap<String,String>();
+                form.put("service", "ken");
+                form.put("keys", String.join(" ", param.subscriptions.get("ken").keys));
+                postAndCheck(session, "/modify", form, "MODIFY KEN", (check) -> {
+                        check.isRedirect("/modify");
+                    });
+            }
+            {
+                HashMap<String,String> form = new HashMap<String,String>();
+                form.put("service", "ken2");
+                form.put("param_name", "zipcode");
+                form.put("param_value", param.subscriptions.get("ken2").params.get("zipcode"));
+                postAndCheck(session, "/modify", form, "MODIFY KEN2", (check) -> {
+                        check.isRedirect("/modify");
+                    });
+            }
+            // TODO: modify surname, givenname
         }
 
         {
-            // TODO: get /data and check content
+            I5FParameter param = (I5FParameter) session.param();
+            getAndCheck(session, "/", "GET INDEX AFTER MODIFY", (check) -> {
+                    check.isStatus(200);
+                    check.isContentType("text/html");
+                    check.exist(".container .header.clearfix nav ul.nav li a[href=/modify]");
+                    check.content(".container .header h3", String.format("AirISU: %s", param.email));
+
+                    check.hasStyleSheet("/css/bootstrap.min.css");
+                    check.hasStyleSheet("/css/jumbotron-narrow.css");
+                    check.hasJavaScript("/js/jquery-1.11.3.js");
+                    check.hasJavaScript("/js/bootstrap.js");
+                    check.hasJavaScript("/user.js");
+                    check.hasJavaScript("/js/airisu.js");
+                });
+            String kenValue = I5FZipcodes.address(param.subscriptions.get("ken").keys.get(0));
+            String ken2Value = I5FZipcodes.address(param.subscriptions.get("ken2").params.get("zipcode"));
+            getAndCheck(session, "/data", "DATA AFTER MODIFY SUBSCRIPTIONS", (check) -> {
+                    check.isStatus(200);
+                    check.isContentType("application/json");
+                    check.isValidJson();
+                    check.exist("$.[?(@.service=='ken')]", 1);
+                    check.contentMatch("$.[?(@.service=='ken')].data.addresses[0]", kenValue);
+                    check.exist("$.[?(@.service=='ken2')]", 1);
+                    check.contentMatch("$.[?(@.service=='ken2')].data.addresses[0]", ken2Value);
+                });
         }
     }
 }
