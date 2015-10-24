@@ -1,13 +1,23 @@
 package net.isucon.isucon5q.bench.scenario;
 
 public class I5FZipcodes {
+    public static String address(String zipcode) {
+        for (String[] pair : list) {
+            if (pair[0].equals(zipcode)) {
+                return pair[1];
+            }
+        }
+        throw new IllegalArgumentException("Argument zipcode does not exist in list: " + zipcode);
+    }
+
+    // there's no same zipcode
     public static String[][] list = {
-        {"1006334", "東京都 千代田区 丸の内丸の内ビルディング　３４階"},
-        {"1600022", "東京都 新宿区 新宿"},
-        {"3771711", "群馬県 吾妻郡草津町 草津"},
-        {"4050036", "山梨県 山梨市 矢坪"},
-        {"4103514", "静岡県 賀茂郡西伊豆町 仁科"},
-        {"3771528", "群馬県 吾妻郡嬬恋村 干俣万座温泉"},
+        {"1006334","東京都 千代田区 丸の内丸の内ビルディング　３４階"},
+        {"1600022","東京都 新宿区 新宿"},
+        {"3771711","群馬県 吾妻郡草津町 草津"},
+        {"4050036","山梨県 山梨市 矢坪"},
+        {"4103514","静岡県 賀茂郡西伊豆町 仁科"},
+        {"3771528","群馬県 吾妻郡嬬恋村 干俣万座温泉"},
         {"3010015","茨城県 龍ケ崎市 長沖町"},
         {"7201415","広島県 神石郡神石高原町 階見"},
         {"0791572","北海道 富良野市 山部西２３線"},
