@@ -29,6 +29,9 @@ public class Checker {
 
     public static Checker create(Result result, String type, Config config, long responseTime, Response response) {
         String contentType = response.getHeaders().get("Content-Type");
+        if (contentType.indexOf(";") > -1) {
+            contentType = contentType.substring(0, contentType.indexOf(";"));
+        }
         switch (contentType) {
         case "text/html": return new HtmlChecker(result, type, config, responseTime, response);
         case "application/json": return new JsonChecker(result, type, config, responseTime, response);
@@ -44,6 +47,9 @@ public class Checker {
         this.response = response;
 
         this.contentType = response.getHeaders().get("Content-Type");
+        if (contentType.indexOf(";") > -1) {
+            contentType = contentType.substring(0, contentType.indexOf(";"));
+        }
 
         this.contentBodyChecksum = null; // SHA-1 checksum
         this.contentBody = null;
