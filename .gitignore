@@ -1,3 +1,9 @@
 *~
 #*#
 *.swp
+.idea
+*.iml
+target
+build
+.bundle
+vendor

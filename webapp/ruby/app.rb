@@ -171,9 +171,13 @@ SQL
     db.transaction do |conn|
       arg_json = conn.exec_params(select_query, [user[:id]]).values.first[0]
       arg = JSON.parse(arg_json)
+      arg[service] ||= {}
       arg[service]['token'] = token if token
       arg[service]['keys'] = keys if keys
-      arg[service]['params'][param_name] = param_value if param_name && param_value
+      if param_name && param_value
+        arg[service]['params'] ||= {}
+        arg[service]['params'][param_name] = param_value
+      end
       conn.exec_params(update_query, [arg.to_json, user[:id]])
     end
     redirect '/modify'
