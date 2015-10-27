@@ -3,7 +3,8 @@
 import os
 import json
 import random
-import urllib
+import urllib.parse
+import urllib.request
 import bottle
 import pg8000
 
@@ -37,7 +38,7 @@ def db():
     try:
         return bottle.local.db
     except AttributeError:
-        bottle.local.db = minipg.connect(
+        bottle.local.db = pg8000.connect(
             host=app.config["db.host"],
             port=app.config["db.port"],
             user=app.config["db.username"],
@@ -48,23 +49,36 @@ def db():
 
 def db_fetchone(query, *args):
     args = args if args else None
-    with db().cursor() as cursor:
+    cursor = db().cursor()
+    try:
         cursor.execute(query, args)
         return cursor.fetchone()
+    finally:
+        cursor.close()
 
 
 def db_fetchall(query, *args):
     args = args if args else None
-    with db().cursor() as cursor:
+    cursor = db().cursor()
+    try:
         cursor.execute(query, args)
         return cursor.fetchall()
+    finally:
+        cursor.close()
 
 
 def db_execute(query, *args):
     args = args if args else None
-    with db().cursor() as cursor:
+    cursor = db().cursor()
+    try:
         cursor.execute(query, args)
-    db().commit()
+    except:
+        db().rollback()
+        raise
+    else:
+        db().commit()
+    finally:
+        cursor.close()
 
 
 def authenticate(email, password):
@@ -100,7 +114,10 @@ def generate_salt():
 
 def fetch_api(method, uri, headers, params):
     assert method in ("GET", "POST")
-    req = urllib.request.Request(uri, method=method, headers=headers, data=params)
+    if params:
+        query = urllib.parse.urlencode(params)
+        uri += "?" + query
+    req = urllib.request.Request(uri, method=method, headers=headers)
     res = urllib.request.urlopen(req)
     body = res.read()
     return json.loads(body) if body else {}
@@ -117,14 +134,20 @@ def post_signup():
     email = bottle.request.forms.getunicode("email")
     password = bottle.request.forms.getunicode("password")
     grade = bottle.request.forms.getunicode("grade")
+    salt = generate_salt()
     insert_user_query = "INSERT INTO users (email,salt,passhash,grade) VALUES (%s,%s,digest(%s || %s, 'sha512'),%s) RETURNING id"
     insert_subscription_query = "INSERT INTO subscriptions (user_id,arg) VALUES (%s,%s)"
-    with db().cursor() as cursor:
+    cursor = db().cursor()
+    try:
         cursor.execute(insert_user_query, (email, salt, salt, password, grade, ))
         rows = cursor.fetchall()
-        user_id = rows[0]
+        user_id = rows[0][0]
         cursor.execute(insert_subscription_query, (user_id, json.dumps({}), ))
-    db().commit()
+    except:
+        db().rollback()
+        raise
+    else:
+        db().commit()
     bottle.redirect("/login")
 
 
@@ -143,8 +166,8 @@ def get_login():
 def post_login():
     email = bottle.request.forms.getunicode("email")
     password = bottle.request.forms.getunicode("password")
-    authenticate(email, password)
-    if not current_user():
+    user = authenticate(email, password)
+    if not user:
         bottle.abort(403)
     bottle.redirect("/")
 
@@ -168,8 +191,18 @@ def get_userjs():
     user = current_user()
     if not user:
         bottle.abort(403)
+    if user["grade"] == "micro":
+        grade = 30000
+    elif user["grade"] == "small":
+        grade = 30000
+    elif user["grade"] == "standard":
+        grade = 20000
+    elif user["grade"] == "premium":
+        grade = 10000
+    else:
+        grade = ""
     bottle.response.set_header("Content-Type", "application/javascript")
-    return bottle.template("userjs", {"grade": user["grade"]})
+    return bottle.template("userjs", {"grade": grade})
 
 
 @app.get("/modify")
@@ -205,9 +238,10 @@ def post_modify():
     
     select_query = "SELECT arg FROM subscriptions WHERE user_id=%s FOR UPDATE"
     update_query = "UPDATE subscriptions SET arg=%s WHERE user_id=%s"
-    with db().cursor() as cursor:
+    cursor = db().cursor()
+    try:
         cursor.execute(select_query, (user["id"], ))
-        arg_json = cursor.fetchall()[0]
+        arg_json = cursor.fetchall()[0][0]
         arg = json.loads(arg_json) or {}
         arg.setdefault(service, {})
         if token:
@@ -215,10 +249,16 @@ def post_modify():
         if keys:
             arg[service]["keys"] = keys
         if param_name and param_value:
-            arg[service]["params"].setdefault(param_name, {})
+            arg[service].setdefault("params", {})
             arg[service]["params"][param_name] = param_value
         cursor.execute(update_query, (json.dumps(arg), user["id"], ))
-    db().commit()
+    except:
+        db().rollback()
+        raise
+    else:
+        db().commit()
+    finally:
+        cursor.close()
     
     bottle.redirect("/modify")
 
@@ -244,9 +284,9 @@ def get_data():
             headers[token_key] = conf["token"]
         elif token_type == "param":
             params[token_key] = conf["token"]
-        if conf["keys"]:
-            # this is not python3...
-            uri = uri_template % conf["keys"]
+        conf_keys = conf.get("keys")
+        if conf_keys:
+            uri = uri_template % conf_keys
         else:
             uri = uri_template
         data.append({"service": service, "data": fetch_api(method, uri, headers, params)})
@@ -286,6 +326,6 @@ if __name__ == "__main__":
     app.run(server="wsgiref",
             host="127.0.0.1",
             port=8080,
-            reloader=True,
+            reloader=False,
             quiet=False,
             debug=True)
