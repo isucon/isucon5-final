@@ -45,7 +45,9 @@ VALUES
 ('ken', 'GET', NULL, NULL, 'http://127.0.0.1:8080/%s'),
 ('ken2', 'GET', NULL, NULL, 'http://127.0.0.1:8080/'),
 ('surname', 'GET', NULL, NULL, 'http://127.0.0.1:8081/surname'),
-('givenname', 'GET', NULL, NULL, 'http://127.0.0.1:8081/givenname');
+('givenname', 'GET', NULL, NULL, 'http://127.0.0.1:8081/givenname'),
+('perfectsec', 'GET', 'header', 'X-PERFECT-SECURITY-TOKEN', 'https://127.0.0.1:8443/tokens'),
+('perfectsec_attacked', 'GET', 'header', 'X-PERFECT-SECURITY-TOKEN', 'https://127.0.0.1:8443/attacked_list');
 
 CREATE TABLE subscriptions (
   user_id INTEGER REFERENCES users (id) NOT NULL PRIMARY KEY,
@@ -54,6 +56,6 @@ CREATE TABLE subscriptions (
 
 INSERT INTO subscriptions (user_id, arg)
 VALUES
-(1, '{"ken":{"keys":["6900014"]},"ken2":{"params":{"zipcode":"1530042"}},"surname":{"params":{"q":"神"}},"givenname":{"params":{"q":"さと"}}}'),
-(2, '{"ken":{"keys":["6900014"]},"ken2":{"params":{"zipcode":"1530042"}}}')
+(1, '{"ken":{"keys":["6900014"]},"ken2":{"params":{"zipcode":"1530042"}},"surname":{"params":{"q":"神"}},"givenname":{"params":{"q":"さと"}},"perfectsec":{"params":{"req":"ps1"},"token":"da39a3ee5e6b4b0d3255bfef95601890afd80709"},"perfectsec_attacked":{"token":"da39a3ee5e6b4b0d3255bfef95601890afd80709"}}'),
+(2, '{"ken":{"keys":["6900014"]},"ken2":{"params":{"zipcode":"1530042"}},"surname":{"params":{"q":"神"}},"givenname":{"params":{"q":"さと"}}}')
 ;
