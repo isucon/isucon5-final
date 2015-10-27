@@ -39,16 +39,6 @@ public class Bootstrap extends Base {
 
     private class CheckingStatus {
         //TODO: fixit
-        public int friends;
-
-        public Long existingEntryId;
-        public String commentText;
-
-        public Long postedEntryId;
-        public String postedTitle;
-        public String postedContent;
-
-        public String newBirthday;
     }
 
     private static String[] BOOTSTRAP_TEST_DATA = new String[]{
@@ -187,7 +177,7 @@ public class Bootstrap extends Base {
                 });
             getAndCheck(session, "/js/airisu.js", "AIR-ISU JS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("11f090f858fcc93fc83504281ceea03eb03bff46");
+                    check.isContentBodyChecksum("c2f4ae15ab0c59e0d75a06e031550ad70e59dfc2");
                 });
             String intervalVal = null;
             switch (param.grade) {
@@ -251,11 +241,39 @@ public class Bootstrap extends Base {
                         check.isRedirect("/modify");
                     });
             }
-            // TODO: modify surname, givenname
+            {
+                HashMap<String,String> form = new HashMap<String,String>();
+                form.put("service", "surname");
+                form.put("param_name", "q");
+                form.put("param_value", I5FSurnames.getQuery(param.subscriptions.get("surname").params.get("q")));
+                postAndCheck(session, "/modify", form, "MODIFY GIVENNAME", (check) -> {
+                        check.isRedirect("/modify");
+                    });
+            }
+
+            if (grade.equals("small") || grade.equals("standard") || grade.equals("premium")){
+                HashMap<String,String> form = new HashMap<String,String>();
+                form.put("service", "givenname");
+                form.put("param_name", "q");
+                form.put("param_value", I5FGivennames.getQuery(param.subscriptions.get("givenname").params.get("q")));
+                postAndCheck(session, "/modify", form, "MODIFY GIVENNAME", (check) -> {
+                        check.isRedirect("/modify");
+                    });
+            }
+
+            if (grade.equals("standard") || grade.equals("premium")){
+                // tenki ?
+            }
+
+            if (grade.equals("premium")){
+                // modify perfectsec
+                // modify perfectsec_attacked
+            }
         }
 
         {
             I5FParameter param = (I5FParameter) session.param();
+            String grade = param.grade;
             getAndCheck(session, "/", "GET INDEX AFTER MODIFY", (check) -> {
                     check.isStatus(200);
                     check.isContentType("text/html");
@@ -275,11 +293,69 @@ public class Bootstrap extends Base {
                     check.isStatus(200);
                     check.isContentType("application/json");
                     check.isValidJson();
+
                     check.exist("$.[?(@.service=='ken')]", 1);
-                    check.contentMatch("$.[?(@.service=='ken')].data.addresses[0]", kenValue);
+                    check.contentMatch("$.[?(@.service=='ken')].data.addresses.*", kenValue);
+
                     check.exist("$.[?(@.service=='ken2')]", 1);
-                    check.contentMatch("$.[?(@.service=='ken2')].data.addresses[0]", ken2Value);
+                    check.contentMatch("$.[?(@.service=='ken2')].data.addresses.*", ken2Value);
+
+                    check.exist("$.[?(@.service=='surname')].data.query", 1);
+                    {
+                        String qKey = param.subscriptions.get("surname").params.get("q");
+                        String query = I5FSurnames.getQuery(qKey);
+                        String queryCheck = String.format("$.[?(@.service=='surname')].data.[?(@.query=='%s')]", query);
+                        check.exist(queryCheck, 1);
+                        List<I5FJsonData.NameElement> result = I5FSurnames.getResult(qKey);
+                        for (I5FJsonData.NameElement r : result) {
+                            check.contentMatch("$.[?(@.service=='surname')].data.result..name", r.name);
+                        }
+                    }
+
+                    if (grade.equals("small") || grade.equals("standard") || grade.equals("premium")){
+                        check.exist("$.[?(@.service=='givenname')].data.query", 1);
+                        String qKey = param.subscriptions.get("givenname").params.get("q");
+                        String query = I5FGivennames.getQuery(qKey);
+                        String queryCheck = String.format("$.[?(@.service=='givenname')].data.[?(@.query=='%s')]", query);
+                        check.exist(queryCheck, 1);
+                        List<I5FJsonData.NameElement> result = I5FGivennames.getResult(qKey);
+                        for (I5FJsonData.NameElement r : result) {
+                            check.contentMatch("$.[?(@.service=='givenname')].data.result..name", r.name);
+                        }
+                    }
+
+                    if (grade.equals("standard") || grade.equals("premium")){
+                    }
+
+                    if (grade.equals("premium")){
+                    }
                 });
         }
     }
 }
+/*
+[
+{"service":"ken","data":{"zipcode":"6900014","addresses":["島根県 松江市 八雲台"]}},
+{"service":"ken2","data":{"zipcode":"1530042","addresses":["東京都 目黒区 青葉台", "東京都 目黒区 テストさん"]}},
+{"service":"surname","data":{"query":"神","result":[
+  {"yomi":"カクミ","name":"神代"},{"yomi":"カグラオカ","name":"神楽岡"},
+  {"yomi":"カゴシマ","name":"神子島"},{"yomi":"カジロ","name":"神代"},
+  {"yomi":"カジロ","name":"神白"},{"yomi":"カナガワ","name":"神奈川"},
+  ]}},
+{"service":"givenname","data":{"query":"さと","result":[
+  {"yomi":"サト","name":"郷"},{"yomi":"サト","name":"郷寧"},
+  {"yomi":"サト","name":"慧"},{"yomi":"サト","name":"佐音"},
+  {"yomi":"サト","name":"佐都"},{"yomi":"サト","name":"佐橙"},
+  ]}},
+{"service":"perfectsec",
+ "data":{
+  "req":"ps1",
+  "key":"kPOHq448HawFt24ihg8l",
+  "onetime_token":"38c56517174a3a304f888f140d504674ab3c346c"}},
+{"service":"perfectsec_attacked",
+ "data":{
+  "key1":"0516f6726860dac017136f8fadbda9f9e084d07b",
+  "key2":"2d383c91ae1ecb552b773052145b052782e39b73",
+  "key3":"fc6004fdc6de41d62852fc0249af0f473769d0e6",
+  "updated_at":1445948187}}]
+*/
