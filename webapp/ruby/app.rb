@@ -5,6 +5,7 @@ require 'tilt/erubis'
 require 'erubis'
 require 'json'
 require 'httpclient'
+require 'openssl'
 
 # bundle config build.pg --with-pg-config=<path to pg_config>
 # bundle install
@@ -185,8 +186,8 @@ SQL
 
   def fetch_api(method, uri, headers, params)
     client = HTTPClient.new
-    if uri.start_with? "https://" #TODO: create private cert store
-      client.ssl_config.set_trust_ca(ca_file_or_hashed_dir)
+    if uri.start_with? "https://"
+      client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
     fetcher = case method
               when 'GET' then client.method(:get_content)

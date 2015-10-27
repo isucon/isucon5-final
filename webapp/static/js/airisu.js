@@ -15,10 +15,23 @@ function render(list) {
       case 'ken2': render_ken(element, item.data); break;
       case 'surname':
       case 'givenname': render_name(element, item.data); break;
+      case 'perfectsec': render_perfectsec(element, item.data); break;
+      case 'perfectsec_attacked': render_perfectsec_attacked(element, item.data); break;
       default: console.log("unknown api response, service:" + item.service); console.log(item.data);
     }
     $('#api-response-container').append(element);
   });
+}
+
+function render_perfectsec(element, data){
+  $(element).find('h4').text("Request: " + data.req);
+  $(element).find('p').text("KEY: " + data.key + ", TOKEN: " + data.onetime_token);
+}
+
+function render_perfectsec_attacked(element, data){
+  var updatedAt = new Date(data.updated_at * 1000);
+  $(element).find('h4').text("updated: " + updatedAt.toISOString());
+  $(element).find('p').text(data.key1 + ", " + data.key2 + ", " + data.key3);
 }
 
 function render_ken(element, data){
