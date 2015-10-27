@@ -65,14 +65,14 @@ public class I5FParameter extends Parameter {
     private static I5FService dummyServiceGivenname(Random random) {
         I5FService s = new I5FService();
         s.params = new HashMap<String,String>();
-        //s.params.put("q", I5FGivennames.list[random.nextInt(I5FGivennames.list.length)]);
+        s.params.put("q", I5FGivennames.getKey());
         return s;
     }
 
     private static I5FService dummyServiceSurname(Random random) {
         I5FService s = new I5FService();
         s.params = new HashMap<String,String>();
-        //s.params.put("q", I5FSurnames.list[random.nextInt(I5FSurnames.list.length)]);
+        s.params.put("q", I5FSurnames.getKey());
         return s;
     }
 
@@ -83,16 +83,16 @@ public class I5FParameter extends Parameter {
         Map<String,I5FService> subs = new HashMap<String,I5FService>();
         switch (grade) {
         case "premium":
-            // set premium only service
+            // perfectsec
+            // perfectsec_attacked
         case "standard":
-            // set standard or premium
+            // tenki api
         case "small":
-            // ...
+            subs.put("givenname", dummyServiceGivenname(rand));
         case "micro":
             subs.put("ken", dummyServiceKen(rand));
             subs.put("ken2", dummyServiceKen2(rand));
-            // "givenname":{"params":{"q":"さと"}}
-            // "surname":{"params":{"q":"神"}},}
+            subs.put("surname", dummyServiceSurname(rand));
             break;
         default:
             throw new IllegalArgumentException("Undefined grade:" + grade);
