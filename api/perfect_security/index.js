@@ -2,7 +2,7 @@ var http2 = require('http2')
   , fs = require('fs')
   , crypto = require('crypto');
 
-var LISTEN_PORT = process.env.PORT || 8082;
+var LISTEN_PORT = process.env.PORT || 8443;
 
 var CONNECTED_TOKENS = {};
 
