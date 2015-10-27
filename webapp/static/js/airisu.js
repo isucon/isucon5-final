@@ -1,9 +1,8 @@
 $(function(){
   window.setInterval(function(){
-    $.get('/data', function(data){
-      render(data);
-    });
+    $.get('/data', function(data){ render(data); });
   }, AIR_ISU_REFRESH_INTERVAL);
+  $.get('/data', function(data){ render(data); });
 });
 
 function render(list) {
