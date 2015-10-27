@@ -12,37 +12,13 @@ import (
 	"../log"
 )
 
-const ContentType = "text/plain; charset=utf-8"
+const ContentType = "application/json; charset=utf-8"
 
 var (
 	Wait     time.Duration
 	Interval time.Duration
-	Secret   = "winenajeira"
-	Tenkis   []string
+	Secret   = "happyhalloween"
 )
-
-func init() {
-	initTenkis()
-}
-
-func initTenkis() {
-	kinds := []string{"晴れ", "曇り", "雨", "雪", "雷雨",
-		"雨か雪", "雪か雨", "雨か雷雨", "大雨", "暴風雨", "大雪", "暴風雪"}
-	conns := []string{"時々", "一時", "のち"}
-
-	Tenkis = make([]string, 0)
-	for _, kind1 := range kinds {
-		Tenkis = append(Tenkis, kind1)
-
-		for _, conn := range conns {
-			for _, kind2 := range kinds {
-				if kind1 != kind2 {
-					Tenkis = append(Tenkis, kind1+conn+kind2)
-				}
-			}
-		}
-	}
-}
 
 func logHandler(f func(w http.ResponseWriter, r *http.Request) (int, string, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +59,8 @@ func handlerIndex(w http.ResponseWriter, r *http.Request) (int, string, string) 
 	// 天気を決める
 	yoho := getResult(lastModified)
 
-	return http.StatusOK, yoho, lastModified
+	result := fmt.Sprintf(`{"yoho": "%s", "date": "%s"}`, yoho, lastModified)
+	return http.StatusOK, result, lastModified
 }
 
 func getResult(date string) string {
@@ -98,8 +75,8 @@ func getResult(date string) string {
 func toInt(date string) int {
 	str := fmt.Sprintf("%s %s", date, Secret)
 	sum := md5.Sum([]byte(str))
-	num := binary.BigEndian.Uint64(sum[:8])
-	return int(num & 0x7FFFFFFF)
+	num := binary.BigEndian.Uint32(sum[:4])
+	return int(num)
 }
 
 func main() {
