@@ -1,13 +1,17 @@
 package net.isucon.isucon5f.bench;
 
+import java.util.Map;
+import java.util.HashMap;
+
 public class I5FZipcodes {
+    // map is initialized by static initializer
+    public static Map<String,String> map;
+
     public static String address(String zipcode) {
-        for (String[] pair : list) {
-            if (pair[0].equals(zipcode)) {
-                return pair[1];
-            }
-        }
-        throw new IllegalArgumentException("Argument zipcode does not exist in list: " + zipcode);
+        String address = map.get(zipcode);
+        if (address == null)
+            throw new IllegalArgumentException("Argument zipcode does not exist in list: " + zipcode);
+        return address;
     }
 
     // there's no same zipcode
@@ -220,4 +224,11 @@ public class I5FZipcodes {
         {"0590003","北海道 登別市 千歳町"},
         {"0294503","岩手県 胆沢郡金ケ崎町 西根"},
     };
+
+    static {
+        map = new HashMap();
+        for (String[] pair : list) {
+            map.put(pair[0], pair[1]);
+        }
+    }
 }
