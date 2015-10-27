@@ -41,19 +41,36 @@ function generate_random_key() {
 }
 
 function auth_provider_handler(token, request, response) {
-  var key = generate_random_key(token);
-  var onetime_token = crypto.createHash('sha1').update(token + 'secret word tony-morris' + key).digest('hex');
-  var responseJson = JSON.stringify({key: key, onetime_token: onetime_token});
-  setTimeout(function(){
-    response.writeHead(200, {
-      'Content-Length': Buffer.byteLength(responseJson),
-      'Content-Type': 'application/json'
-    });
-    response.write(responseJson, function(){
+  var queries = request.url.split("?");
+  queries.shift();
+  var req = null;
+  for (var i = 0; i< queries.length; i++) {
+    if (queries[i].indexOf('req=') == 0) {
+      req = queries[i].substring(4);
+      break;
+    }
+  }
+  if (req === null) {
+    setTimeout(function(){
+      response.statusCode = 400;
       response.end();
       delete CONNECTED_TOKENS[token];
-    });
-  }, 50);
+    }, 200);
+  } else {
+    var key = generate_random_key(token);
+    var onetime_token = crypto.createHash('sha1').update(token + 'secret word tony-morris' + key + req).digest('hex');
+    var responseJson = JSON.stringify({req: req, key: key, onetime_token: onetime_token});
+    setTimeout(function(){
+      response.writeHead(200, {
+        'Content-Length': Buffer.byteLength(responseJson),
+        'Content-Type': 'application/json'
+      });
+      response.write(responseJson, function(){
+        response.end();
+        delete CONNECTED_TOKENS[token];
+      });
+    }, 50);
+  }
 }
 
 var WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
