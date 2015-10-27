@@ -26,11 +26,13 @@ func logHandler(f func(w http.ResponseWriter, r *http.Request) (int, string, str
 
 		status, body, lastModified := f(w, r)
 
-		w.WriteHeader(status)
 		if body != "" {
 			w.Header().Set("Last-Modified", lastModified)
 			w.Header().Set("Content-Type", ContentType)
+			w.WriteHeader(status)
 			w.Write([]byte(body))
+		} else {
+			w.WriteHeader(status)
 		}
 
 		if log.V(1) {
@@ -97,12 +99,6 @@ func main() {
 
 	Wait = time.Duration(wait) * time.Millisecond
 	Interval = time.Duration(interval) * time.Millisecond
-
-	if log.V(2) {
-		for _, tenki := range Tenkis {
-			log.Print(tenki)
-		}
-	}
 
 	http.HandleFunc("/", logHandler(handlerIndex))
 
