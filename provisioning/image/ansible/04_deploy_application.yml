@@ -1,0 +1,43 @@
+---
+- hosts: all
+  gather_facts: no
+  sudo: yes
+  sudo_user: isucon
+  tasks:
+    - file: path=/home/isucon/.ssh state=directory owner=isucon mode=755
+    - copy: src=../keys/root_id_rsa dest=/home/isucon/.ssh/deploy_id_rsa owner=isucon mode=600
+    - git:
+        repo=git@github.com:tagomoris/isucon5-final.git
+        dest=/tmp/isucon5-final
+        key_file=/home/isucon/.ssh/deploy_id_rsa
+        accept_hostkey=yes
+    - command: rsync -avz --delete /tmp/isucon5-final/webapp /home/isucon/
+    # /home/isucon/webapp/{etc,go,java,nodejs,perl,php,python,ruby,scala,sql,static}
+    - command: rm -rf /tmp/isucon5-qualify
+      args:
+        removes: /tmp/isucon5-qualify
+    - copy: src=../files/env.sh dest=/home/isucon/env.sh owner=isucon mode=755
+    - name: ruby
+      shell: PATH=/home/isucon/.local/ruby/bin:$PATH bundle install
+      args:
+        chdir: /home/isucon/webapp/ruby
+  # post_tasks:
+    # - command: sudo su - isucon /home/isucon/init.sh
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - service: name=postgresql state=restarted
+    - shell: cat sql/init-for-gce.sql | sudo -u isucon psql isucon5f
+      args:
+        chdir: /home/isucon/webapp
+    - apt: name=supervisor state=present
+    # In ubuntu default /etc/supervisor/supervisord.conf
+    # [include]
+    # files = /etc/supervisor/conf.d/*.conf
+    - copy: src=../files/supervisor.ruby.conf dest=/etc/supervisor/conf.d/ruby.conf
+    - supervisorctl: name=ruby state=present
+    # other languages
+    #
+    - name: default application
+      supervisorctl: name=ruby state=restarted

@@ -1,0 +1,40 @@
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+    - apt: name=nginx state=present
+    - service: name=nginx state=running enabled=true
+    - copy: src=../files/nginx.conf dest=/etc/nginx/nginx.conf owner=root mode=644
+      notify:
+        - reload nginx
+    - copy: src=../files/nginx.php.conf dest=/etc/nginx/nginx.php.conf owner=root mode=644
+    - apt: name=libpq-dev state=present
+    - apt: name=python-psycopg2 state=present
+    - apt_key: url=https://www.postgresql.org/media/keys/ACCC4CF8.asc state=present
+    - apt_repository: repo='deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main' state=present update_cache=yes
+    - apt: name=postgresql-9.4 state=present
+    - apt: name=postgresql-contrib-9.4 state=present
+    - apt: name=postgresql-client-9.4 state=present
+    - name: copy postgresql configurations
+      copy: src=../files/postgresql.conf dest=/etc/postgresql/9.4/main/postgresql.conf owner=postgres group=postgres mode=644
+      notify:
+        - restart postgresql
+    - name: copy postgres connection controls
+      copy: src=../files/pg_hba.conf dest=/etc/postgresql/9.4/main/pg_hba.conf owner=postgres group=postgres mode=640
+      notify:
+        - restart postgresql
+    - service: name=postgresql state=running enabled=true
+  handlers:
+    - name: restart postgresql
+      action: service name=postgresql state=restarted
+    - name: reload nginx
+      action: service name=nginx state=restarted
+
+- hosts: all
+  gather_facts: no
+  sudo: yes
+  sudo_user: postgres
+  tasks:
+    - postgresql_user: name=isucon
+    - postgresql_db: name=isucon5f owner=isucon encoding=utf8
+    - postgresql_ext: name=pgcrypto db=isucon5f
