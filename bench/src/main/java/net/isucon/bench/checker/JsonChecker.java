@@ -46,18 +46,6 @@ public class JsonChecker extends Checker {
         }
     }
 
-    /*
-    public Map<String,Object> jsonMapContent() {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(contentBody, Map.class);
-    }
-
-    public List<Object> jsonListContent() {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(contentBody, List.class);
-    }
-    */
-
     public void exist(String selector) {
         if (((List) JsonPath.read(parsed(), selector)).size() > 0) {
             addViolation(String.format("要素 %s が存在するはずですが、存在しません", selector));
