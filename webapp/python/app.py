@@ -13,9 +13,9 @@ app = bottle.default_app()
 app.config.load_dict({
     "db": {
         "host": os.environ.get("ISUCON5_DB_HOST") or "localhost",
-        "port": int(os.environ.get("ISUCON5_DB_PORT") or 3306),
+        "port": int(os.environ.get("ISUCON5_DB_PORT") or 5432),
         "username": os.environ.get("ISUCON5_DB_USER") or "whoami",
-        "password": os.environ.get("ISUCON5_DB_PASSWORD"),
+        "password": os.environ.get("ISUCON5_DB_PASSWORD") or None,
         "database": os.environ.get("ISUCON5_DB_NAME") or "isucon5f",
     },
     "session_secret": os.environ.get("ISUCON5_SESSION_SECRET") or "tonymoris",
