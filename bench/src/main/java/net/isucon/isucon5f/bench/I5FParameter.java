@@ -76,6 +76,25 @@ public class I5FParameter extends Parameter {
         return s;
     }
 
+    private static I5FService dummyServiceTenki(Random random) {
+        I5FService s = new I5FService();
+        s.token = I5FTenki.zipRandom(random);
+        return s;
+    }
+
+    private static I5FService dummyServicePerfectSecurity(Random random) {
+        I5FService s = new I5FService();
+        s.params = new HashMap<String,String>();
+        s.params.put("req", I5FPerfectSecurity.getReq(random));
+        s.token = I5FPerfectSecurity.getToken(random);
+        return s;
+    }
+
+    private static I5FService dummyServicePerfectSecurityAttacked(Random random) {
+        I5FService s = new I5FService();
+        return s;
+    }
+
     public void putDummySubscriptions() {
         Random rand = new Random();
         int index = rand.nextInt(4) * 3;
@@ -83,10 +102,10 @@ public class I5FParameter extends Parameter {
         Map<String,I5FService> subs = new HashMap<String,I5FService>();
         switch (grade) {
         case "premium":
-            // perfectsec
-            // perfectsec_attacked
+            subs.put("perfectsec", dummyServicePerfectSecurity(rand));
+            subs.put("perfectsec_attacked", dummyServicePerfectSecurityAttacked(rand));
         case "standard":
-            // tenki api
+            subs.put("tenki", dummyServiceTenki(rand));
         case "small":
             subs.put("givenname", dummyServiceGivenname(rand));
         case "micro":

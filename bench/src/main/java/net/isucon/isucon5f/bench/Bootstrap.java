@@ -41,21 +41,19 @@ public class Bootstrap extends Base {
         //TODO: fixit
     }
 
-    private static String[] BOOTSTRAP_TEST_DATA = new String[]{
-        "tony@moris.io", "tonyny31", "micro",
-        "tony@moris.io", "tonyny32", "small",
-        "tony@moris.io", "tonyny33", "standard",
-        "tony@moris.io", "tonyny34", "premium",
+    private static String[][] BOOTSTRAP_TEST_DATA = new String[][]{
+        { "tony@moris.io", "tonyny31", "micro" },
+        { "tony@moris.io", "tonyny32", "small" },
+        { "tony@moris.io", "tonyny33", "standard" },
+        { "tony@moris.io", "tonyny34", "premium" },
     };
 
-    private static Session testData() {
-        Random rand = new Random();
-        int index = rand.nextInt(4) * 3;
-
+    private static Session testData(int index) {
         I5FParameter param = new I5FParameter();
-        param.email = BOOTSTRAP_TEST_DATA[index];
-        param.password = BOOTSTRAP_TEST_DATA[index + 1];
-        param.grade = BOOTSTRAP_TEST_DATA[index + 2];
+        String[] data = BOOTSTRAP_TEST_DATA[index];
+        param.email = data[0];
+        param.password = data[1];
+        param.grade = data[2];
 
         param.putDummySubscriptions();
 
@@ -64,8 +62,12 @@ public class Bootstrap extends Base {
 
     @Override
     public void scenario(List<Session> originalSessions) {
-        Session session = testData();
+        for (int i = 0 ; i < 4 ; i++) {
+            scenarioOnce(testData(i));
+        }
+    }
 
+    private void scenarioOnce(Session session) {
         {
             getAndCheck(session, "/", "GET INDEX BEFORE SIGNUP", (check) -> { check.isRedirect("/login"); });
             getAndCheck(session, "/login", "GET LOGIN BEFORE SIGNUP", (check) -> {
@@ -177,7 +179,7 @@ public class Bootstrap extends Base {
                 });
             getAndCheck(session, "/js/airisu.js", "AIR-ISU JS", (check) -> {
                     check.isStatus(200);
-                    check.isContentBodyChecksum("c2f4ae15ab0c59e0d75a06e031550ad70e59dfc2");
+                    check.isContentBodyChecksum("2a7e762957979ed3b2bf7ba3503a471b8ed76437");
                 });
             String intervalVal = null;
             switch (param.grade) {
@@ -262,12 +264,30 @@ public class Bootstrap extends Base {
             }
 
             if (grade.equals("standard") || grade.equals("premium")){
-                // tenki ?
+                HashMap<String,String> form = new HashMap<String,String>();
+                form.put("service", "tenki");
+                form.put("token", param.subscriptions.get("tenki").token);
+                postAndCheck(session, "/modify", form, "MODIFY TENKI", (check) -> {
+                        check.isRedirect("/modify");
+                    });
             }
 
             if (grade.equals("premium")){
-                // modify perfectsec
-                // modify perfectsec_attacked
+                HashMap<String,String> form1 = new HashMap<String,String>();
+                form1.put("service", "perfectsec");
+                form1.put("param_name", "req");
+                form1.put("param_value", param.subscriptions.get("perfectsec").params.get("req"));
+                form1.put("token", param.subscriptions.get("perfectsec").token);
+                postAndCheck(session, "/modify", form1, "MODIFY PERFECTSEC", (check) -> {
+                        check.isRedirect("/modify");
+                    });
+
+                HashMap<String,String> form2 = new HashMap<String,String>();
+                form2.put("service", "perfectsec_attacked");
+                form2.put("token", param.subscriptions.get("perfectsec").token);
+                postAndCheck(session, "/modify", form2, "MODIFY PERFECTSEC_ATTACKED", (check) -> {
+                        check.isRedirect("/modify");
+                    });
             }
         }
 
@@ -322,12 +342,40 @@ public class Bootstrap extends Base {
                         for (I5FJsonData.NameElement r : result) {
                             check.contentMatch("$.[?(@.service=='givenname')].data.result..name", r.name);
                         }
+                    } else {
+                        check.missing("$.[?(@.service=='givenname')].data.query");
                     }
 
                     if (grade.equals("standard") || grade.equals("premium")){
+                        check.exist("$.[?(@.service=='tenki')].data", 1);
+                        String date = check.find("$.[?(@.service=='tenki')].data.date").get(0);
+                        String yoho = I5FTenki.getYoho(date);
+                        check.content("$.[?(@.service=='tenki')].data.yoho", yoho);
+                    } else {
+                        check.missing("$.[?(@.service=='tenki')].data");
                     }
 
                     if (grade.equals("premium")){
+                        check.exist("$.[?(@.service=='perfectsec')].data", 1);
+                        String req = param.subscriptions.get("perfectsec").params.get("req");
+                        check.content("$.[?(@.service=='perfectsec')].data.req", req);
+
+                        String token = param.subscriptions.get("perfectsec").token;
+                        check.exist("$.[?(@.service=='perfectsec')].data.key", 1);
+                        String key = check.find("$.[?(@.service=='perfectsec')].data.key").get(0);
+
+                        String onetime = I5FPerfectSecurity.getOneTime(token, req, key);
+                        check.content("$.[?(@.service=='perfectsec')].data.onetime_token", onetime);
+
+                        check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1);
+                        String epoch = String.valueOf(check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at").get(0));
+                        String[] attacked = I5FPerfectSecurity.getAttacked(token, epoch);
+                        check.content("$.[?(@.service=='perfectsec_attacked')].data.key1", attacked[0]);
+                        check.content("$.[?(@.service=='perfectsec_attacked')].data.key2", attacked[1]);
+                        check.content("$.[?(@.service=='perfectsec_attacked')].data.key3", attacked[2]);
+                    } else {
+                        check.missing("$.[?(@.service=='perfectsec')].data");
+                        check.missing("$.[?(@.service=='perfectsec_attacked')].data");
                     }
                 });
         }
@@ -335,27 +383,30 @@ public class Bootstrap extends Base {
 }
 /*
 [
-{"service":"ken","data":{"zipcode":"6900014","addresses":["島根県 松江市 八雲台"]}},
-{"service":"ken2","data":{"zipcode":"1530042","addresses":["東京都 目黒区 青葉台", "東京都 目黒区 テストさん"]}},
-{"service":"surname","data":{"query":"神","result":[
-  {"yomi":"カクミ","name":"神代"},{"yomi":"カグラオカ","name":"神楽岡"},
-  {"yomi":"カゴシマ","name":"神子島"},{"yomi":"カジロ","name":"神代"},
-  {"yomi":"カジロ","name":"神白"},{"yomi":"カナガワ","name":"神奈川"},
-  ]}},
-{"service":"givenname","data":{"query":"さと","result":[
-  {"yomi":"サト","name":"郷"},{"yomi":"サト","name":"郷寧"},
-  {"yomi":"サト","name":"慧"},{"yomi":"サト","name":"佐音"},
-  {"yomi":"サト","name":"佐都"},{"yomi":"サト","name":"佐橙"},
-  ]}},
-{"service":"perfectsec",
- "data":{
-  "req":"ps1",
-  "key":"kPOHq448HawFt24ihg8l",
-  "onetime_token":"38c56517174a3a304f888f140d504674ab3c346c"}},
-{"service":"perfectsec_attacked",
- "data":{
-  "key1":"0516f6726860dac017136f8fadbda9f9e084d07b",
-  "key2":"2d383c91ae1ecb552b773052145b052782e39b73",
-  "key3":"fc6004fdc6de41d62852fc0249af0f473769d0e6",
-  "updated_at":1445948187}}]
+ {"service":"ken","data":{"zipcode":"0791111","addresses":["北海道 赤平市 若木町北"]}},
+ {"service":"ken2","data":{"zipcode":"5008157","addresses":["岐阜県 岐阜市 五坪","岐阜県 岐阜市 五坪町"]}},
+ {"service":"surname","data":{"query":"かご","result":[
+   {"yomi":"カゴ","name":"加後"},{"yomi":"カゴ","name":"加護"},{"yomi":"カゴ","name":"篭"},{"yomi":"カゴ","name":"籠"},{"yomi":"カゴイ","name":"籠居"},
+   {"yomi":"カゴイケ","name":"籠池"},{"yomi":"カゴウラ","name":"籠浦"},{"yomi":"カゴオ","name":"篭尾"},{"yomi":"カゴオ","name":"籠尾"},
+   {"yomi":"カゴクラ","name":"籠倉"},{"yomi":"カゴサキ","name":"籠崎"},{"yomi":"カゴシマ","name":"鹿子島"},{"yomi":"カゴシマ","name":"鹿子嶋"},
+   {"yomi":"カゴシマ","name":"鹿児島"},{"yomi":"カゴシマ","name":"神子島"},{"yomi":"カゴシマ","name":"篭島"},{"yomi":"カゴシマ","name":"籠島"},
+   {"yomi":"カゴセ","name":"籠瀬"},{"yomi":"カゴタニ","name":"篭谷"},{"yomi":"カゴタニ","name":"籠谷"},{"yomi":"カゴノ","name":"加護野"},
+   {"yomi":"カゴハシ","name":"篭橋"},{"yomi":"カゴハシ","name":"籠橋"},{"yomi":"カゴハラ","name":"篭原"},{"yomi":"カゴバヤシ","name":"籠林"},
+   {"yomi":"カゴミヤ","name":"籠宮"},{"yomi":"カゴヤ","name":"籠谷"},{"yomi":"カゴヤマ","name":"篭山"},{"yomi":"カゴロク","name":"賀籠六"},
+   {"yomi":"カゴロク","name":"鹿籠六"}
+   ]}},
+ {"service":"givenname","data":{"query":"のりしげ","result":[
+   {"yomi":"ノリシゲ","name":"紀重"},{"yomi":"ノリシゲ","name":"紀繁"},{"yomi":"ノリシゲ","name":"憲薫"},{"yomi":"ノリシゲ","name":"憲滋"},
+   {"yomi":"ノリシゲ","name":"憲重"},{"yomi":"ノリシゲ","name":"憲成"},{"yomi":"ノリシゲ","name":"憲繁"},{"yomi":"ノリシゲ","name":"憲茂"},
+   {"yomi":"ノリシゲ","name":"則重"},{"yomi":"ノリシゲ","name":"典茂"},{"yomi":"ノリシゲ","name":"法滋"},{"yomi":"ノリシゲ","name":"法重"},
+   {"yomi":"ノリシゲ","name":"法繁"}
+   ]}},
+ {"service":"tenki","data":{"yoho":"雨のち雷雨","date":"Wed, 28 Oct 2015 16:46:30 JST"}},
+ {"service":"perfectsec","data":{"req":"ultimate","key":"qOMaDBClXZ38SUGYJ4Ke","onetime_token":"b5a72de90611837b1efaf430f6efa3f31d6d6fcf"}},
+ {"service":"perfectsec_attacked","data":{
+   "key1":"c9ab24fb3859e3099973b41a5b55bfbecd988413",
+   "key2":"81538bea420f3ed5327b6b003692758cdd8de840",
+   "key3":"f28aaf75fecb186a976bd5062cdb67b2d8cd30de",
+   "updated_at":1446018374}}
+]
 */
