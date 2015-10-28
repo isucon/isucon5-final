@@ -11,6 +11,7 @@ CREATE_SQL_FILE = File.expand_path("../initialize.sql", __FILE__)
 CREATE_JSON_FILE = File.expand_path("../source.json", __FILE__)
 
 GENERATE_USERS = 1000
+BENCH_CHUNKS_NUM = 20
 
 GENERATE_GRADE_LIST = (
   [:micro] * (GENERATE_USERS * 0.4) + [:small] * (GENERATE_USERS * 0.3) +
@@ -104,7 +105,6 @@ end
 # );
 
 sql = File.new(CREATE_SQL_FILE, 'w')
-# json = File.new(CREATE_JSON_FILE, 'w')
 
 sql.write <<SQL
 TRUNCATE users, subscriptions;
@@ -143,4 +143,16 @@ EOL
 end
 
 sql.close
-# json.close
+
+data = []
+BENCH_CHUNKS_NUM.times do
+  data << []
+end
+users.shuffle.each do |user|
+  data.first << {email: user[:email], password: user[:password], grade: user[:grade], subscriptions: user[:sub]}
+  data.rotate!
+end
+
+File.open(CREATE_JSON_FILE, 'w') do |f|
+  Yajl::Encoder.encode(data, f)
+end
