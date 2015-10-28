@@ -46,6 +46,10 @@ public class JsonChecker extends Checker {
         }
     }
 
+    public List find(String selector) {
+        return JsonPath.read(parsed(), selector);
+    }
+
     public void exist(String selector) {
         if (((List) JsonPath.read(parsed(), selector)).size() > 0) {
             addViolation(String.format("要素 %s が存在するはずですが、存在しません", selector));
@@ -66,7 +70,10 @@ public class JsonChecker extends Checker {
     }
 
     public void content(String selector, String text) {
-        if (((String) JsonPath.read(parsed(), selector)).equals(text)) {
+        List<String> list = JsonPath.read(parsed(), selector);
+        if (list.size() == 1 && list.get(0).equals(text)) {
+            // ok
+        } else {
             addViolation(String.format("要素 %s の内容が %s ではありません", selector, text));
         }
     }

@@ -47,6 +47,8 @@ public class HtmlChecker extends Checker {
         return lastMatch;
     }
 
+    // find -> List<String>: text? something else?
+
     public void hasStyleSheet(String path) {
         Elements es = document().head().getElementsByTag("link");
         if (es.stream().noneMatch(e -> e.attr("rel").equals("stylesheet") && e.attr("href").equals(path))) {
