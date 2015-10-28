@@ -9,6 +9,7 @@ use DBIx::Sunny;
 use JSON;
 use Furl;
 use URI;
+use IO::Socket::SSL qw(SSL_VERIFY_NONE);
 use String::Util qw(trim);
 
 sub db {
@@ -198,7 +199,7 @@ SQL
 
 sub fetch_api {
     my ($method, $uri, $headers, $params) = @_;
-    my $client = Furl->new;
+    my $client = Furl->new(ssl_opts => { SSL_verify_mode => SSL_VERIFY_NONE });
     my $uri = URI->new($uri);
     $uri->query_form(%$params);
     my $res = $client->request(
