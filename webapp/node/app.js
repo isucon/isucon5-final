@@ -215,7 +215,7 @@ function fetchApi(method, uri, headers, params, fn) {
   let options = { method, uri, headers, json: true };
 
   if (/^https:\/\//.test(uri)) {
-    options.agentOptions = { ca: ca_file_or_hashed_dir }; // TODO: create private cert store
+    options.rejectUnauthorized = false;
   }
 
   if (method === 'GET') {
