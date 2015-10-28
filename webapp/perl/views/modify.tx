@@ -21,7 +21,7 @@
       <li role="presentation" class="disabled"><a href="#">解約</a></li>
     </ul>
     </nav>
-    <h3 class="text-muted">AirISU 設定変更: <?php h($user['email']) ?></h3>
+    <h3 class="text-muted">AirISU 設定変更: <: $user['email'] :></h3>
   </div>
 
   <!-- <div class="api-form" data-api-name="API name (example)" data-service="ken" data-param-name="ParameterName1" data-keys-description="KeysDescription2" data-token="true"></div> -->
@@ -29,7 +29,10 @@
   <div class="api-form" data-grade="micro,small,standard,premium" data-api-name="郵便番号解決API" data-service="ken" data-keys-desc="郵便番号"></div>
   <div class="api-form" data-grade="micro,small,standard,premium" data-api-name="KEN_ALL API" data-service="ken2" data-param-name="zipcode" data-param-desc="郵便番号"></div>
   <div class="api-form" data-grade="micro,small,standard,premium" data-api-name="苗字API" data-service="surname" data-param-name="q" data-param-desc="クエリ"></div>
-  <div class="api-form" data-grade="micro,small,standard,premium" data-api-name="名前API" data-service="givenname" data-param-name="q" data-param-desc="クエリ"></div>
+  <div class="api-form" data-grade="small,standard,premium" data-api-name="名前API" data-service="givenname" data-param-name="q" data-param-desc="クエリ"></div>
+  <div class="api-form" data-grade="standard,premium" data-api-name="天気" data-service="tenki" data-token="true"></div>
+  <div class="api-form" data-grade="premium" data-api-name="PerfectSecurity" data-service="perfectsec" data-param-name="req" data-param-desc="リクエスト" data-token="true"></div>
+  <div class="api-form" data-grade="premium" data-api-name="PerfectSecurityアタックリスト" data-service="perfectsec_attacked" data-token="true"></div>
 
   <footer class="footer">
   <p>&copy; ISU Company 2015</p>
