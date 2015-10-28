@@ -225,8 +225,8 @@ SQL
     json data
   end
 
-# * `GET /initialize` データの初期化用ハンドラ
   get '/initialize' do
-    # TODO any proc?
+    file = File.expand_path("../../sql/initialize.sql", __FILE__)
+    system("psql", "-f", file, "isucon5f")
   end
 end
