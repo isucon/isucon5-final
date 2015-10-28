@@ -42,10 +42,10 @@ public class Bootstrap extends Base {
     }
 
     private static String[][] BOOTSTRAP_TEST_DATA = new String[][]{
-        { "tony@moris.io", "tonyny31", "micro" },
-        { "tony@moris.io", "tonyny32", "small" },
-        { "tony@moris.io", "tonyny33", "standard" },
-        { "tony@moris.io", "tonyny34", "premium" },
+        { "tony1@moris.io", "tonyny31", "micro" },
+        { "tony2@moris.io", "tonyny32", "small" },
+        { "tony3@moris.io", "tonyny33", "standard" },
+        { "tony4@moris.io", "tonyny34", "premium" },
     };
 
     private static Session testData(int index) {
@@ -348,7 +348,7 @@ public class Bootstrap extends Base {
 
                     if (grade.equals("standard") || grade.equals("premium")){
                         check.exist("$.[?(@.service=='tenki')].data", 1);
-                        String date = check.find("$.[?(@.service=='tenki')].data.date").get(0);
+                        String date = (String) check.find("$.[?(@.service=='tenki')].data.date").get(0);
                         // At Check, add addViolation for expired data
                         String yoho = I5FTenki.getYoho(date);
                         check.content("$.[?(@.service=='tenki')].data.yoho", yoho);
@@ -363,7 +363,7 @@ public class Bootstrap extends Base {
 
                         String token = param.subscriptions.get("perfectsec").token;
                         check.exist("$.[?(@.service=='perfectsec')].data.key", 1);
-                        String key = check.find("$.[?(@.service=='perfectsec')].data.key").get(0);
+                        String key = (String) check.find("$.[?(@.service=='perfectsec')].data.key").get(0);
 
                         String onetime = I5FPerfectSecurity.getOneTime(token, req, key);
                         check.content("$.[?(@.service=='perfectsec')].data.onetime_token", onetime);
