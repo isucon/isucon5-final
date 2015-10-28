@@ -51,14 +51,14 @@ public class I5FParameter extends Parameter {
     private static I5FService dummyServiceKen(Random random) {
         I5FService s = new I5FService();
         s.keys = new ArrayList<String>();
-        s.keys.add(I5FZipcodes.list[random.nextInt(I5FZipcodes.list.length)][0]);
+        s.keys.add(I5FZipcodes.getKey());
         return s;
     }
 
     private static I5FService dummyServiceKen2(Random random) {
         I5FService s = new I5FService();
         s.params = new HashMap<String,String>();
-        s.params.put("zipcode", I5FZipcodes.list[random.nextInt(I5FZipcodes.list.length)][0]);
+        s.params.put("zipcode", I5FZipcodes.getKey());
         return s;
     }
 
