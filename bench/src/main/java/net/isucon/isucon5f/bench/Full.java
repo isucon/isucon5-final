@@ -61,7 +61,8 @@ public class Full extends Scenario {
         Step[] steps = new Step[3];
         steps[0] = new Step(35000L, Init.class);
         steps[1] = new Step(60000L, Bootstrap.class);
-        steps[2] = new Step(70000L, Checker.class, Load.class, Load.class, Load.class, Load.class);
+        // steps[2] = new Step(70000L, Checker.class, Load.class, Load.class, Load.class, Load.class);
+        steps[2] = new Step(70000L, Checker.class, Load.class);
 
         return steps;
     }

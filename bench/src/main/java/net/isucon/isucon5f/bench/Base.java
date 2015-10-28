@@ -16,4 +16,13 @@ public class Base extends Scenario {
     public Base(Long timeout) {
         super(timeout);
     }
+
+    protected Map formLogin(Session session) {
+        I5FParameter p = (I5FParameter) session.param();
+        Map form = new HashMap();
+
+        form.put("email", p.email);
+        form.put("password", p.password);
+        return form;
+    }
 }

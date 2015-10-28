@@ -1,9 +1,11 @@
 package net.isucon.isucon5f.bench;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.function.Consumer;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,15 +36,9 @@ public class Checker extends Base {
 
     @Override
     public void scenario(List<Session> originalSessions) {
-        //TODO: fixit
-
-        /*
-        //  0..3  -> BootstrapChecker
-        //  3..10 -> Isucon5Checker
-        // 10.... -> Isucon5Load
-        System.err.println("Isucon5Checker");
-
-        List<Session> sessions = originalSessions.subList(3, 10);
+        System.err.println("Checker");
+        List<Session> sessions = originalSessions.subList(0, 10);
+        Collections.shuffle(sessions);
         Random random = new Random();
 
         LocalDateTime stopAt = LocalDateTime.now().plus(DURATION_MILLIS, ChronoUnit.MILLIS);
@@ -50,109 +46,174 @@ public class Checker extends Base {
         while (true) {
             if (LocalDateTime.now().isAfter(stopAt))
                 break;
-            int ssize = (int) sessions.size();
-            int r1 = random.nextInt(ssize);
-            int r2 = random.nextInt(ssize);
-            while (r1 == r2) {
-                r2 = random.nextInt(ssize);
-            }
-            Session s1 = sessions.get(r1);
-            Session s2 = sessions.get(r2);
+            Session s = sessions.get(random.nextInt((int) sessions.size()));
+            I5FParameter param = (I5FParameter) s.param();
 
-            int i1 = getStatus(s1, "/");
-            int i2 = 0;
-            if (i1 != 200) {
-                getAndCheck(s1, "/login", "LOGIN PAGE BECAUSE NOT LOGGED IN", check -> check.isStatus(200));
-                postAndCheck(s1, "/login", formLogin(s1), "LOGIN POST WHEN LOGGED OUT", check -> check.isRedirect("/"));
-                getAndCheck(s1, "/", "SHOW INDEX AFTER LOGIN", check -> check.isStatus(200));
-                i2 = getStatus(s1, "/");
-            }
-            if (i1 != 200 && i2 != 200)
-                continue;
-
-            if (LocalDateTime.now().isAfter(stopAt))
-                break;
-
-            int i3 = getStatus(s2, "/");
-            int i4 = 0;
-            if (i3 != 200) {
-                getAndCheck(s2, "/login", "LOGIN PAGE BECAUSE NOT LOGGED IN", check -> check.isStatus(200));
-                postAndCheck(s2, "/login", formLogin(s2), "LOGIN POST WHEN LOGGED OUT", check -> check.isRedirect("/"));
-                getAndCheck(s2, "/", "SHOW INDEX AFTER LOGIN", check -> check.isStatus(200));
-                i4 = getStatus(s2, "/");
-            }
-            if (i3 != 200 && i4 != 200)
-                continue;
+            getAndCheck(s, "/login", "GET LOGIN", (check) -> {
+                    check.isStatus(200);
+                    check.isContentType("text/html");
+                    check.hasStyleSheet("/css/bootstrap.min.css");
+                    check.hasStyleSheet("/css/signin.css");
+                });
+            getAndCheck(s, "/css/bootstrap.min.css", "GET BOOTSTRAP CSS", (check) -> {
+                    check.isStatus(200);
+                    check.isContentBodyChecksum("08df9a96752852f2cbd310c30facd934e348c2c5");
+                });
+            getAndCheck(s, "/css/signin.css", "GET SIGNIN CSS", (check) -> {
+                    check.isStatus(200);
+                    check.isContentBodyChecksum("702783cc5eff3d8d3532e339ddd15c57f7a08776");
+                });
+            postAndCheck(s, "/login", formLogin(s), "POST LOGIN", (check) -> {
+                    check.isRedirect("/");
+                });
 
             if (LocalDateTime.now().isAfter(stopAt))
                 break;
 
-            sleep(1000);
+            getAndCheck(s, "/", "GET INDEX", (check) -> {
+                    check.isStatus(200);
+                    check.isContentType("text/html");
+                    check.exist(".container .header.clearfix nav ul.nav li a[href=/modify]");
+                    check.content(".container .header h3", String.format("AirISU: %s", param.email));
+
+                    check.hasStyleSheet("/css/bootstrap.min.css");
+                    check.hasStyleSheet("/css/jumbotron-narrow.css");
+                    check.hasJavaScript("/js/jquery-1.11.3.js");
+                    check.hasJavaScript("/js/bootstrap.js");
+                    check.hasJavaScript("/user.js");
+                    check.hasJavaScript("/js/airisu.js");
+                });
+            getAndCheck(s, "/css/bootstrap.min.css", "GET BOOTSTRAP CSS", (check) -> {
+                    check.isStatus(200);
+                    check.isContentBodyChecksum("08df9a96752852f2cbd310c30facd934e348c2c5");
+                });
+            getAndCheck(s, "/css/jumbotron-narrow.css", "GET JUMBOTRON CSS", (check) -> {
+                    check.isStatus(200);
+                    check.isContentBodyChecksum("d55e584b9bb64d574c09ab02e361a4e49a1e6b5f");
+                });
+            getAndCheck(s, "/js/jquery-1.11.3.js", "GET JQUERY JS", (check) -> {
+                    check.isStatus(200);
+                    check.isContentBodyChecksum("96c73f3774471cc8378c77a64ecf09b7f625d8b7");
+                });
+            getAndCheck(s, "/js/bootstrap.js", "GET BOOTSTRAP JS", (check) -> {
+                    check.isStatus(200);
+                    check.isContentBodyChecksum("bbf55e20f1ebb6368522799f29db39830a08ef93");
+                });
+            getAndCheck(s, "/js/airisu.js", "GET AIR-ISU JS", (check) -> {
+                    check.isStatus(200);
+                    check.isContentBodyChecksum("2a7e762957979ed3b2bf7ba3503a471b8ed76437");
+                });
+            String intervalVal = null;
+            switch (param.grade) {
+            case "micro":    intervalVal = "30000"; break;
+            case "small":    intervalVal = "30000"; break;
+            case "standard": intervalVal = "20000"; break;
+            case "premium":  intervalVal = "10000"; break;
+            }
+            final String interval = intervalVal;
+            getAndCheck(s, "/user.js", "GET USER JS", (check) -> {
+                    check.isStatus(200);
+                    check.contentMatch(String.format("var AIR_ISU_REFRESH_INTERVAL = %s;", interval));
+                });
 
             if (LocalDateTime.now().isAfter(stopAt))
                 break;
 
-            String s2friendPath = String.format("/profile/%s", accountName(s2));
-            String s2nickName = getAndRead(s1, "/friends", String.format("#friends dl dd.friend-friend a[href=%s]", s2friendPath), 0, e -> e.text());
-            if (s2nickName == null) {
-                // s1 and s2 are not friends each other
-                postAndCheck(s2, String.format("/friends/%s", accountName(s1)), new HashMap(), "MAKE FRIENDS", check -> {
-                        check.isRedirect("/friends");
-                        check.respondUntil(3000);
-                    });
-                if (LocalDateTime.now().isAfter(stopAt))
-                    break;
+            String grade = param.grade;
 
-                sleep(1000);
+            Consumer<net.isucon.bench.Checker> callback = (check) -> {
+                check.isStatus(200);
+                check.isContentType("application/json");
+                check.isValidJson();
 
-                if (LocalDateTime.now().isAfter(stopAt))
-                    break;
+                String kenValue = I5FZipcodes.address(param.subscriptions.get("ken").keys.get(0));
+                String ken2Value = I5FZipcodes.address(param.subscriptions.get("ken2").params.get("zipcode"));
 
-                getAndCheck(s1, "/friends", "FRIEND LIST AFTER MAKING FRIEND", (check) -> {
-                        check.isStatus(200);
-                        check.contentCheck(String.format("#friends dl dd.friend-friend a[href=%s]", s2friendPath), "友だちリストになったばかりの友だちが含まれていません", (e) -> {
-                                return e.attr("href").equals(s2friendPath);
-                            });
-                    });
-            } else {
-                // s1 and s2 are friends each other
-                String entryPath = getAndRead(s2, String.format("/diary/entries/%s", accountName(s1)), "#entries .entry .entry-title a", 0, e -> e.attr("href"));
-                long entryId = 0L;
-                String commentText = null;
-                if (entryPath != null) {
-                    URI uri = null;
-                    try {
-                        uri = new URI(entryPath);
-                        if (uri.getPath() != null && uri.getPath().startsWith("/diary/entry/")) {
-                            entryId = Long.parseLong(uri.getPath().substring("/diary/entry/".length()));
-                            if (entryId > 0) {
-                                Map f = formComment(random);
-                                postAndCheck(s2, String.format("/diary/comment/%d", entryId), f, "COMMENT POST", check -> check.respondUntil(3000));
-                                commentText = (String) f.get("comment");
-                            }
-                        }
-                    } catch (URISyntaxException e) {
-                        // ignore, but in fact, it's bug of application
+                check.exist("$.[?(@.service=='ken')]", 1);
+                check.contentMatch("$.[?(@.service=='ken')].data.addresses.*", kenValue);
+
+                check.exist("$.[?(@.service=='ken2')]", 1);
+                check.contentMatch("$.[?(@.service=='ken2')].data.addresses.*", ken2Value);
+
+                check.exist("$.[?(@.service=='surname')].data.query", 1);
+                {
+                    String qKey = param.subscriptions.get("surname").params.get("q");
+                    String query = I5FSurnames.getQuery(qKey);
+                    String queryCheck = String.format("$.[?(@.service=='surname')].data.[?(@.query=='%s')]", query);
+                    check.exist(queryCheck, 1);
+                    List<I5FJsonData.NameElement> result = I5FSurnames.getResult(qKey);
+                    for (I5FJsonData.NameElement r : result) {
+                        check.contentMatch("$.[?(@.service=='surname')].data.result..name", r.name);
                     }
                 }
 
-                if (LocalDateTime.now().isAfter(stopAt))
-                    break;
-
-                sleep(1000);
-
-                if (LocalDateTime.now().isAfter(stopAt))
-                    break;
-
-                if (entryId > 0 && commentText != null) {
-                    final String longText = commentText;
-                    getAndCheck(s1, String.format("/diary/entry/%d", entryId), "SHOW ENTRY AFTER COMMENT POSTED", (check) -> {
-                            check.isStatus(200);
-                            check.contentLongText("#entry-comments .comment .comment-comment", longText);
-                        });
+                if (grade.equals("small") || grade.equals("standard") || grade.equals("premium")){
+                    check.exist("$.[?(@.service=='givenname')].data.query", 1);
+                    String qKey = param.subscriptions.get("givenname").params.get("q");
+                    String query = I5FGivennames.getQuery(qKey);
+                    String queryCheck = String.format("$.[?(@.service=='givenname')].data.[?(@.query=='%s')]", query);
+                    check.exist(queryCheck, 1);
+                    List<I5FJsonData.NameElement> result = I5FGivennames.getResult(qKey);
+                    for (I5FJsonData.NameElement r : result) {
+                        check.contentMatch("$.[?(@.service=='givenname')].data.result..name", r.name);
+                    }
+                } else {
+                    check.missing("$.[?(@.service=='givenname')].data.query");
                 }
+
+                if (grade.equals("standard") || grade.equals("premium")){
+                    check.exist("$.[?(@.service=='tenki')].data", 1);
+                    String date = (String) check.find("$.[?(@.service=='tenki')].data.date").get(0);
+                    // At Check, add addViolation for expired data
+                    String yoho = I5FTenki.getYoho(date);
+                    check.content("$.[?(@.service=='tenki')].data.yoho", yoho);
+                } else {
+                    check.missing("$.[?(@.service=='tenki')].data");
+                }
+
+                if (grade.equals("premium")){
+                    check.exist("$.[?(@.service=='perfectsec')].data", 1);
+                    String req = param.subscriptions.get("perfectsec").params.get("req");
+                    check.content("$.[?(@.service=='perfectsec')].data.req", req);
+
+                    String token = param.subscriptions.get("perfectsec").token;
+                    check.exist("$.[?(@.service=='perfectsec')].data.key", 1);
+                    String key = (String) check.find("$.[?(@.service=='perfectsec')].data.key").get(0);
+
+                    String onetime = I5FPerfectSecurity.getOneTime(token, req, key);
+                    check.content("$.[?(@.service=='perfectsec')].data.onetime_token", onetime);
+
+                    check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1);
+                    String epoch = String.valueOf(check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at").get(0));
+                    // At Check, add addViolation for expired data
+                    String[] attacked = I5FPerfectSecurity.getAttacked(token, epoch);
+                    check.content("$.[?(@.service=='perfectsec_attacked')].data.key1", attacked[0]);
+                    check.content("$.[?(@.service=='perfectsec_attacked')].data.key2", attacked[1]);
+                    check.content("$.[?(@.service=='perfectsec_attacked')].data.key3", attacked[2]);
+                } else {
+                    check.missing("$.[?(@.service=='perfectsec')].data");
+                    check.missing("$.[?(@.service=='perfectsec_attacked')].data");
+                }
+            };
+
+            getAndCheck(s, "/data", "GET DATA", callback);
+
+            if (LocalDateTime.now().isAfter(stopAt))
+                break;
+
+            while (true) {
+                if (LocalDateTime.now().isAfter(stopAt))
+                    break;
+                if (random.nextInt(4) == 0) { // 25%
+                    // modify session data
+                }
+
+                getAndCheck(s, "/data", "GET DATAx", callback);
+
+                if (LocalDateTime.now().isAfter(stopAt))
+                    break;
+                sleep(800);
             }
         }
-        */
     }
 }

@@ -196,7 +196,7 @@ public class Bootstrap extends Base {
             case "premium":  intervalVal = "10000"; break;
             }
             final String interval = intervalVal;
-            getAndCheck(session, "/user.js", "JQUERY JS", (check) -> {
+            getAndCheck(session, "/user.js", "USER JS", (check) -> {
                     check.isStatus(200);
                     check.contentMatch(String.format("var AIR_ISU_REFRESH_INTERVAL = %s;", interval));
                 });
