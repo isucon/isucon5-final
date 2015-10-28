@@ -1,0 +1,1 @@
+var AIR_ISU_REFRESH_INTERVAL = {{if eq .Grade "micro" }}{{ 30000 }}{{ else if eq .Grade "small" }}{{ 30000 }}{{ else if eq .Grade "standard" }}{{ 20000 }}{{ else if eq .Grade "premium" }}{{ 10000 }}{{ end }};
