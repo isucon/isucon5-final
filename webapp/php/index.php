@@ -183,14 +183,10 @@ SQL;
 
 function fetch_api($method, $uri, $headers, $params)
 {
-    $client = new GuzzleHttp\Client();
-    //if uri.start_with? "https://" #TODO: create private cert store
-    //  client.ssl_config.set_trust_ca(ca_file_or_hashed_dir)
-    //end
+    $client = new GuzzleHttp\Client(['verify' => false]);
     $res = $client->request($method, $uri, [
         'headers' => $headers,
         'query' => $params,
-        //'form_params' => $params,
     ]);
     return json_decode($res->getBody(), true);
 }
