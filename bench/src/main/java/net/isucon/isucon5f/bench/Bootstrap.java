@@ -349,6 +349,7 @@ public class Bootstrap extends Base {
                     if (grade.equals("standard") || grade.equals("premium")){
                         check.exist("$.[?(@.service=='tenki')].data", 1);
                         String date = check.find("$.[?(@.service=='tenki')].data.date").get(0);
+                        // At Check, add addViolation for expired data
                         String yoho = I5FTenki.getYoho(date);
                         check.content("$.[?(@.service=='tenki')].data.yoho", yoho);
                     } else {
@@ -369,6 +370,7 @@ public class Bootstrap extends Base {
 
                         check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1);
                         String epoch = String.valueOf(check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at").get(0));
+                        // At Check, add addViolation for expired data
                         String[] attacked = I5FPerfectSecurity.getAttacked(token, epoch);
                         check.content("$.[?(@.service=='perfectsec_attacked')].data.key1", attacked[0]);
                         check.content("$.[?(@.service=='perfectsec_attacked')].data.key2", attacked[1]);
