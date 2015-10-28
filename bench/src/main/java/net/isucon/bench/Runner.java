@@ -24,9 +24,7 @@ public class Runner {
     private static final int MAX_CONNECTIONS_PER_DEST = 2048;
     private static final int MAX_QUEUED_REQUESTS_PER_DEST = 512;
 
-    private static final String DEFAULT_PARAMETER_CLASS = "net.isucon.isucon5q.bench.scenario.I5FParameter";
-
-    private Class rootClass;
+    private static final String DEFAULT_PARAMETER_CLASS = "net.isucon.bench.Parameter";
 
     private boolean running;
 
@@ -61,11 +59,11 @@ public class Runner {
         }
 
         String rootClassName = cmd.getArgs()[0];
+        Class rootClass = Class.forName(rootClassName);
 
         String host = cmd.getArgs()[1];
 
-        Class root = Class.forName(rootClassName);
-        Runner runner = new Runner(root, host);
+        Runner runner = new Runner(host);
 
         if (cmd.hasOption("p")) {
             runner.config.port = Integer.parseInt(cmd.getOptionValue("p"));
@@ -78,28 +76,29 @@ public class Runner {
             runner.config.runningTime = Long.parseLong(cmd.getOptionValue("t"));
         }
 
-        String paramClassName = DEFAULT_PARAMETER_CLASS;
+        Scenario root = getRootInstance(rootClass, runner.config);
+        if (root == null) {
+            System.err.println("root scenario missing");
+            System.exit(1);
+        }
+
+        System.err.println("Scenario class:" + root.getClass().getName());
+        String paramClassName = root.parameterClassName();
         if (cmd.hasOption("P")) {
             paramClassName = cmd.getOptionValue("P");
         }
-
         System.err.println("reading stdin");
-
         String jsonInput = readFromStdIn();
-
         System.err.println("got data");
-
         List<Parameter> params = Parameter.generate(paramClassName, jsonInput);
-
         System.err.format("data number: %d%n", params.size());
 
         System.err.println("start");
-        runner.execute(params);
+        runner.execute(root, params);
         System.err.println("done");
     }
 
-    public Runner(Class root, String host) {
-        this.rootClass = root;
+    public Runner(String host) {
         config = new Config();
         config.host = host;
     }
@@ -138,26 +137,19 @@ public class Runner {
         return httpClient;
     }
 
-    private Scenario getRootInstance(Class root) {
+    private static Scenario getRootInstance(Class root, Config config) {
         Long timeout = new Long(config.runningTime);
         Scenario sc = null;
         try {
-            sc = (Scenario) rootClass
-                .getConstructor(Long.class)
-                .newInstance(timeout);
+            sc = (Scenario) root.getConstructor(Long.class).newInstance(timeout);
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            System.err.format("Failed to create instance of Scenario: %s%n", rootClass);
+            System.err.format("Failed to create instance of Scenario: %s%n", root);
             System.err.format("Error %s: %s", e.getClass(), e.getMessage());
         }
         return sc;
     }
 
-    public void execute(List<Parameter> params) {
-        Scenario root = getRootInstance(rootClass);
-        if (root == null) {
-            System.exit(1);
-        }
-
+    public void execute(Scenario root, List<Parameter> params) {
         HttpClient client = client();
 
         try {

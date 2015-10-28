@@ -3,6 +3,7 @@ package net.isucon.bench;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -190,6 +191,7 @@ public class Checker {
 
     public Document document() { throw notSupportedException(); }
     public Matcher lastMatch() { throw notSupportedException(); }
+    public List find(String selector) { throw notSupportedException(); }
     public void hasStyleSheet(String path) { throw notSupportedException(); }
     public void hasJavaScript(String path) { throw notSupportedException(); }
     public void exist(String selector) { throw notSupportedException(); }

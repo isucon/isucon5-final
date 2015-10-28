@@ -15,12 +15,18 @@ function render(list) {
       case 'ken2': render_ken(element, item.data); break;
       case 'surname':
       case 'givenname': render_name(element, item.data); break;
+      case 'tenki': render_tenki(element, item.data); break;
       case 'perfectsec': render_perfectsec(element, item.data); break;
       case 'perfectsec_attacked': render_perfectsec_attacked(element, item.data); break;
       default: console.log("unknown api response, service:" + item.service); console.log(item.data);
     }
     $('#api-response-container').append(element);
   });
+}
+
+function render_tenki(element, data){
+  $(element).find('h4').text("Updated: " + data.date);
+  $(element).find('p').text(data.yoho);
 }
 
 function render_perfectsec(element, data){

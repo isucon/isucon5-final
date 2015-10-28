@@ -121,7 +121,6 @@ function attacked_tokens_handler(token, request, response) {
         response.end();
         delete CONNECTED_TOKENS[token];
       });
-      ;
     }, responseDelay);
   }
 }
