@@ -11,10 +11,17 @@ import net.isucon.bench.Parameter;
 import net.isucon.bench.Session;
 
 public class Full extends Scenario {
+    private static final String PARAMETER_CLASS = "net.isucon.isucon5f.bench.I5FParameter";
+
     private static long DURATION_MILLIS = 120 * 1000;
 
     public Full(Long timeout) {
         super(timeout);
+    }
+
+    @Override
+    public String parameterClassName() {
+        return PARAMETER_CLASS;
     }
 
     @Override

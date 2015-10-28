@@ -60,6 +60,10 @@ public abstract class Scenario extends Driver {
         this.state = new State();
     }
 
+    public String parameterClassName() {
+        throw new AbstractMethodError();
+    }
+
     private List<Session> createSessions(List<Parameter> params) {
         List<Session> sessions = new ArrayList<Session>();
         for (Parameter param : params) {
