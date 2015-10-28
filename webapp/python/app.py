@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
+import subprocess
 import json
 import random
 import urllib.parse
 import urllib.request
+import ssl
 import bottle
 import pg8000
 
@@ -14,7 +16,7 @@ app.config.load_dict({
     "db": {
         "host": os.environ.get("ISUCON5_DB_HOST") or "localhost",
         "port": int(os.environ.get("ISUCON5_DB_PORT") or 5432),
-        "username": os.environ.get("ISUCON5_DB_USER") or "whoami",
+        "username": os.environ.get("ISUCON5_DB_USER") or subprocess.check_output("whoami").strip(),
         "password": os.environ.get("ISUCON5_DB_PASSWORD") or None,
         "database": os.environ.get("ISUCON5_DB_NAME") or "isucon5f",
     },
@@ -117,10 +119,12 @@ def fetch_api(method, uri, headers, params):
     if params:
         query = urllib.parse.urlencode(params)
         uri += "?" + query
+    # TODO: unverify ssl cert
+    # ssl._create_default_https_context = ssl._create_unverified_context
     req = urllib.request.Request(uri, method=method, headers=headers)
     res = urllib.request.urlopen(req)
     body = res.read()
-    return json.loads(body) if body else {}
+    return json.loads(body.decode("utf-8")) if body else {}
 
 
 @app.get("/signup")
@@ -279,7 +283,7 @@ def get_data():
         rows = db_fetchall("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=$1", service)
         method, token_type, token_key, uri_template = rows[0]
         headers = {}
-        params = dict(conf["params"]) if conf["params"] else {}
+        params = conf.get("params", {})
         if token_type == "header":
             headers[token_key] = conf["token"]
         elif token_type == "param":
