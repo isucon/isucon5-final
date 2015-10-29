@@ -1,5 +1,5 @@
 ---
-- hosts: guests,extras
+- hosts: guests:extras
   gather_facts: no
   tasks:
     - apt: name=nginx state=present

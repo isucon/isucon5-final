@@ -1,5 +1,5 @@
 ---
-- hosts: guests,extras
+- hosts: guests:extras
   sudo: yes
   sudo_user: isucon
   gather_facts: no
@@ -39,7 +39,7 @@
         creates: /home/isucon/.local/scala-2.11.7/bin/scala
     - file: src=/home/isucon/.local/scala-2.11.7 dest=/home/isucon/.local/scala state=link
 
-- hosts: guests,extras
+- hosts: guests:extras
   gather_facts: no
   tasks:
     - apt_repository: repo='ppa:webupd8team/java'
