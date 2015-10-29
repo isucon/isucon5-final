@@ -50,5 +50,5 @@
     - apt: name=oracle-java8-installer update_cache=yes
     - apt: name=ca-certificates
     - apt: name=oracle-java8-set-default
-    - apt: gradle
+    - apt: name=gradle
     - file: src=/usr/lib/jvm/java-8-oracle dest=/usr/lib/jvm/default-java owner=root state=link
