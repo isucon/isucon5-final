@@ -1,5 +1,6 @@
 ---
-- hosts: guests:extras
+# - hosts: guests:extras
+- hosts: extras
   gather_facts: no
   tasks:
     - apt: name=python-selinux state=present update_cache=true
