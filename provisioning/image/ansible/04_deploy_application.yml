@@ -3,7 +3,6 @@
 - hosts: extras
   gather_facts: no
   tasks:
-    - lineinfile: dest=/etc/hosts regexp='^api\five-final.isucon\.net ' state=absent
     - name: add API endpoint host to /etc/hosts
       lineinfile: dest=/etc/hosts regexp='api\five-final.isucon\.net' line='{{api_host}} api.five-final.isucon.net' state=present
 
@@ -30,22 +29,21 @@
       shell: PATH=/home/isucon/.local/ruby/bin:$PATH bundle install
       args:
         chdir: /home/isucon/webapp/ruby
-  # post_tasks:
-    # - command: sudo su - isucon /home/isucon/init.sh
 
 # - hosts: guests:extras
 - hosts: extras
   gather_facts: no
   tasks:
     - service: name=postgresql state=restarted
-    # TODO: create sql including api server addresses, and replace this
-    # - shell: cat sql/init-for-gce.sql | sudo -u isucon psql isucon5f
-    #   args:
-    #     chdir: /home/isucon/webapp
-    # - apt: name=supervisor state=present
-    # - copy: src=../files/supervisor.ruby.conf dest=/etc/supervisor/conf.d/ruby.conf
-    # - supervisorctl: name=ruby state=present
-    # # other languages
-    # #
-    # - name: default application
-    #   supervisorctl: name=ruby state=restarted
+    - shell: cat ./initialize.sql | sudo -u isucon psql isucon5f
+      args:
+        chdir: /home/isucon/webapp/sql
+    - apt: name=supervisor state=present
+    - copy: src=../files/supervisor.ruby.conf dest=/etc/supervisor/conf.d/ruby.conf
+    - supervisorctl: name=ruby state=present
+    # other languages
+    #
+    - name: default application
+      supervisorctl: name=ruby state=restarted
+
+

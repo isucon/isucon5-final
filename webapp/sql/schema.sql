@@ -1,7 +1,7 @@
-CREATE USER isucon;
-CREATE DATABASE isucon5f OWNER isucon ENCODING 'utf8';
+-- CREATE USER isucon;
+-- CREATE DATABASE isucon5f OWNER isucon ENCODING 'utf8';
 
-\connect isucon5f
+-- \connect isucon5f
 
 CREATE TYPE grades AS ENUM ('micro', 'small', 'standard', 'premium');
 
@@ -13,7 +13,7 @@ CREATE TABLE users (
   grade grades
 );
 
-CREATE EXTENSION pgcrypto;
+-- CREATE EXTENSION pgcrypto;
 
 CREATE TYPE token_types AS ENUM ('header', 'param');
 
