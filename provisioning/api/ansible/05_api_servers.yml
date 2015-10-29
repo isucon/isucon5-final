@@ -17,7 +17,7 @@
       args:
         chdir: /home/isucon/isucon5-final/api/ken
 
-- hosts: all
+- hosts: api
   gather_facts: no
   tasks:
     - apt: name=supervisor state=present
