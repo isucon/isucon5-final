@@ -16,7 +16,7 @@ import xerial.core.util.Shell
 
 import scala.io.Source
 import scala.util.Random
-import scala.util.parsing.json.{JSONArray, JSONObject}
+import scala.util.parsing.json.{JSONFormat, JSONArray, JSONObject}
 
 
 sealed trait Grade
@@ -307,7 +307,7 @@ object Isucon5 extends WebApp with ScalateSupport {
   private def merge(a: Any, b: Any): Any = {
     (a, b) match {
       case (m1: Map[String, Any], m2: Map[String, Any]) =>
-        val m = for (k <- (m1.keySet ++ m2.keySet)) yield k -> merge(m1.get(k), m2.get(k))
+        val m = for (k:String <- (m1.keySet ++ m2.keySet)) yield k -> merge(m1.get(k), m2.get(k))
         m.toMap[String, Any]
       case (Some(e1), Some(e2)) => merge(e1, e2)
       case (Some(e1), None) => e1
@@ -315,6 +315,31 @@ object Isucon5 extends WebApp with ScalateSupport {
       case _ => b
     }
   }
+
+  private def toJson(obj:Any) : Any = {
+    import scala.collection.JavaConversions._
+    obj match {
+      case m:Map[_, _] =>
+        val kv = for((k, v) <- m) yield {
+          s""""${k}":${toJson(v)}"""
+        }
+        s"{${kv.mkString(",")}}"
+      case a:Seq[_] =>
+        val arr = a.map(toJson(_)).mkString(",")
+        s"[${arr}]"
+      case a:Array[String] =>
+        val arr = a.map(toJson(_)).mkString(",")
+        s"[${arr}]"
+      case it:java.lang.Iterable[_] =>
+        val arr = it.iterator().map(toJson(_)).mkString(",")
+        s"[${arr}]"
+      case s:String =>
+        s""""$s""""
+      case other =>
+        other.toString
+    }
+  }
+
 
   post("/modify") {
     ensureLogin { u =>
@@ -332,10 +357,10 @@ object Isucon5 extends WebApp with ScalateSupport {
         token.map(service += "token" -> _)
         keys.map(service += "keys" -> _)
         for (pn <- paramName; pv <- paramValue) {
-          service += "params" -> (pn -> pv)
+          service += "params" -> Map(pn -> pv)
         }
         val updated = merge(arg, Map("service" -> service.result)).asInstanceOf[Map[String, Any]]
-        conn.execute(updateQuery, JSONObject(updated).toString(), u.id)
+        conn.execute(updateQuery, toJson(updated), u.id)
       }
       redirect("/modify")
     }
@@ -397,7 +422,7 @@ object Isucon5 extends WebApp with ScalateSupport {
 
       contentType = "application/json"
       // data to json
-      response.writer.print(JSONArray(data.toList).toString())
+      response.writer.print(toJson(data.toSeq))
     }
   }
 
