@@ -417,7 +417,11 @@ object Isucon5 extends WebApp with ScalateSupport {
           case "param" => params += ep.tokenKey -> token
           case _ =>
         }
-        Map("service" -> service, "data" -> fetchApi(ep.meth, ep.uri, headers.result, params.result))
+        val uri = conf.get("keys") match {
+          case k:Option[Array[Any]] => ep.uri.format(k.get(0))
+          case _ => ep.uri
+        }
+        Map("service" -> service, "data" -> fetchApi(ep.meth, uri, headers.result, params.result))
       }
 
       contentType = "application/json"
