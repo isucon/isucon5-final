@@ -1,11 +1,11 @@
 ---
-- hosts: all
+- hosts: guests,extras
   gather_facts: no
   sudo: yes
   sudo_user: isucon
   tasks:
     - file: path=/home/isucon/.ssh state=directory owner=isucon mode=755
-    - copy: src=../keys/root_id_rsa dest=/home/isucon/.ssh/deploy_id_rsa owner=isucon mode=600
+    - copy: src=../keys/deploy_id_rsa dest=/home/isucon/.ssh/deploy_id_rsa owner=isucon mode=600
     - git:
         repo=git@github.com:tagomoris/isucon5-final.git
         dest=/tmp/isucon5-final
@@ -24,17 +24,15 @@
   # post_tasks:
     # - command: sudo su - isucon /home/isucon/init.sh
 
-- hosts: all
+- hosts: guests,extras
   gather_facts: no
   tasks:
     - service: name=postgresql state=restarted
+    # TODO: create sql including api server addresses, and replace this
     - shell: cat sql/init-for-gce.sql | sudo -u isucon psql isucon5f
       args:
         chdir: /home/isucon/webapp
     - apt: name=supervisor state=present
-    # In ubuntu default /etc/supervisor/supervisord.conf
-    # [include]
-    # files = /etc/supervisor/conf.d/*.conf
     - copy: src=../files/supervisor.ruby.conf dest=/etc/supervisor/conf.d/ruby.conf
     - supervisorctl: name=ruby state=present
     # other languages

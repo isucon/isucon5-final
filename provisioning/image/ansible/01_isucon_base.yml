@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: guests,extras
   gather_facts: no
   tasks:
     - name: change timezone to JST

@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: guests,extras
   gather_facts: no
   tasks:
     - apt: name=nginx state=present
@@ -30,7 +30,7 @@
     - name: reload nginx
       action: service name=nginx state=restarted
 
-- hosts: all
+- hosts: guests,extras
   gather_facts: no
   sudo: yes
   sudo_user: postgres
