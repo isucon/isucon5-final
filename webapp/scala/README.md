@@ -1,7 +1,7 @@
 isucon5-final-scala
 ===
 
-Scala-based example application for the ISUCON5 qualification round.
+Scala-based example application for the ISUCON5 final round.
 
 ISUCON5決勝アプリケーションのScalaによる参考実装です。
 
