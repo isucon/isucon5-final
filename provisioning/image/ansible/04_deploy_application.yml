@@ -2,6 +2,13 @@
 # - hosts: guests:extras
 - hosts: extras
   gather_facts: no
+  tasks:
+    - name: add API endpoint host to /etc/hosts
+      lineinfile: dest=/etc/hosts regexp='^api\five-final.isucon\.net ' line='api.five-final.isucon.net {{api_host}}' state=present
+
+# - hosts: guests:extras
+- hosts: extras
+  gather_facts: no
   sudo: yes
   sudo_user: isucon
   tasks:
