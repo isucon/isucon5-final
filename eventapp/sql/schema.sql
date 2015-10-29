@@ -2,17 +2,14 @@ DROP DATABASE IF EXISTS isucon5portal;
 
 CREATE DATABASE IF NOT EXISTS isucon5portal;
 
-use isucon5portal;
+use isucon5fportal;
 
 CREATE TABLE IF NOT EXISTS teams (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `team` varchar(128) NOT NULL UNIQUE,
   `password` varchar(32) NOT NULL,
-  `email` varchar(128) NOT NULL UNIQUE,
-  `round` int NOT NULL, -- 1 is Saturday, 2 is Sunday, 0 is Both(only for organizer)
-  `project_id` varchar(128),
-  `zone_name` varchar(128),
-  `instance_name` varchar(128)
+  `account` varchar(128) NOT NULL UNIQUE,
+  `priv` int NOT NULL -- 0:organizer, 1:teams, 2:audience
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS queue (
