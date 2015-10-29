@@ -5,7 +5,7 @@
   sudo_user: isucon
   tasks:
     - file: path=/home/isucon/.ssh state=directory owner=isucon mode=755
-    - copy: src=../keys/root_id_rsa dest=/home/isucon/.ssh/deploy_id_rsa owner=isucon mode=600
+    - copy: src=../keys/deploy_id_rsa dest=/home/isucon/.ssh/deploy_id_rsa owner=isucon mode=600
     - git:
         repo=git@github.com:tagomoris/isucon5-final.git
         dest=/home/isucon/isucon5-final
