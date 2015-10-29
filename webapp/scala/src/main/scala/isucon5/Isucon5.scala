@@ -411,10 +411,11 @@ object Isucon5 extends WebApp with ScalateSupport {
         val headers = Map.newBuilder[String, Any]
         val params = Map.newBuilder[String, Any]
         conf.get("params").map(params ++= _.asInstanceOf[Map[String, Any]])
-        val token = conf("token")
+        val token = conf.get("token")
         ep.tokenType match {
           case "header" => headers += ep.tokenKey -> token
           case "param" => params += ep.tokenKey -> token
+          case _ =>
         }
         Map("service" -> service, "data" -> fetchApi(ep.meth, ep.uri, headers.result, params.result))
       }
