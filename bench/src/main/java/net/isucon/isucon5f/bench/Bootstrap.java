@@ -392,12 +392,14 @@ public class Bootstrap extends Base {
                         check.exist("$.[?(@.service=='perfectsec')].data.key", 1);
                         String key = (String) check.find("$.[?(@.service=='perfectsec')].data.key").get(0);
 
-                        String onetime = I5FPerfectSecurity.getOneTime(token, req, key);
-                        check.content("$.[?(@.service=='perfectsec')].data.onetime_token", onetime);
+                        check.exist("$.[?(@.service=='perfectsec')].data.onetime_token", 1);
+                        String onetime = (String) check.find("$.[?(@.service=='perfectsec')].data.onetime_token").get(0);
+                        if (! I5FPerfectSecurity.isCorrectOneTime(onetime, token, req, key, responseAt)) {
+                            check.fatal("perfectsec API onetime tokenの値が不正です");
+                        }
 
                         check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1);
                         String epoch = String.valueOf(check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at").get(0));
-                        // At Check, add addViolation for expired data
                         String[] attacked = I5FPerfectSecurity.getAttacked(token, epoch);
                         check.content("$.[?(@.service=='perfectsec_attacked')].data.key1", attacked[0]);
                         check.content("$.[?(@.service=='perfectsec_attacked')].data.key2", attacked[1]);

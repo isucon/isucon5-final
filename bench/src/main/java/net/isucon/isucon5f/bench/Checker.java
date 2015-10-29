@@ -166,8 +166,18 @@ public class Checker extends Base {
 
                 if (grade.equals("standard") || grade.equals("premium")){
                     check.exist("$.[?(@.service=='tenki')].data", 1);
+
                     String date = (String) check.find("$.[?(@.service=='tenki')].data.date").get(0);
-                    // At Check, add addViolation for expired data
+                    long dataAt = DateUtils.parseDate(date).getTime();
+                    String responseDate = check.header("Date");
+                    long responseAt = new Date().getTime();
+                    if (responseDate != null) {
+                        responseAt = DateUtils.parseDate(responseDate).getTime();
+                    }
+                    if (responseAt - dataAt > I5FTenki.VALID_CACHE_MILLIS) {
+                        check.fatal("Tenki API レスポンスの内容が古いままです");
+                    }
+
                     String yoho = I5FTenki.getYoho(date);
                     check.content("$.[?(@.service=='tenki')].data.yoho", yoho);
                 } else {
@@ -189,13 +199,20 @@ public class Checker extends Base {
                     check.exist("$.[?(@.service=='perfectsec')].data.key", 1);
                     String key = (String) check.find("$.[?(@.service=='perfectsec')].data.key").get(0);
 
-                    String onetime = I5FPerfectSecurity.getOneTime(token, req, key);
-                    check.content("$.[?(@.service=='perfectsec')].data.onetime_token", onetime);
+                    check.exist("$.[?(@.service=='perfectsec')].data.onetime_token", 1);
+                    String onetime = (String) check.find("$.[?(@.service=='perfectsec')].data.onetime_token").get(0);
+                    if (! I5FPerfectSecurity.isCorrectOneTime(onetime, token, req, key, responseAt)) {
+                        check.fatal("perfectsec API onetime tokenの値が不正です");
+                    }
 
                     check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1);
-                    String epoch = String.valueOf(check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at").get(0));
-                    // At Check, add addViolation for expired data
-                    String[] attacked = I5FPerfectSecurity.getAttacked(token, epoch);
+                    // seconds from epoch
+                    long epoch = Long.getLong(String.valueOf(check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at").get(0)));
+                    long epochMillis = epoch * 1000;
+                    if (responseAt - epochMillis > I5FPerfectSecurity.VALID_CACHE_MILLIS) {
+                        check.fatal("perfectsec_attacked API レスポンスの内容が古いままです");
+                    }
+                    String[] attacked = I5FPerfectSecurity.getAttacked(token, Long.toString(epoch));
                     check.content("$.[?(@.service=='perfectsec_attacked')].data.key1", attacked[0]);
                     check.content("$.[?(@.service=='perfectsec_attacked')].data.key2", attacked[1]);
                     check.content("$.[?(@.service=='perfectsec_attacked')].data.key3", attacked[2]);
