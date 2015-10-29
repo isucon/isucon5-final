@@ -38,5 +38,5 @@
   sudo_user: postgres
   tasks:
     - postgresql_user: name=isucon
-    - postgresql_db: name=isucon5f owner=isucon encoding=utf8
+    - postgresql_db: name=isucon5f owner=isucon encoding=utf8 template=template0
     - postgresql_ext: name=pgcrypto db=isucon5f
