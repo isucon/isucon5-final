@@ -136,7 +136,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         }
       }
       def executeQuery[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
-        executePrep(sql, args) { st =>
+        executePrep(sql, args:_*) { st =>
           val rs = st.executeQuery()
           val b = Seq.newBuilder[A]
           while (rs.next()) {
@@ -146,7 +146,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         }
       }
       def executeUpdate[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
-        executePrep(sql, args) { st =>
+        executePrep(sql, args:_*) { st =>
           st.executeUpdate()
           val b = Seq.newBuilder[A]
           val rs = st.getResultSet
