@@ -319,6 +319,8 @@ def get_static(dirname, filename):
 
 @app.get("/initialize")
 def get_initialize():
+    file = os.path.abspath(os.path.dirname(__file__) + "/../sql/initialize.sql")
+    subprocess.call(["psql", "-f", file, "isucon5f"])
     return ""
 
 

@@ -11,6 +11,8 @@ use Furl;
 use URI;
 use IO::Socket::SSL qw(SSL_VERIFY_NONE);
 use String::Util qw(trim);
+use File::Basename qw(dirname);
+use File::Spec;
 
 sub db {
     state $db ||= do {
@@ -200,7 +202,7 @@ SQL
 sub fetch_api {
     my ($method, $uri, $headers, $params) = @_;
     my $client = Furl->new(ssl_opts => { SSL_verify_mode => SSL_VERIFY_NONE });
-    my $uri = URI->new($uri);
+    $uri = URI->new($uri);
     $uri->query_form(%$params);
     my $res = $client->request(
         method => $method,
@@ -246,6 +248,9 @@ get '/data' => [qw(set_global)] => sub {
 
 get '/initialize' => sub {
     my ($self, $c) = @_;
+    my $file = File::Spec->rel2abs("../../sql/initialize.sql", dirname(dirname(__FILE__)));
+    system("psql", "-f", $file, "isucon5f");
+    [200];
 };
 
 1;
