@@ -27,7 +27,7 @@ object Grade {
   case object Premium extends Grade
 
   private val table = Seq(Micro, Small, Standard, Premium).map(v => v.toString.toLowerCase() -> v).toMap
-  def fromName(name: String): Grade = table(name)
+  def fromName(name: String): Grade = table(name.toLowerCase)
 }
 
 sealed trait TokenType
