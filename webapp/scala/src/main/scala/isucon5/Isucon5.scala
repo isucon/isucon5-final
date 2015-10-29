@@ -38,9 +38,8 @@ object TokenType {
 case class User(id: Int, email: String, grade: Grade) {
   def this(rs: ResultSet) = this(rs.getInt("id"), rs.getString("email"), Grade.fromName(rs.getString("grade")))
 }
-case class Endpoint(service: String, meth: String, tokenType: String, tokenKey: String, uri: String) {
-  def this(rs: ResultSet) = this(rs.getString("service"), rs.getString("meth"), rs.getString("token_type"), rs.getString("token_key"), rs
-                                                                                                                                       .getString("uri"))
+case class Endpoint(meth: String, tokenType: String, tokenKey: String, uri: String) {
+  def this(rs: ResultSet) = this(rs.getString("meth"), rs.getString("token_type"), rs.getString("token_key"), rs.getString("uri"))
 }
 case class Subscription(userId: Int, arg: String)
 
@@ -417,7 +416,7 @@ object Isucon5 extends WebApp with ScalateSupport {
           case "header" => headers += ep.tokenKey -> token
           case "param" => params += ep.tokenKey -> token
         }
-        Map("service" -> ep.service, "data" -> fetchApi(ep.meth, ep.uri, headers.result, params.result))
+        Map("service" -> service, "data" -> fetchApi(ep.meth, ep.uri, headers.result, params.result))
       }
 
       contentType = "application/json"
