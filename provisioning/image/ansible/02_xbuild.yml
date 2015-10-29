@@ -1,5 +1,6 @@
 ---
-- hosts: guests:extras
+# - hosts: guests:extras
+- hosts: extras
   sudo: yes
   sudo_user: isucon
   gather_facts: no
