@@ -7,6 +7,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class I5FTenki {
+    public static long VALID_CACHE_MILLIS = 4000; // 3s + 1
+
     private static char[] chars = new char[]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
     private static String secret = "happyhalloween";
 

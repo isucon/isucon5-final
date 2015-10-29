@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.function.Consumer;
+import java.util.Date;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -13,6 +14,8 @@ import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.ChronoField;
+
+import org.apache.http.client.utils.DateUtils;
 
 import net.isucon.bench.Scenario;
 import net.isucon.bench.Step;
@@ -172,6 +175,12 @@ public class Checker extends Base {
                 }
 
                 if (grade.equals("premium")){
+                    String responseDate = check.header("Date");
+                    long responseAt = new Date().getTime();
+                    if (responseDate != null) {
+                        responseAt = DateUtils.parseDate(responseDate).getTime();
+                    }
+
                     check.exist("$.[?(@.service=='perfectsec')].data", 1);
                     String req = param.subscriptions.get("perfectsec").params.get("req");
                     check.content("$.[?(@.service=='perfectsec')].data.req", req);
