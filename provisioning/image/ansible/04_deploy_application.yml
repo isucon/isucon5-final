@@ -29,6 +29,39 @@
       shell: PATH=/home/isucon/.local/ruby/bin:$PATH bundle install
       args:
         chdir: /home/isucon/webapp/ruby
+    - name: perl
+      shell: PATH=/home/isucon/.local/perl/bin:$PATH carton install
+      args:
+        chdir: /home/isucon/webapp/perl
+    - name: php
+      shell: PATH=/home/isucon/.local/php/bin:$PATH php composer.phar install
+      args:
+        chdir: /home/isucon/webapp/php
+    - name: node
+      shell: PATH=/home/isucon/.local/node/bin:$PATH npm install
+      args:
+        chdir: /home/isucon/webapp/node
+    - name: java
+      shell: ./mvnw clean package -Dmaven.test.skip=true
+      args:
+        chdir: /home/isucon/webapp/java
+    # python
+    - command: /home/isucon/.local/python3/bin/pip install bottle
+    - command: /home/isucon/.local/python3/bin/pip install pg8000
+    - command: /home/isucon/.local/python3/bin/pip install gunicorn
+    - name: go get
+      shell: PATH=/home/isucon/.local/go/bin:$PATH GOROOT=/home/isucon/.local/go GOPATH=/home/isucon/webapp/golang go get
+      args:
+        chdir: /home/isucon/webapp/golang
+    - name: go build
+      shell: PATH=/home/isucon/.local/go/bin:$PATH GOROOT=/home/isucon/.local/go GOPATH=/home/isucon/webapp/golang go build -o app
+      args:
+        chdir: /home/isucon/webapp/golang
+    #- name: scala
+    #  shell: ./sbt launcher
+    #  args:
+    #    chdir: /home/isucon/webapp/scala
+
 
 # - hosts: guests:extras
 - hosts: extras
@@ -41,8 +74,20 @@
     - apt: name=supervisor state=present
     - copy: src=../files/supervisor.ruby.conf dest=/etc/supervisor/conf.d/ruby.conf
     - supervisorctl: name=ruby state=present
-    # other languages
-    #
+    - copy: src=../files/supervisor.perl.conf dest=/etc/supervisor/conf.d/perl.conf
+    - supervisorctl: name=perl state=present
+    - copy: src=../files/supervisor.php.conf dest=/etc/supervisor/conf.d/php.conf
+    - supervisorctl: name=php state=present
+    - copy: src=../files/supervisor.node.conf dest=/etc/supervisor/conf.d/node.conf
+    - supervisorctl: name=node state=present
+    - copy: src=../files/supervisor.java.conf dest=/etc/supervisor/conf.d/java.conf
+    - supervisorctl: name=java state=present
+    - copy: src=../files/supervisor.python.conf dest=/etc/supervisor/conf.d/python.conf
+    - supervisorctl: name=python state=present
+    - copy: src=../files/supervisor.golang.conf dest=/etc/supervisor/conf.d/golang.conf
+    - supervisorctl: name=golang state=present
+    #- copy: src=../files/supervisor.scala.conf dest=/etc/supervisor/conf.d/scala.conf
+    #- supervisorctl: name=scala state=present
     - name: default application
       supervisorctl: name=ruby state=restarted
 

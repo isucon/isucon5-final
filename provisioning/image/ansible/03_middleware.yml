@@ -47,6 +47,6 @@
   sudo: yes
   sudo_user: isucon
   tasks:
-    - shell: cat ./schema.sql | psql isucon5f
-      args:
-        chdir: /home/isucon/webapp/sql
+    - copy: src=../files/schema.sql dest=/tmp/schema.sql
+    - command: cat /tmp/schema.sql | psql isucon5f
+    - command: rm /tmp/schema.sql
