@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: api
   gather_facts: no
   sudo: yes
   sudo_user: isucon
