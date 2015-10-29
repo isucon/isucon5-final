@@ -1,0 +1,341 @@
+package isucon5
+
+import java.sql._
+import java.time.format.DateTimeFormatter
+import java.util.{Calendar, TimeZone}
+
+import org.json4s._
+import org.json4s.native.JsonMethods._
+import org.slf4j.LoggerFactory
+import skinny.micro.Format.JSON
+import skinny.micro._
+import skinny.micro.WebApp
+import skinny.micro.contrib.ScalateSupport
+
+import scala.util.Random
+
+
+sealed trait Grade
+object Grade {
+  case object Micro extends Grade
+  case object Small extends Grade
+  case object Standard extends Grade
+  case object Premium extends Grade
+
+  private val table = Seq(Micro, Small, Standard, Premium).map(v => v.toString.toLowerCase() -> v).toMap
+  def fromName(name:String) : Grade = table(name)
+}
+
+sealed trait TokenType
+object TokenType {
+  case object Header extends TokenType
+  case object Param extends TokenType
+}
+case class User(id:Int, email:String, salt:String, passhash:Array[Byte], grade:Grade) {
+  def this(rs:ResultSet) = this(rs.getInt("id"), rs.getString("email"), rs.getString("salt"), Grade.fromName(rs.getString("grade")))
+}
+case class Endpoint(service:String, meth:String, tokenType:String, tokenKey:String, uri:String) {
+  def this(rs:ResultSet) = this(rs.getString("service"), rs.getString("meth"), rs.getString("token_type"), rs.getString("token_key"), rs.getString("uri"))
+}
+case class Subscription(userId:Int, arg:String)
+
+/**
+ *
+ */
+object Isucon5 extends WebApp with ScalateSupport {
+
+  case object AuthenticationError extends Exception
+  case object PermissionDenied extends Exception
+  case object ContentNotFound extends Exception
+
+  object DB {
+    private val logger = LoggerFactory.getLogger("isucon5.DB")
+    val cal = Calendar.getInstance(TimeZone.getDefault)
+    val df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+    private implicit class RichResultSet(rs:ResultSet) {
+      def getLocalDateTime(colName:String) = rs.getTimestamp(colName, cal).toLocalDateTime
+    }
+
+    // database configuration
+    case class DBConfig(host: String,
+                        port: Int,
+                        user: String,
+                        password: Option[String],
+                        name: String,
+                        jdbcDriverName: String,
+                        jdbcProperties: Map[String, String]
+                         ) {
+      lazy val jdbcUrl = {
+        var props = jdbcProperties + ("user" -> user)
+        password.map(p => props += "password" -> p)
+        s"jdbc:postgresql://${host}:${port}/${name}?${props.map { case (k, v) => s"${k}=${v}" }.mkString("&")}"
+      }
+    }
+
+    private def env = System.getenv()
+
+    lazy val dbConfig: DBConfig = DBConfig(
+      host = env.getOrDefault("ISUCON5_DB_HOST", "localhost"),
+      port = env.getOrDefault("ISUCON5_DB_PORT", "5432").toInt,
+      user = env.getOrDefault("ISUCON5_DB_USER", "root"),
+      password = Option(System.getenv.get("ISUCON5_DB_PASSWORD")),
+      name = env.getOrDefault("ISUCON5_DB_HOST", "isucon5f"),
+      jdbcDriverName = "org.postgresql.Driver",
+      jdbcProperties = Map("connectTimeout" -> "3600")
+    )
+
+    // Query execution helper methods
+    def withResource[Resource <: AutoCloseable, U](resource: Resource)(body: Resource => U): U = {
+      try {
+        body(resource)
+      }
+      finally {
+        resource.close()
+      }
+    }
+
+    def executeQuery[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
+      executeSQL(sql, args: _*) { st =>
+        val rs = st.executeQuery
+        val b = Seq.newBuilder[A]
+        while (rs.next()) {
+          b += resultMapper(rs)
+        }
+        b.result()
+      }
+    }
+
+    def execute[A](sql: String, args: Any*): Unit = {
+      executeSQL(sql, args: _*) { st =>
+        st.execute
+      }
+    }
+
+    private def executeSQL[A](sql: String, args: Any*)(handler: PreparedStatement => A): A = {
+      Class.forName(dbConfig.jdbcDriverName)
+      withResource(DriverManager.getConnection(dbConfig.jdbcUrl)) { conn =>
+        conn.executePrep(sql, args)(handler)
+      }
+    }
+
+    implicit class RichConnection(conn:Connection) {
+      def execute[A](sql: String, args: Any*) {
+        executePrep(sql, args)(_.execute())
+      }
+
+      def executePrep[A](sql: String, args: Any*)(handler: PreparedStatement => A): A = {
+        withResource(conn.prepareStatement(sql)) { st =>
+          // populate the placeholders in the prepared statement
+          for ((a, i) <- args.zipWithIndex) {
+            st.setObject(i + 1, a)
+          }
+          handler(st)
+        }
+      }
+      def executeQuery[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
+        executePrep(sql, args){ st =>
+          val rs = st.executeQuery()
+          val b = Seq.newBuilder[A]
+          while (rs.next()) {
+            b += resultMapper(rs)
+          }
+          b.result()
+        }
+      }
+      def executeUpdate[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
+        executePrep(sql, args){ st =>
+          st.executeUpdate()
+          val b = Seq.newBuilder[A]
+          val rs = st.getResultSet
+          while (rs.next()) {
+            b += resultMapper(rs)
+          }
+          b.result()
+        }
+      }
+
+    }
+
+    def transaction[U](body: Connection => U) : U  = {
+      Class.forName(dbConfig.jdbcDriverName)
+      withResource(DriverManager.getConnection(dbConfig.jdbcUrl)) { conn =>
+        try {
+          conn.setAutoCommit(false)
+          val ret = body(conn)
+          conn.commit()
+          ret
+        }
+        catch {
+          case e:SQLException =>
+            conn.rollback()
+            throw e
+        }
+        finally {
+          conn.setAutoCommit(true)
+        }
+      }
+    }
+
+  }
+
+  import DB._
+
+  private def authenticate(email: String, password: String) {
+    executeQuery(
+      "SELECT id, email, grade FROM users WHERE email=? AND passhash=digest(salt || ?, 'sha512')",
+      email,
+      password)(new User(_)).headOption match {
+      case Some(user) =>
+        session.setAttribute("user_id", user.id)
+      case None =>
+        throw AuthenticationError
+    }
+  }
+
+  private def getCurrentUser: Option[User] = {
+    executeQuery(
+      "SELECT id,email,grade FROM users WHERE id=?", session.getAttribute("user_id"))(new User(_)).headOption match {
+      case Some(u) => u
+      case None =>
+        session.remove("user_id")
+        throw PermissionDenied
+    }
+  }
+
+  private def ensureLogin[U](onSuccess: User => U) : Any = {
+    session.getAs[User]("user") match {
+      case Some(u:User) => onSuccess(u)
+      case None => redirect302("/login")
+    }
+  }
+
+
+  before() {
+    contentType = "text/html"
+  }
+
+  error {
+    case AuthenticationError =>
+      status = 401
+      ssp("/login.ssp")
+    case PermissionDenied =>
+      status = 403
+      ssp("/")
+  }
+
+
+  get("/signup") {
+    session.clear()
+    ssp("/signup.ssp")
+  }
+
+  post("/signup") {
+    val email = params("email")
+    val password = params("password")
+    val grade = params("grade")
+    val salt = generateSalt
+    val insertUserQuery =
+      """INSERT INTO users (email,salt,passhash,grade)
+        |VALUES ( ?, ?,digest( ? ||  ?, 'sha512'), ?) RETURNING id
+      """.stripMargin
+    val insertSubscriptionQuery =
+      """
+        |INSERT INTO subscriptions (user_id,arg) VALUES (?,?)
+      """.stripMargin
+    transaction { conn =>
+      val userId = conn.executeUpdate(insertUserQuery, email, salt, salt, password, grade){ rs: ResultSet =>
+        rs.getInt(1)
+      }.head
+      conn.execute(insertSubscriptionQuery, userId, "{}")
+    }
+  }
+
+  post("/cancel") {
+    redirect303("/signup")
+  }
+
+  get("/login") {
+    session.clear()
+    ssp("./login.ssp")
+  }
+
+  post("/login") {
+    authenticate(params("email"), params("password"))
+    redirect303("/")
+  }
+
+  get("/logout") {
+    session.clear()
+    redirect("/login")
+  }
+
+  get("/") {
+    ensureLogin { u =>
+      ssp("/main.ssp", "user" -> u)
+    }
+  }
+
+  get("/user.js") {
+    ensureLogin { u =>
+      contentType = "application/javascript"
+      ssp("/userjs.ssp", "grade" -> u.grade.toString)
+    }
+  }
+
+  get("/modify") {
+    ensureLogin { u =>
+      val arg = executeQuery("SELECT arg FROM subscriptions WHERE user_id=?", u.id)(rs => rs.getString("arg")).headOption
+      ssp("modify.ssp", "user"->u, "arg"->arg.getOrElse(null))
+    }
+  }
+
+  post("/modify") {
+    ensureLogin { u =>
+      val service = params("service")
+      val token = params.get("token").map(_.trim)
+      val keys = params.get("keys").map(_.trim.split("/\\s+/"))
+      val paramName = params.get("param_name").map(_.trim)
+      val paramValue = params.get("param_value").map(_.trim)
+      val selectQuery = "SELECT arg FROM subscriptions WHERE user_id=? FOR UPDATE"
+      val updateQuery = "UPDATE subscriptions SET arg=? WHERE user_id=?"
+      transaction { conn =>
+        val argJson = conn.executeQuery(selectQuery, u.id)(_.getString("arg")).head
+        val arg = parse(argJson)
+        //arg(service) =
+
+       //conn.execute(updateQuery, arg.toJson, u.id)
+      }
+      redirect("/modify")
+    }
+  }
+
+  def fetchApi(method:String, uri:String, headers:Map[String, String], params:Map[String, String]): Unit = {
+    if(uri.startsWith("https://"))
+
+  }
+
+
+  get("/data") {
+    ensureLogin { u =>
+      val argJson = executeQuery("SELECT arg FROM subscriptions WHERE user_id=?", u.id)(_.getString("arg"))
+                    .headOption.getOrElse("{}")
+      val arg = parse(argJson)
+      val data = for((service, conf) <- arg) yield {
+        val ep : Endpoint = executeQuery("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=?", service)(new Endpoint(_)).head
+        Map("service"->ep.service, "data" -> fetchApi(ep.meth, ep.uri, Map(), Map()))
+      }
+
+      contentType = "application/json"
+      // data to json
+    }
+  }
+
+
+
+  private val SALT_CHARS = Seq('a' to 'z', 'A' to 'Z', '0' to '9').flatten.mkString
+  private def generateSalt : String = {
+    (0 until 32).map(i => SALT_CHARS(Random.nextInt(SALT_CHARS.size))).mkString
+  }
+
+}
