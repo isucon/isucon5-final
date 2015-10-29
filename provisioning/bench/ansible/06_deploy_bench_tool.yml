@@ -17,7 +17,6 @@
       args:
         chdir: /home/isucon/isucon5-final/bench
     - name: java build
-      # shell: JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 gradle compileJava
       shell: gradle compileJava
       args:
         chdir: /home/isucon/isucon5-final/bench
