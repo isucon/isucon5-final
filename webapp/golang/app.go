@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -299,6 +300,12 @@ func PostModify(w http.ResponseWriter, r *http.Request) {
 
 func fetchApi(method, uri string, headers, params map[string]string) map[string]interface{} {
 	client := &http.Client{}
+	if strings.HasPrefix(uri, "https://") {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client.Transport = tr
+	}
 	values := url.Values{}
 	for k, v := range params {
 		values.Add(k, v)
