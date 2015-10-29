@@ -1,9 +1,6 @@
 #!/usr/bin/env ruby
 
-require "socket"
-MYHOSTNAME = Socket.gethostname
-
-MY_PROCESS_NAME = `hostname`.chomp + Process.pid.to_s
+MYHOSTNAME = `hostname`.chomp + ":" + Process.pid.to_s
 
 MANAGER_ADDRESS = "isu-adm01.data-hotel.net"
 MANAGER_USER = "portaltony"
@@ -18,7 +15,7 @@ client = Mysql2::Client.new(
   port: 3306,
   username: MANAGER_USER,
   password: MANAGER_PASSWORD,
-  database: 'isucon5portal',
+  database: 'isucon5fportal',
   reconnect: true,
 )
 client.query_options.merge!(symbolize_keys: true)

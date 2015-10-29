@@ -30,10 +30,8 @@ class Isucon5Portal::WebApp < Sinatra::Base
 
   IN_PROCESS_CACHE_TIMEOUT = 30
 
-  SATURDAY = [Time.parse("2015-09-26 08:00:00"), Time.parse("2015-09-26 19:00:00")]
-  SUNDAY   = [Time.parse("2015-09-27 08:00:00"), Time.parse("2015-09-27 18:00:00")]
-  SATURDAY_GAMETIME = [Time.parse("2015-09-26 11:00:00"), Time.parse("2015-09-26 19:00:00")]
-  SUNDAY_GAMETIME   = [Time.parse("2015-09-27 10:00:00"), Time.parse("2015-09-27 18:00:00")]
+  GAME_TIME =   [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 18:00:00")]
+  PUBLIC_TIME = [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 17:45:00")]
 
   helpers do
     def config
@@ -43,7 +41,7 @@ class Isucon5Portal::WebApp < Sinatra::Base
           port: ENV['ISUCON5_DB_PORT'] && ENV['ISUCON5_DB_PORT'].to_i,
           username: ENV['ISUCON5_DB_USER'] || 'root',
           password: ENV['ISUCON5_DB_PASSWORD'] || '',
-          database: ENV['ISUCON5_DB_NAME'] || 'isucon5portal',
+          database: ENV['ISUCON5_DB_NAME'] || 'isucon5fportal',
         },
       }
     end
@@ -64,48 +62,49 @@ class Isucon5Portal::WebApp < Sinatra::Base
     end
 
     def is_organizer?(team)
-      team[:round] == 0
+      team[:priv] == 0
     end
 
-    def in_game_round_number(team)
-      if is_organizer?(team)
-        if Time.now < SUNDAY.first
-          1
-        else
-          2
-        end
-      else
-        team[:round]
-      end
+    def is_guest?(team)
+      team[:priv] == 2
     end
 
     def in_game?(team)
       now = Time.now
-      case team[:round]
-      when 1 then SATURDAY_GAMETIME.first < now && now < SATURDAY_GAMETIME.last
-      when 2 then SUNDAY_GAMETIME.first < now && now < SUNDAY_GAMETIME.last
+      case team[:priv]
       when 0 then true
+      when 1 then GAME_TIME.first <= now && now < GAME_TIME.last
+      when 2 then GAME_TIME.first <= now && now < GAME_TIME.last
+      end
+    end
+
+    def in_public?(team)
+      now = Time.now
+      case team[:priv]
+      when 0 then true
+      when 1 then PUBLIC_TIME.first <= now && now < PUBLIC_TIME.last
+      when 2 then PUBLIC_TIME.first <= now && now < PUBLIC_TIME.last
       end
     end
 
     def active_team?(team)
       now = Time.now
-      case team[:round]
-      when 1 then SATURDAY.first < now && now < SATURDAY.last
-      when 2 then SUNDAY.first < now && now < SUNDAY.last
+      case team[:priv]
+      when 1 then GAME_TIME.first <= now && now < GAME_TIME.last
+      when 2 then false
       when 0 then true
       end
     end
 
-    def authenticate(email, password)
+    def authenticate(account, password)
       query = <<SQL
-SELECT * FROM teams WHERE email=? AND password=?
+SELECT * FROM teams WHERE account=? AND password=?
 SQL
-      result = db.xquery(query, email, password).first
+      result = db.xquery(query, account, password).first
       unless result
         raise Isucon5Portal::AuthenticationError
       end
-      unless active_team?(result)
+      unless in_game?(team)
         raise Isucon5Portal::AuthenticationError
       end
       session[:team_id] = result[:id]
@@ -124,10 +123,11 @@ SQL
         session.clear
         raise Isucon5Portal::AuthenticationError
       end
-      unless active_team?(@team)
+      unless in_game?(@team)
         session.clear
         raise Isucon5Portal::AuthenticationError
       end
+      @team[:ipaddresses] = JSON.parse(@team[:ipaddrs])
       @team
     end
 
@@ -149,14 +149,14 @@ SQL
   end
 
   post '/login' do
-    authenticate params['email'], params['password']
+    authenticate params['account'], params['password']
     redirect '/'
   end
 
   get '/' do
     authenticated!
     team = current_team()
-    erb :index, locals: {enable_actions: true, team_id: team[:id], team_name: team[:team]}
+    erb :index, locals: {enable_actions: true, team_id: team[:id], team_name: team[:team], guest_priv: is_guest?(team), super_priv: is_organizer?(team)}
   end
 
   get '/messages' do
@@ -170,85 +170,49 @@ SQL
 
   get '/team' do
     authenticated!
+    halt 403 if is_guest?(curren_team)
     team = current_team()
     data = {
       enable_actions: false,
       team_id: team[:id],
       team: team[:team],
-      email: team[:email],
-      round: team[:round],
-      project_id: team[:project_id],
-      zone_name: team[:zone_name],
-      instance_name: team[:instance_name]
+      account: team[:account],
+      destination: team[:destination],
+      ipaddrs: team[:ipaddrs],
     }
     erb :team, locals: data
   end
 
   post '/team' do
     authenticated!
+    halt 403 if is_guest?(curren_team)
     query = <<SQL
-UPDATE teams SET project_id=?, zone_name=?, instance_name=? WHERE id=?
+UPDATE teams SET destination=? WHERE id=?
 SQL
-    db.xquery(query, params[:project_id].strip, params[:zone_name].strip, params[:instance_name].strip, session[:team_id])
+    db.xquery(query, params[:destination].strip, session[:team_id])
     redirect '/'
-  end
-
-  get '/project_check' do
-    authenticated!
-    team = current_team()
-
-    if $gcp_team_cache[team[:id]] && $gcp_team_cache[team[:id]][:expire] < Time.now
-      return json($gcp_team_cache[team[:id]][:value])
-    end
-
-    unless team[:project_id] && team[:zone_name] && team[:instance_name]
-      return json({valid: false, messages: ["GCEインスタンス情報が未登録です"]})
-    end
-    serverInfo = Isucon5Portal::GCloud.server_info(team[:project_id], team[:zone_name], team[:instance_name])
-
-    unless serverInfo
-      value = {
-        valid: false,
-        messages: ["GCEインスタンス情報を正常に取得できません: ProjectId, Zone名, インスタンス名を確認してください", "主催者アカウントがプロジェクトに参加しているか確認してください"]
-      }
-      $gcp_team_cache[team[:id]] = {expire: Time.now + 300, value: value}
-      return json(value)
-    end
-    cautions = Isucon5Portal::GCloud.check_server_info(serverInfo)
-    if cautions.size > 0
-      value = {valid: false, messages: cautions}
-      $gcp_team_cache[team[:id]] = {expire: Time.now + 300, value: value}
-      return json(value)
-    end
-    ipaddr = Isucon5Portal::GCloud.valid_ip_address(team[:project_id], team[:zone_name], team[:instance_name])
-    value = {
-      valid: true,
-      ipaddress: ipaddr,
-      message: "IP Address:" + ipaddr,
-    }
-    $gcp_team_cache[team[:id]] = {expire: Time.now + 300, value: value}
-    json(value)
   end
 
   post '/enqueue' do
     authenticated!
+    halt 403 if is_guest?(curren_team)
 
     team = current_team()
 
-    unless in_game?(team)
+    if ! in_game?(team) && ! is_organizer?(team)
       return json({valid: false, message: "開始時刻まで待ってネ"})
     end
 
+    ####################
+    # TODO: for organizer enqueuing
     query = "SELECT COUNT(1) AS c FROM queue WHERE team_id=? AND status IN ('waiting','running')"
     existing = db.xquery(query, current_team[:id]).first[:c]
     if existing > 0 && team[:round] != 0
       return json({valid: false, message: "既にリクエスト済みです"})
     end
 
+    # TODO: see team[:destination]
     ip_address = params[:ip_address]
-    if ip_address.nil? || ip_address.empty?
-      ip_address = Isucon5Portal::GCloud.valid_ip_address(team[:project_id], team[:zone_name], team[:instance_name])
-    end
     if ip_address.nil? || ip_address.empty?
       return json({valid: false, message: "IPアドレスが取得できません"})
     end
@@ -260,12 +224,14 @@ SQL
     testset_id = testset_ids[rand(testset_ids.size)]
 
     db.xquery("INSERT INTO queue (team_id,status,ip_address,testset_id) VALUES (?,'waiting',?,?)", team[:id], ip_address, testset_id)
+    ####################
 
     json({valid: true, message: "ベンチマークリクエストをキューに投入しました"})
   end
 
   get '/bench_detail/:id' do
     authenticated!
+    halt 403 if is_guest?(curren_team)
     query = "SELECT id, team_id, summary, score, submitted_at, json FROM scores WHERE id=? AND team_id=?"
     data = db.xquery(query, params[:id], current_team[:id]).first()
     detail = JSON.parse(data[:json]) rescue nil
@@ -279,6 +245,8 @@ SQL
 
   get '/history' do
     authenticated!
+    halt 403 if is_guest?(curren_team)
+
     query = "SELECT id, summary, score, submitted_at FROM scores WHERE team_id = ? ORDER BY submitted_at DESC"
     json(db.xquery(query, current_team[:id]).map{|row| { id: row[:id], team_id: current_team[:id], success: (row[:summary] == 'success'), score: row[:score], submitted_at: row[:submitted_at].strftime("%H:%M:%S") } })
   end
@@ -298,11 +266,13 @@ SQL
 
   get '/leader_board' do
     authenticated!
-    # latest top 10 + highscore top 10 + your team
 
     if $leader_board && $leader_board_at && Time.now < $leader_board_at + IN_PROCESS_CACHE_TIMEOUT
       return json($leader_board)
     end
+
+    ##########
+
 
     current_round = in_game_round_number(current_team)
 

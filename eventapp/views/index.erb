@@ -13,17 +13,33 @@
 
 <div style="padding-top: 4em;"></div>
 
+<% unless guest_priv %>
+
 <div id="command" class="panel panel-default">
   <div class="panel-heading"><h5>Request benchmark</h5></div>
   <div class="panel-body">
     <form class="form-inline">
       <div class="form-group">
-        <label class="sr-only" for="inputIPAddress">IP Address</label>
+        <label class="sr-only" for="inputIPAddress">Benchmark Target</label>
         <div class="input-group">
           <div class="input-group-addon">IP</div>
-          <input type="text" class="form-control" id="inputIPAddress" size="30" placeholder="インスタンス登録があれば不要" />
+          <input type="text" class="form-control" id="inputIPAddress" size="30" placeholder="IPアドレス登録してあれば不要" />
         </div>
       </div>
+      <% if super_priv %>
+      <div class="form-group">
+        <label class="sr-only" for="inputTeamID">実行対象</label>
+        <div class="input-group">
+          <div class="input-group-addon">Team ID</div>
+          <select id="inputTeamID">
+            <option value="none">ログインチーム</option>
+              <% (1..28).each do |id| %>
+            <option>team<%= sprintf("%02d", id) %></option>
+              <% end %>
+          </select>
+        </div>
+      </div>
+      <% end %>
       <button id="enqueue-request" type="submit" class="btn btn-primary">Enqueue</button>
       <div class="form-group" id="instance-status-check">
       </div>
@@ -31,6 +47,9 @@
   </div>
 </div>
 
+<% end %>
+
+<% unless guest_priv %>
 <div class="page-header">
   <h2>Score History</h2>
 </div>
@@ -39,6 +58,7 @@
     <tr id="history-header"><th>timestamp</th><th style="text-align:right;">score</th><th></th></tr>
   </table>
 </div>
+<% end %>
 
 <div class="page-header">
   <h2>Latest Top 20</h2>
@@ -53,6 +73,8 @@
     </tr>
   </table>
 </div>
+
+<% unless guest_priv %>
 
 <div class="modal fade" id="enqueue-request-result">
   <div class="modal-dialog">
@@ -110,6 +132,8 @@
     </div>
   </div>
 </div>
+
+<% end %>
 
 <div id="item_box" style="display: none;">
   <!-- into div#messages -->

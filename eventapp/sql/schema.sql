@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS teams (
   `team` varchar(128) NOT NULL UNIQUE,
   `password` varchar(32) NOT NULL,
   `account` varchar(128) NOT NULL UNIQUE,
-  `priv` int NOT NULL -- 0:organizer, 1:teams, 2:audience
+  `priv` int NOT NULL, -- 0:organizer, 1:teams, 2:audience
+  `destination` varchar(32) DEFAULT NULL,
+  `ipaddrs` text DEFAULT NULL
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS queue (

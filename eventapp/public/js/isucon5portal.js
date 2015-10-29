@@ -2,30 +2,41 @@ var ISUCON5_UPDATE_MESSAGE_INTERVAL = 120 * 1000;
 var ISUCON5_UPDATE_QUEUE_INTERVAL = 20 * 1000;
 var ISUCON5_UPDATE_HISTORY_INTERVAL = 10 * 1000;
 var ISUCON5_UPDATE_LEADER_BOARD_INTERVAL = 120 * 1000;
-// var ISUCON5_UPDATE_PROJECT_CHECK_INTERVAL = 600 * 1000;
 
-// my_team_id MUST be set in html
+// my_team_id: set in html
 
 $(function(){
   updateMessage();
-  updateQueue();
-  updateHistory();
   updateLeaderBoard();
-  updateProjectCheck();
 
-  $("button#enqueue-request").click(requestEnqueue);
-  $("button.show-bench-detail").click(showBenchDetail);
+  if (my_team_id >= 0) { // non-guest
 
-  setInterval(updateMessage, ISUCON5_UPDATE_MESSAGE_INTERVAL);
-  setInterval(updateQueue,   ISUCON5_UPDATE_QUEUE_INTERVAL);
-  setInterval(updateHistory, ISUCON5_UPDATE_HISTORY_INTERVAL);
-  setInterval(updateLeaderBoard, ISUCON5_UPDATE_LEADER_BOARD_INTERVAL);
-  // setInterval(updateProjectCheck, ISUCON5_UPDATE_PROJECT_CHECK_INTERVAL);
+    updateQueue();
+    updateHistory();
+
+    $("button#enqueue-request").click(requestEnqueue);
+    $("button.show-bench-detail").click(showBenchDetail);
+
+    setInterval(updateMessage, ISUCON5_UPDATE_MESSAGE_INTERVAL);
+    setInterval(updateQueue,   ISUCON5_UPDATE_QUEUE_INTERVAL);
+    setInterval(updateHistory, ISUCON5_UPDATE_HISTORY_INTERVAL);
+    setInterval(updateLeaderBoard, ISUCON5_UPDATE_LEADER_BOARD_INTERVAL);
+
+  } else { // guest
+
+    setInterval(updateMessage, ISUCON5_UPDATE_MESSAGE_INTERVAL);
+    setInterval(updateLeaderBoard, ISUCON5_UPDATE_LEADER_BOARD_INTERVAL);
+  }
+
 });
 
 function requestEnqueue(event){
   event.preventDefault();
-  $.post("/enqueue", {ip_address: $("input#inputIPAddress").val()}, function(data){
+  var data = {ip_address: $("input#inputIPAddress").val()};
+  if ($("select#inputTeamID").size() > 0 && $("select#inputTeamID").val() !== "none") {
+    data.team_id = $("select#inputTeamID").val();
+  }
+  $.post("/enqueue", data, function(data){
     $("#enqueue-request-result .modal-dialog .modal-content .modal-body #result-message").text(data.message);
     $("#enqueue-request-result").modal();
   });
@@ -121,23 +132,5 @@ function updateLeaderBoard(){
       item.find("td.bench-best").text(row.best);
       $("#leader-board table#leader-board-table").append(item);
     });
-  });
-}
-
-function updateProjectCheck(){
-  $.get("/project_check", function(data){
-    console.log(data);
-    $("#instance-status-check").html("");
-    var base = $("#item_box #item-box-instance-check .check-success").clone();
-    if (! data.valid) {
-      base = $("#item_box #item-box-instance-check .check-fail").clone();
-    }
-    if (data.messages != null && data.messages.length > 0) {
-      data.messages.forEach(function(m){
-        var item = base.clone();
-        item.find("span").text(m);
-        $("#instance-status-check").append(item);
-      });
-    }
   });
 }

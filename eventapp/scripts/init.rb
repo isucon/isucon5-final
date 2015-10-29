@@ -11,15 +11,6 @@ client = Mysql2::Client.new(
 )
 client.query_options.merge!(symbolize_keys: true)
 
-# CREATE TABLE IF NOT EXISTS messages (
-#   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-#   -- http://getbootstrap.com/components/#alerts
-#   `priority` varchar(16) DEFAULT 'alert-info', -- 'alert-success', 'alert-info', 'alert-warning', 'alert-danger'
-#   `content` TEXT NOT NULL,
-#   `show_at` timestamp NOT NULL,
-#   `hide_at` timestamp NOT NULL
-# ) DEFAULT CHARSET=utf8mb4;
-
 # TODO: for first message
 MESSAGES = [
   # { priority: 'alert-info', content: '', show_at: '', hide_at: '' },
