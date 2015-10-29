@@ -6,16 +6,11 @@ import java.sql._
 import java.time.format.DateTimeFormatter
 import java.util.{Calendar, TimeZone}
 
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.native.JsonMethods._
 import org.slf4j.LoggerFactory
-import skinny.micro._
 import skinny.micro.WebApp
 import skinny.micro.contrib.ScalateSupport
 import xerial.core.util.Shell
 
-import scala.Option
 import scala.io.Source
 import scala.util.Random
 import scala.util.parsing.json.{JSONArray, JSONObject}
@@ -29,7 +24,7 @@ object Grade {
   case object Premium extends Grade
 
   private val table = Seq(Micro, Small, Standard, Premium).map(v => v.toString.toLowerCase() -> v).toMap
-  def fromName(name:String) : Grade = table(name)
+  def fromName(name: String): Grade = table(name)
 }
 
 sealed trait TokenType
@@ -37,13 +32,14 @@ object TokenType {
   case object Header extends TokenType
   case object Param extends TokenType
 }
-case class User(id:Int, email:String, salt:String, grade:Grade) {
-  def this(rs:ResultSet) = this(rs.getInt("id"), rs.getString("email"), rs.getString("salt"), Grade.fromName(rs.getString("grade")))
+case class User(id: Int, email: String, grade: Grade) {
+  def this(rs: ResultSet) = this(rs.getInt("id"), rs.getString("email"), Grade.fromName(rs.getString("grade")))
 }
-case class Endpoint(service:String, meth:String, tokenType:String, tokenKey:String, uri:String) {
-  def this(rs:ResultSet) = this(rs.getString("service"), rs.getString("meth"), rs.getString("token_type"), rs.getString("token_key"), rs.getString("uri"))
+case class Endpoint(service: String, meth: String, tokenType: String, tokenKey: String, uri: String) {
+  def this(rs: ResultSet) = this(rs.getString("service"), rs.getString("meth"), rs.getString("token_type"), rs.getString("token_key"), rs
+                                                                                                                                       .getString("uri"))
 }
-case class Subscription(userId:Int, arg:String)
+case class Subscription(userId: Int, arg: String)
 
 /**
  *
@@ -59,8 +55,8 @@ object Isucon5 extends WebApp with ScalateSupport {
     val cal = Calendar.getInstance(TimeZone.getDefault)
     val df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
-    private implicit class RichResultSet(rs:ResultSet) {
-      def getLocalDateTime(colName:String) = rs.getTimestamp(colName, cal).toLocalDateTime
+    private implicit class RichResultSet(rs: ResultSet) {
+      def getLocalDateTime(colName: String) = rs.getTimestamp(colName, cal).toLocalDateTime
     }
 
     // database configuration
@@ -84,7 +80,7 @@ object Isucon5 extends WebApp with ScalateSupport {
     lazy val dbConfig: DBConfig = DBConfig(
       host = env.getOrDefault("ISUCON5_DB_HOST", "localhost"),
       port = env.getOrDefault("ISUCON5_DB_PORT", "5432").toInt,
-      user = env.getOrDefault("ISUCON5_DB_USER", "root"),
+      user = env.getOrDefault("ISUCON5_DB_USER", "isucon"),
       password = Option(System.getenv.get("ISUCON5_DB_PASSWORD")),
       name = env.getOrDefault("ISUCON5_DB_HOST", "isucon5f"),
       jdbcDriverName = "org.postgresql.Driver",
@@ -121,13 +117,13 @@ object Isucon5 extends WebApp with ScalateSupport {
     private def executeSQL[A](sql: String, args: Any*)(handler: PreparedStatement => A): A = {
       Class.forName(dbConfig.jdbcDriverName)
       withResource(DriverManager.getConnection(dbConfig.jdbcUrl)) { conn =>
-        conn.executePrep(sql, args)(handler)
+        conn.executePrep(sql, args:_*)(handler)
       }
     }
 
-    implicit class RichConnection(conn:Connection) {
+    implicit class RichConnection(conn: Connection) {
       def execute[A](sql: String, args: Any*) {
-        executePrep(sql, args)(_.execute())
+        executePrep(sql, args:_*)(_.execute())
       }
 
       def executePrep[A](sql: String, args: Any*)(handler: PreparedStatement => A): A = {
@@ -140,7 +136,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         }
       }
       def executeQuery[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
-        executePrep(sql, args){ st =>
+        executePrep(sql, args) { st =>
           val rs = st.executeQuery()
           val b = Seq.newBuilder[A]
           while (rs.next()) {
@@ -150,7 +146,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         }
       }
       def executeUpdate[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
-        executePrep(sql, args){ st =>
+        executePrep(sql, args) { st =>
           st.executeUpdate()
           val b = Seq.newBuilder[A]
           val rs = st.getResultSet
@@ -163,7 +159,7 @@ object Isucon5 extends WebApp with ScalateSupport {
 
     }
 
-    def transaction[U](body: Connection => U) : U  = {
+    def transaction[U](body: Connection => U): U = {
       Class.forName(dbConfig.jdbcDriverName)
       withResource(DriverManager.getConnection(dbConfig.jdbcUrl)) { conn =>
         try {
@@ -173,7 +169,7 @@ object Isucon5 extends WebApp with ScalateSupport {
           ret
         }
         catch {
-          case e:SQLException =>
+          case e: SQLException =>
             conn.rollback()
             throw e
         }
@@ -199,20 +195,18 @@ object Isucon5 extends WebApp with ScalateSupport {
     }
   }
 
-  private def getCurrentUser = {
-    executeQuery(
-      "SELECT id,email,grade FROM users WHERE id=?", session.getAttribute("user_id"))(new User(_)).headOption match {
-      case Some(u) => u
+  private def ensureLogin[U](onSuccess: User => U) : U = {
+    session.get("user_id") match {
+      case Some(userId) =>
+        executeQuery("SELECT id,email,grade FROM users WHERE id=?", userId)(new User(_))
+        .headOption match {
+          case Some(u) =>
+            onSuccess(u)
+          case None =>
+            throw PermissionDenied
+        }
       case None =>
-        session.remove("user_id")
         throw PermissionDenied
-    }
-  }
-
-  private def ensureLogin[U](onSuccess: User => U) : Any = {
-    session.getAs[User]("user") match {
-      case Some(u:User) => onSuccess(u)
-      case None => redirect302("/login")
     }
   }
 
@@ -227,7 +221,7 @@ object Isucon5 extends WebApp with ScalateSupport {
       ssp("/login.ssp")
     case PermissionDenied =>
       status = 403
-      ssp("/")
+      ssp("/login.ssp")
   }
 
 
@@ -250,7 +244,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         |INSERT INTO subscriptions (user_id,arg) VALUES (?,?)
       """.stripMargin
     transaction { conn =>
-      val userId = conn.executeUpdate(insertUserQuery, email, salt, salt, password, grade){ rs: ResultSet =>
+      val userId = conn.executeUpdate(insertUserQuery, email, salt, salt, password, grade) { rs: ResultSet =>
         rs.getInt(1)
       }.head
       conn.execute(insertSubscriptionQuery, userId, "{}")
@@ -292,7 +286,7 @@ object Isucon5 extends WebApp with ScalateSupport {
   get("/modify") {
     ensureLogin { u =>
       val arg = executeQuery("SELECT arg FROM subscriptions WHERE user_id=?", u.id)(rs => rs.getString("arg")).headOption
-      ssp("modify.ssp", "user"->u, "arg"->arg.getOrElse(null))
+      ssp("modify.ssp", "user" -> u, "arg" -> arg.getOrElse(null))
     }
   }
 
@@ -307,10 +301,10 @@ object Isucon5 extends WebApp with ScalateSupport {
     m
   }
 
-  private def merge(a:Any, b:Any): Any = {
+  private def merge(a: Any, b: Any): Any = {
     (a, b) match {
-      case (m1:Map[String,Any], m2:Map[String,Any]) =>
-        val m = for(k <- (m1.keySet ++ m2.keySet)) yield k -> merge(m1.get(k), m2.get(k))
+      case (m1: Map[String, Any], m2: Map[String, Any]) =>
+        val m = for (k <- (m1.keySet ++ m2.keySet)) yield k -> merge(m1.get(k), m2.get(k))
         m.toMap[String, Any]
       case (Some(e1), Some(e2)) => merge(e1, e2)
       case (Some(e1), None) => e1
@@ -334,7 +328,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         val service = Map.newBuilder[String, Any]
         token.map(service += "token" -> _)
         keys.map(service += "keys" -> _)
-        for(pn <- paramName; pv <- paramValue) {
+        for (pn <- paramName; pv <- paramValue) {
           service += "params" -> (pn -> pv)
         }
         val updated = merge(arg, Map("service" -> service.result)).asInstanceOf[Map[String, Any]]
@@ -344,10 +338,11 @@ object Isucon5 extends WebApp with ScalateSupport {
     }
   }
 
-  def fetchApi(method:String, uri:String, headers:Map[String, Any], params:Map[String, Any]): Map[String, Any] = {
-    val conn = new URI(s"${uri}?${params.map{case (k,v) => s"$k=$v"}.mkString("&")}").toURL.openConnection().asInstanceOf[HttpURLConnection]
+  def fetchApi(method: String, uri: String, headers: Map[String, Any], params: Map[String, Any]): Map[String, Any] = {
+    val conn = new URI(s"${uri}?${params.map { case (k, v) => s"$k=$v" }.mkString("&")}").toURL.openConnection()
+               .asInstanceOf[HttpURLConnection]
     conn.setRequestMethod(method)
-    headers.map{case (k, v) => conn.setRequestProperty(k, v.toString)}
+    headers.map { case (k, v) => conn.setRequestProperty(k, v.toString) }
     val response = withResource(new BufferedInputStream(conn.getInputStream)) { in =>
       Source.fromInputStream(in).mkString
     }
@@ -359,9 +354,10 @@ object Isucon5 extends WebApp with ScalateSupport {
       val argJson = executeQuery("SELECT arg FROM subscriptions WHERE user_id=?", u.id)(_.getString("arg"))
                     .headOption.getOrElse("{}")
       val arg = mapper.readValue[Map[String, Any]](argJson)
-      val data = for((service, confObj) <- arg) yield {
+      val data = for ((service, confObj) <- arg) yield {
         val conf = confObj.asInstanceOf[Map[String, Any]]
-        val ep : Endpoint = executeQuery("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=?", service)(new Endpoint(_)).head
+        val ep: Endpoint = executeQuery("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=?", service)(new Endpoint(_))
+                           .head
         val headers = Map.newBuilder[String, Any]
         val params = Map.newBuilder[String, Any]
         conf.get("params").map(params ++= _.asInstanceOf[Map[String, Any]])
@@ -370,7 +366,7 @@ object Isucon5 extends WebApp with ScalateSupport {
           case "header" => headers += ep.tokenKey -> token
           case "param" => params += ep.tokenKey -> token
         }
-        Map("service"->ep.service, "data" -> fetchApi(ep.meth, ep.uri, headers.result, params.result))
+        Map("service" -> ep.service, "data" -> fetchApi(ep.meth, ep.uri, headers.result, params.result))
       }
 
       contentType = "application/json"
@@ -380,11 +376,12 @@ object Isucon5 extends WebApp with ScalateSupport {
   }
 
   get("/initialize") {
-    Shell.exec("psql -f ../../sql/initialize.sql isucon5f")
+    val ret = Shell.exec("psql -f ../sql/initialize.sql isucon5f")
+    response.writer.write(ret)
   }
 
-  private val SALT_CHARS : String = Seq('a' to 'z', 'A' to 'Z', '0' to '9').flatten.mkString
-  private def generateSalt : String = {
+  private val SALT_CHARS: String = Seq('a' to 'z', 'A' to 'Z', '0' to '9').flatten.mkString
+  private def generateSalt: String = {
     (0 until 32).map(i => SALT_CHARS.charAt(Random.nextInt(SALT_CHARS.size))).mkString
   }
 
