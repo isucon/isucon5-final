@@ -2,9 +2,12 @@ package isucon5
 
 import java.io.BufferedInputStream
 import java.net.{HttpURLConnection, URI}
-import java.sql._
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
+import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet, SQLException}
 import java.time.format.DateTimeFormatter
 import java.util.{Calendar, TimeZone}
+import javax.net.ssl._
 
 import org.slf4j.LoggerFactory
 import skinny.micro.WebApp
@@ -338,9 +341,32 @@ object Isucon5 extends WebApp with ScalateSupport {
     }
   }
 
+  private val trustManager : Array[TrustManager] = Array(
+    new X509TrustManager() {
+      override def getAcceptedIssuers: Array[X509Certificate] = null
+      override def checkClientTrusted(x509Certificates: Array[X509Certificate], s: String): Unit = {}
+      override def checkServerTrusted(x509Certificates: Array[X509Certificate], s: String): Unit = {}
+    }
+  )
+  private val unsafeSSLSocketFactory = {
+    val sc = SSLContext.getInstance("SSL")
+    sc.init(null, trustManager, new SecureRandom())
+    sc.getSocketFactory
+  }
+  private val unsafeHostnameVarifier = new HostnameVerifier {
+    override def verify(s: String, sslSession: SSLSession): Boolean = true
+  }
+
   def fetchApi(method: String, uri: String, headers: Map[String, Any], params: Map[String, Any]): Map[String, Any] = {
-    val conn = new URI(s"${uri}?${params.map { case (k, v) => s"$k=$v" }.mkString("&")}").toURL.openConnection()
-               .asInstanceOf[HttpURLConnection]
+    val c = new URI(s"${uri}?${params.map { case (k, v) => s"$k=$v" }.mkString("&")}").toURL.openConnection()
+    val conn : HttpURLConnection = c match {
+      case hs:HttpsURLConnection =>
+        hs.setSSLSocketFactory(unsafeSSLSocketFactory)
+        hs.setHostnameVerifier(unsafeHostnameVarifier)
+        hs
+      case h:HttpURLConnection => h
+    }
+
     conn.setRequestMethod(method)
     headers.map { case (k, v) => conn.setRequestProperty(k, v.toString) }
     val response = withResource(new BufferedInputStream(conn.getInputStream)) { in =>
