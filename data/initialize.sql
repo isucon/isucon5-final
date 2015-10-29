@@ -1,3 +1,15 @@
+TRUNCATE endpoints;
+
+INSERT INTO endpoints (service, meth, token_type, token_key, uri)
+VALUES
+('ken', 'GET', NULL, NULL, 'http://api.five-final.isucon.net:8080/%s'),
+('ken2', 'GET', NULL, NULL, 'http://api.five-final.isucon.net:8080/'),
+('surname', 'GET', NULL, NULL, 'http://api.five-final.isucon.net:8081/surname'),
+('givenname', 'GET', NULL, NULL, 'http://api.five-final.isucon.net:8081/givenname'),
+('tenki', 'GET', 'param', 'zipcode', 'http://api.five-final.isucon.net:8988/'),
+('perfectsec', 'GET', 'header', 'X-PERFECT-SECURITY-TOKEN', 'https://api.five-final.isucon.net:8443/tokens'),
+('perfectsec_attacked', 'GET', 'header', 'X-PERFECT-SECURITY-TOKEN', 'https://api.five-final.isucon.net:8443/attacked_list');
+
 TRUNCATE users, subscriptions;
 
 INSERT INTO users (id, email, salt, passhash, grade) VALUES
