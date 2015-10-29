@@ -25,7 +25,6 @@
 - hosts: bench
   gather_facts: no
   tasks:
-    - copy: src=../files/env.bench.sh dest=/home/isucon/env.bench.sh owner=isucon mode=644
     - apt: name=supervisor state=present
     # - name: ruby agent 1
     #   copy: src=../files/supervisor.agent1.conf dest=/etc/supervisor/conf.d/agent1.conf owner=root mode=644

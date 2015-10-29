@@ -49,3 +49,4 @@
     - apt: name=ca-certificates
     - apt: name=oracle-java8-set-default
     - apt: name=gradle
+    - file: src=/usr/lib/jvm/java-8-oracle dest=/usr/lib/jvm/default-java owner=root state=link
