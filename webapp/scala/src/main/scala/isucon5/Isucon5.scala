@@ -1,18 +1,24 @@
 package isucon5
 
+import java.io.BufferedInputStream
+import java.net.{HttpURLConnection, URI}
 import java.sql._
 import java.time.format.DateTimeFormatter
 import java.util.{Calendar, TimeZone}
 
 import org.json4s._
+import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 import org.slf4j.LoggerFactory
-import skinny.micro.Format.JSON
 import skinny.micro._
 import skinny.micro.WebApp
 import skinny.micro.contrib.ScalateSupport
+import xerial.core.util.Shell
 
+import scala.Option
+import scala.io.Source
 import scala.util.Random
+import scala.util.parsing.json.{JSONArray, JSONObject}
 
 
 sealed trait Grade
@@ -31,7 +37,7 @@ object TokenType {
   case object Header extends TokenType
   case object Param extends TokenType
 }
-case class User(id:Int, email:String, salt:String, passhash:Array[Byte], grade:Grade) {
+case class User(id:Int, email:String, salt:String, grade:Grade) {
   def this(rs:ResultSet) = this(rs.getInt("id"), rs.getString("email"), rs.getString("salt"), Grade.fromName(rs.getString("grade")))
 }
 case class Endpoint(service:String, meth:String, tokenType:String, tokenKey:String, uri:String) {
@@ -193,7 +199,7 @@ object Isucon5 extends WebApp with ScalateSupport {
     }
   }
 
-  private def getCurrentUser: Option[User] = {
+  private def getCurrentUser = {
     executeQuery(
       "SELECT id,email,grade FROM users WHERE id=?", session.getAttribute("user_id"))(new User(_)).headOption match {
       case Some(u) => u
@@ -290,6 +296,29 @@ object Isucon5 extends WebApp with ScalateSupport {
     }
   }
 
+  import com.fasterxml.jackson.databind.ObjectMapper
+  import com.fasterxml.jackson.module.scala.DefaultScalaModule
+  import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
+
+  // JSON parser
+  private val mapper = {
+    val m = new ObjectMapper() with ScalaObjectMapper
+    m.registerModule(DefaultScalaModule)
+    m
+  }
+
+  private def merge(a:Any, b:Any): Any = {
+    (a, b) match {
+      case (m1:Map[String,Any], m2:Map[String,Any]) =>
+        val m = for(k <- (m1.keySet ++ m2.keySet)) yield k -> merge(m1.get(k), m2.get(k))
+        m.toMap[String, Any]
+      case (Some(e1), Some(e2)) => merge(e1, e2)
+      case (Some(e1), None) => e1
+      case (None, Some(e2)) => e2
+      case _ => b
+    }
+  }
+
   post("/modify") {
     ensureLogin { u =>
       val service = params("service")
@@ -301,41 +330,62 @@ object Isucon5 extends WebApp with ScalateSupport {
       val updateQuery = "UPDATE subscriptions SET arg=? WHERE user_id=?"
       transaction { conn =>
         val argJson = conn.executeQuery(selectQuery, u.id)(_.getString("arg")).head
-        val arg = parse(argJson)
-        //arg(service) =
-
-       //conn.execute(updateQuery, arg.toJson, u.id)
+        val arg = mapper.readValue[Map[String, Any]](argJson)
+        val service = Map.newBuilder[String, Any]
+        token.map(service += "token" -> _)
+        keys.map(service += "keys" -> _)
+        for(pn <- paramName; pv <- paramValue) {
+          service += "params" -> (pn -> pv)
+        }
+        val updated = merge(arg, Map("service" -> service.result)).asInstanceOf[Map[String, Any]]
+        conn.execute(updateQuery, JSONObject(updated).toString(), u.id)
       }
       redirect("/modify")
     }
   }
 
-  def fetchApi(method:String, uri:String, headers:Map[String, String], params:Map[String, String]): Unit = {
-    if(uri.startsWith("https://"))
-
+  def fetchApi(method:String, uri:String, headers:Map[String, Any], params:Map[String, Any]): Map[String, Any] = {
+    val conn = new URI(s"${uri}?${params.map{case (k,v) => s"$k=$v"}.mkString("&")}").toURL.openConnection().asInstanceOf[HttpURLConnection]
+    conn.setRequestMethod(method)
+    headers.map{case (k, v) => conn.setRequestProperty(k, v.toString)}
+    val response = withResource(new BufferedInputStream(conn.getInputStream)) { in =>
+      Source.fromInputStream(in).mkString
+    }
+    mapper.readValue[Map[String, Any]](response)
   }
-
 
   get("/data") {
     ensureLogin { u =>
       val argJson = executeQuery("SELECT arg FROM subscriptions WHERE user_id=?", u.id)(_.getString("arg"))
                     .headOption.getOrElse("{}")
-      val arg = parse(argJson)
-      val data = for((service, conf) <- arg) yield {
+      val arg = mapper.readValue[Map[String, Any]](argJson)
+      val data = for((service, confObj) <- arg) yield {
+        val conf = confObj.asInstanceOf[Map[String, Any]]
         val ep : Endpoint = executeQuery("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=?", service)(new Endpoint(_)).head
-        Map("service"->ep.service, "data" -> fetchApi(ep.meth, ep.uri, Map(), Map()))
+        val headers = Map.newBuilder[String, Any]
+        val params = Map.newBuilder[String, Any]
+        conf.get("params").map(params ++= _.asInstanceOf[Map[String, Any]])
+        val token = conf("token")
+        ep.tokenType match {
+          case "header" => headers += ep.tokenKey -> token
+          case "param" => params += ep.tokenKey -> token
+        }
+        Map("service"->ep.service, "data" -> fetchApi(ep.meth, ep.uri, headers.result, params.result))
       }
 
       contentType = "application/json"
       // data to json
+      response.writer.print(JSONArray(data.toList).toString())
     }
   }
 
+  get("/initialize") {
+    Shell.exec("psql -f ../../sql/initialize.sql isucon5f")
+  }
 
-
-  private val SALT_CHARS = Seq('a' to 'z', 'A' to 'Z', '0' to '9').flatten.mkString
+  private val SALT_CHARS : String = Seq('a' to 'z', 'A' to 'Z', '0' to '9').flatten.mkString
   private def generateSalt : String = {
-    (0 until 32).map(i => SALT_CHARS(Random.nextInt(SALT_CHARS.size))).mkString
+    (0 until 32).map(i => SALT_CHARS.charAt(Random.nextInt(SALT_CHARS.size))).mkString
   }
 
 }

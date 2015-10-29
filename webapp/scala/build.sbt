@@ -31,6 +31,8 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.1.3",
   "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
   "org.json4s" %% "json4s-native" % "3.3.0",
+  "org.xerial" % "xerial-core" %  "3.3.8",
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.6.1",
   "com.github.nscala-time" %% "nscala-time" % "2.2.0"
 )
 
