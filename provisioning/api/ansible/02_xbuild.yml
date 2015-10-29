@@ -48,3 +48,4 @@
     - apt: name=oracle-java8-installer update_cache=yes
     - apt: name=ca-certificates
     - apt: name=oracle-java8-set-default
+    - apt: name=gradle
