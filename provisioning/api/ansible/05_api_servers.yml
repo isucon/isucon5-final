@@ -23,10 +23,10 @@
       args:
         chdir: /home/isucon/isucon5-final/api/perfect_security
 
-    - name: Search Name API
-      shell: gradle wrapper
-      args:
-        chdir: /home/isucon/isucon5-final/api/search-name
+    #- name: Search Name API
+    #  shell: gradle wrapper
+    #  args:
+    #    chdir: /home/isucon/isucon5-final/api/search-name
 
     - name: Tenki API
       shell: PATH=/home/isucon/.local/go/bin:$PATH GOPATH=/home/isucon/isucon5-final/api/go go build
@@ -48,9 +48,9 @@
     - supervisorctl: name=ken state=present
     - supervisorctl: name=ken state=restarted
 
-    - copy: src=../files/supervisor.search-name.conf dest=/etc/supervisor/conf.d/search-name.conf
-    - supervisorctl: name=ken state=present
-    - supervisorctl: name=ken state=restarted
+    #- copy: src=../files/supervisor.search-name.conf dest=/etc/supervisor/conf.d/search-name.conf
+    #- supervisorctl: name=ken state=present
+    #- supervisorctl: name=ken state=restarted
 
     - copy: src=../files/supervisor.tenki.conf dest=/etc/supervisor/conf.d/tenki.conf
     - supervisorctl: name=ken state=present
