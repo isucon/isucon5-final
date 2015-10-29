@@ -4,23 +4,34 @@
   sudo: yes
   sudo_user: isucon
   tasks:
+    - file: path=/home/isucon/.ssh state=directory owner=isucon mode=755
+    - copy: src=../keys/deploy_id_rsa dest=/home/isucon/.ssh/deploy_id_rsa owner=isucon mode=600
     - git:
-        repo=https://github.com/isucon/isucon5-qualify.git
-        dest=/home/isucon/isucon5-qualify
+        repo=git@github.com:tagomoris/isucon5-final.git
+        dest=/home/isucon/isucon5-final
+        key_file=/home/isucon/.ssh/deploy_id_rsa
+        accept_hostkey=yes
+    - copy: src=../files/env.sh dest=/home/isucon/env.sh owner=isucon mode=755
     - name: ruby
       shell: PATH=/home/isucon/.local/ruby/bin:$PATH bundle install
       args:
-        chdir: /home/isucon/isucon5-qualify/bench
+        chdir: /home/isucon/isucon5-final/bench
     - name: java build
-      shell: JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 gradle compileJava
+      # shell: JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 gradle compileJava
+      shell: gradle compileJava
       args:
-        chdir: /home/isucon/isucon5-qualify/bench
+        chdir: /home/isucon/isucon5-final/bench
 
 - hosts: bench
   gather_facts: no
   tasks:
     - copy: src=../files/env.bench.sh dest=/home/isucon/env.bench.sh owner=isucon mode=644
-    - name: ruby (systemd)
-      copy: src=../files/systemd.ruby.service dest=/etc/systemd/system/agent.ruby.service owner=root mode=644
-    - name: default application selection
-      service: name=agent.ruby state=running enabled=true
+    - apt: name=supervisor state=present
+    # - name: ruby agent 1
+    #   copy: src=../files/supervisor.agent1.conf dest=/etc/supervisor/conf.d/agent1.conf owner=root mode=644
+    # - supervisorctl: name=agent1 state=present
+    # - supervisorctl: name=agent1 state=restarted
+    # - name: ruby agent 2
+    #   copy: src=../files/supervisor.agent2.conf dest=/etc/supervisor/conf.d/agent2.conf owner=root mode=644
+    # - supervisorctl: name=agent2 state=present
+    # - supervisorctl: name=agent2 state=restarted
