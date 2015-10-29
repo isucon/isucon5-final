@@ -18,12 +18,10 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
-	"runtime/debug"
+	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
-	"regexp"
-	"path/filepath"
 )
 
 var (
@@ -51,26 +49,6 @@ type Data struct {
 }
 
 var saltChars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
-func myHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			rcv := recover()
-			if rcv != nil {
-				var msg string
-				if e, ok := rcv.(runtime.Error); ok {
-					msg = e.Error()
-				}
-				if s, ok := rcv.(string); ok {
-					msg = s
-				}
-				msg = rcv.(error).Error()
-				http.Error(w, msg, http.StatusInternalServerError)
-			}
-		}()
-		fn(w, r)
-	}
-}
 
 func getSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
 	session, _ := store.Get(r, "isucon5q-go.session")
@@ -186,7 +164,7 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 	passwd := r.FormValue("password")
 	authenticate(w, r, email, passwd)
 	if getCurrentUser(w, r) == nil {
-		w.WriteHeader(http.StatusForbidden)
+		http.Error(w, "Failed to login.", http.StatusForbidden)
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -207,7 +185,7 @@ func GetIndex(w http.ResponseWriter, r *http.Request) {
 
 func GetUserJs(w http.ResponseWriter, r *http.Request) {
 	if getCurrentUser(w, r) == nil {
-		w.WriteHeader(http.StatusForbidden)
+		http.Error(w, "Failed to login.", http.StatusForbidden)
 		return
 	}
 	render(w, r, http.StatusOK, "user.js", struct{ Grade string }{getCurrentUser(w, r).Grade})
@@ -216,7 +194,7 @@ func GetUserJs(w http.ResponseWriter, r *http.Request) {
 func GetModify(w http.ResponseWriter, r *http.Request) {
 	user := getCurrentUser(w, r)
 	if user == nil {
-		w.WriteHeader(http.StatusForbidden)
+		http.Error(w, "Failed to login.", http.StatusForbidden)
 		return
 	}
 	row := db.QueryRow(`SELECT arg FROM subscriptions WHERE user_id=$1`, user.ID)
@@ -234,7 +212,7 @@ func GetModify(w http.ResponseWriter, r *http.Request) {
 func PostModify(w http.ResponseWriter, r *http.Request) {
 	user := getCurrentUser(w, r)
 	if user == nil {
-		w.WriteHeader(http.StatusForbidden)
+		http.Error(w, "Failed to login.", http.StatusForbidden)
 		return
 	}
 
@@ -398,7 +376,7 @@ func GetInitialize(w http.ResponseWriter, r *http.Request) {
 	fname := "../../sql/initialize.sql"
 	file, err := filepath.Abs(fname)
 	checkErr(err)
-	output, err := exec.Command("psql", "-f", file, "isocon5f").Output()
+	_, err = exec.Command("psql", "-f", file, "isocon5f").Output()
 	checkErr(err)
 }
 
@@ -444,36 +422,34 @@ func main() {
 	r := mux.NewRouter()
 
 	s := r.Path("/signup").Subrouter()
-	s.Methods("GET").HandlerFunc(myHandler(GetSignUp))
-	s.Methods("POST").HandlerFunc(myHandler(PostSignUp))
+	s.Methods("GET").HandlerFunc(GetSignUp)
+	s.Methods("POST").HandlerFunc(PostSignUp)
 
 	l := r.Path("/login").Subrouter()
-	l.Methods("GET").HandlerFunc(myHandler(GetLogin))
-	l.Methods("POST").HandlerFunc(myHandler(PostLogin))
+	l.Methods("GET").HandlerFunc(GetLogin)
+	l.Methods("POST").HandlerFunc(PostLogin)
 
-	r.HandleFunc("/logout", myHandler(GetLogout)).Methods("GET")
+	r.HandleFunc("/logout", GetLogout).Methods("GET")
 
 	m := r.Path("/modify").Subrouter()
-	m.Methods("GET").Handler(myHandler(GetModify))
-	m.Methods("POST").Handler(myHandler(PostModify))
+	m.Methods("GET").HandlerFunc(GetModify)
+	m.Methods("POST").HandlerFunc(PostModify)
 
-	r.HandleFunc("/data", myHandler(GetData)).Methods("GET")
+	r.HandleFunc("/data", GetData).Methods("GET")
 
-	r.HandleFunc("/cancel", myHandler(PostCancel)).Methods("POST")
+	r.HandleFunc("/cancel", PostCancel).Methods("POST")
 
-	r.HandleFunc("/user.js", myHandler(GetUserJs)).Methods("GET")
+	r.HandleFunc("/user.js", GetUserJs).Methods("GET")
 
-	r.HandleFunc("/initialize", myHandler(GetInitialize)).Methods("GET")
+	r.HandleFunc("/initialize", GetInitialize).Methods("GET")
 
-	r.HandleFunc("/", myHandler(GetIndex))
+	r.HandleFunc("/", GetIndex)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
 	log.Fatal(http.ListenAndServe(":9292", r))
 }
 
 func checkErr(err error) {
 	if err != nil {
-		log.Println(err.Error())
-		debug.PrintStack()
-		panic(err)
+		log.Fatal(err)
 	}
 }
