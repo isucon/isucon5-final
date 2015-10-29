@@ -1,5 +1,5 @@
 ---
-- hosts: guests,extras
+- hosts: guests:extras
   gather_facts: no
   sudo: yes
   sudo_user: isucon
@@ -24,7 +24,7 @@
   # post_tasks:
     # - command: sudo su - isucon /home/isucon/init.sh
 
-- hosts: guests,extras
+- hosts: guests:extras
   gather_facts: no
   tasks:
     - service: name=postgresql state=restarted

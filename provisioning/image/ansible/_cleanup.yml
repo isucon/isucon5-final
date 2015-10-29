@@ -1,5 +1,5 @@
 ---
-- hosts: guests,extras
+- hosts: guests:extras
   gather_facts: no
   tasks:
     - shell: rm -rf /tmp/*; true

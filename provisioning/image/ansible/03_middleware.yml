@@ -30,7 +30,7 @@
     - name: reload nginx
       action: service name=nginx state=restarted
 
-- hosts: guests,extras
+- hosts: guests:extras
   gather_facts: no
   sudo: yes
   sudo_user: postgres
