@@ -12,13 +12,6 @@ var ATTACKED_LAST_UPDATE = Date.now()
 // curl --http2 -v -k -H 'x-perfect-security-token: hoge' https://localhost:8082/tokens
 // curl --http2 -v -k -H 'x-perfect-security-token: hoge' -H 'if-modified-since: Mon, 26 Oct 2015 18:22:54 GMT' https://localhost:8082/attacked_list
 
-setInterval(function(){
-  if (Date.now() >= ATTACKED_NEXT_UPDATE) {
-    ATTACKED_LAST_UPDATE = ATTACKED_NEXT_UPDATE;
-    ATTACKED_NEXT_UPDATE = parseInt(ATTACKED_LAST_UPDATE + Math.random() * 60 * 1000);
-  }
-}, 3100);
-
 var options = {
   key: fs.readFileSync('./server.key'),
   cert: fs.readFileSync('./server.crt')
@@ -124,6 +117,13 @@ function attacked_tokens_handler(token, request, response) {
     }, responseDelay);
   }
 }
+
+setInterval(function(){
+  if (Date.now() >= ATTACKED_NEXT_UPDATE) {
+    ATTACKED_LAST_UPDATE = ATTACKED_NEXT_UPDATE;
+    ATTACKED_NEXT_UPDATE = parseInt(ATTACKED_LAST_UPDATE + Math.random() * 60 * 1000);
+  }
+}, 3100);
 
 http2.createServer(options, function(request, response) {
   var ver = request.httpVersion;
