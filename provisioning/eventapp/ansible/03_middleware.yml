@@ -14,7 +14,7 @@
         - restart mysqld
     - service: name=mysql state=running enabled=true
     - apt: name=python-mysqldb state=present
-    - mysql_user: name=portalsan password=tony-morris login_host="%" priv=*.*:ALL state=present
+    - mysql_user: name=portaltony password=kamipo-awesome login_host="%" priv=*.*:ALL state=present
   handlers:
     - name: restart mysqld
       action: service name=mysql state=restarted
