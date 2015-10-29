@@ -263,7 +263,7 @@ object Isucon5 extends WebApp with ScalateSupport {
 
   get("/login") {
     session.clear()
-    ssp("./login.ssp")
+    ssp("/login.ssp")
   }
 
   post("/login") {
