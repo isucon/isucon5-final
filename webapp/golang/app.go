@@ -357,6 +357,9 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 
 		headers := make(map[string]string)
 		params := conf.Params
+		if params == nil {
+			params = make(map[string]string)
+		}
 
 		if tokenType != nil && tokenKey != nil {
 			switch *tokenType {
@@ -389,7 +392,6 @@ func GetInitialize(w http.ResponseWriter, r *http.Request) {
 	file, err := filepath.Abs(fname)
 	checkErr(err)
 	output, err := exec.Command("psql", "-f", file, "isocon5f").Output()
-	log.Printf("Result of 'psql -f %s isucon5f': %s\n", file, output)
 	checkErr(err)
 }
 
