@@ -1,6 +1,6 @@
 <div class="jumbotron">
-  <h1>ISUCON5 予選ポータル</h1>
-  <p>予選は 10:00開始 18:00終了 です。参加日のこの時刻の間だけログインできます。</p>
+  <h1>ISUCON5 決勝ポータル</h1>
+  <p>参加者以外の方は guest/guest で参照専用ログインが可能です</p>
 </div>
 
 <div class="row" id="login-box">
@@ -9,8 +9,8 @@
     <form method="POST" action="/login">
       <div class="form-group">
         <div class="form-group">
-          <label for="emailAddress">メールアドレス</label>
-          <input type="text" class="form-control" id="inputEmail" name="email" value="" size="30" />
+          <label for="inputAccount">チームアカウント(team99)</label>
+          <input type="text" class="form-control" id="inputAccount" name="account" value="" size="30" />
         </div>
         <div class="form-group">
           <label for="inputPassowrd">パスワード</label>

@@ -78,6 +78,7 @@ class Isucon5Portal::WebApp < Sinatra::Base
       when 0 then true
       when 1 then GAME_TIME.first <= now && now < GAME_TIME.last
       when 2 then GAME_TIME.first <= now && now < GAME_TIME.last
+      else false
       end
     end
 
@@ -87,15 +88,17 @@ class Isucon5Portal::WebApp < Sinatra::Base
       when 0 then true
       when 1 then PUBLIC_TIME.first <= now && now < PUBLIC_TIME.last
       when 2 then PUBLIC_TIME.first <= now && now < PUBLIC_TIME.last
+      else false
       end
     end
 
     def active_team?(team)
       now = Time.now
       case team[:priv]
-      when 1 then GAME_TIME.first <= now && now < GAME_TIME.last
-      when 2 then false
       when 0 then true
+      when 1 then GAME_TIME.first <= now && now < GAME_TIME.last
+      when 2 then GAME_TIME.first <= now && now < GAME_TIME.last
+      else false
       end
     end
 
@@ -107,7 +110,7 @@ SQL
       unless result
         raise Isucon5Portal::AuthenticationError
       end
-      unless in_game?(team)
+      unless in_game?(result)
         raise Isucon5Portal::AuthenticationError
       end
       session[:team_id] = result[:id]
