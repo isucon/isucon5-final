@@ -10,7 +10,7 @@ srand(941)
 CREATE_SQL_FILE = File.expand_path("../initialize.sql", __FILE__)
 CREATE_JSON_FILE = File.expand_path("../source.json", __FILE__)
 
-GENERATE_USERS = 1000
+GENERATE_USERS = 10000
 BENCH_CHUNKS_NUM = 20
 
 GENERATE_GRADE_LIST = (
@@ -52,7 +52,7 @@ def create_user_data(user_id, grade)
   user_name = Faker::Internet.user_name
   user = {
     id: user_id,
-    email: user_name + "@isucon.net",
+    email: "#{user_name}#{user_id}@isucon.net",
     salt: Faker::Internet.password(8),
     password: user_name,
     grade: grade.to_s,
