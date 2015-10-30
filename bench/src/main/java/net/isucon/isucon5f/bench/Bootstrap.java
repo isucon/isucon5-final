@@ -201,7 +201,7 @@ public class Bootstrap extends Base {
             final String interval = intervalVal;
             getAndCheck(session, "/user.js", "USER JS", (check) -> {
                     check.isStatus(200);
-                    check.contentMatch(String.format("var\\s+AIR_ISU_REFRESH_INTERVAL\\s*=\\s*%s;", interval));
+                    check.contentMatch(String.format("var AIR_ISU_REFRESH_INTERVAL = %s;", interval));
                 });
         }
 
