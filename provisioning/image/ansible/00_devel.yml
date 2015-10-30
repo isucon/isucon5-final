@@ -3,6 +3,7 @@
 #- hosts: extras
   gather_facts: no
   tasks:
+    - copy: src=../files/sources.list dest=/etc/apt/sources.list owner=root mode=644
     - apt: name=python-selinux state=present update_cache=true
     - service: name=apparmor enabled=no state=stopped
     - apt: name=git state=present
