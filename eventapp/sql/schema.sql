@@ -9,12 +9,16 @@ CREATE TABLE IF NOT EXISTS teams (
   `team` varchar(128) NOT NULL UNIQUE,
   `password` varchar(32) NOT NULL,
   `account` varchar(128) NOT NULL UNIQUE,
-  `priv` int NOT NULL -- 0:organizer, 1:teams, 2:audience
+  `benchgroup` int NOT NULL,
+  `priv` int NOT NULL, -- 0:organizer, 1:teams, 2:audience
+  `destination` varchar(32) DEFAULT NULL,
+  `ipaddrs` text DEFAULT NULL
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS queue (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `team_id` int NOT NULL,
+  `benchgroup` int NOT NULL,
   `status` varchar(16) NOT NULL, -- waiting, running, submitted, done
   `ip_address` varchar(32) NOT NULL,
   `testset_id` int NOT NULL,

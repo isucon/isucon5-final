@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
 
-require "socket"
-MYHOSTNAME = Socket.gethostname
+MYHOSTNAME = `hostname`.chomp + ":" + Process.pid.to_s
 
-MY_PROCESS_NAME = `hostname`.chomp + Process.pid.to_s
+TIMEOUT = 180
+
+RUN_SCENARIO = "net.isucon.isucon5f.bench.Full"
 
 MANAGER_ADDRESS = "isu-adm01.data-hotel.net"
 MANAGER_USER = "portaltony"
@@ -18,18 +19,23 @@ client = Mysql2::Client.new(
   port: 3306,
   username: MANAGER_USER,
   password: MANAGER_PASSWORD,
-  database: 'isucon5portal',
+  database: 'isucon5fportal',
   reconnect: true,
 )
 client.query_options.merge!(symbolize_keys: true)
 
 def acquire_queue_entry(client)
   queue_entry_query = <<SQL
-SELECT id, team_id, status, ip_address, testset_id, acked_at, submitted_at, json FROM queue WHERE status=? LIMIT 1 FOR UPDATE
+SELECT id, team_id, benchgroup, status, ip_address, testset_id, acked_at, submitted_at, json
+FROM queue
+WHERE status='waiting'
+  AND benchgroup NOT IN ( SELECT benchgroup FROM queue WHERE status='running' )
+ORDER BY id LIMIT 1
+FOR UPDATE
 SQL
   begin
     client.xquery("BEGIN");
-    entry = client.xquery(queue_entry_query, "waiting").first
+    entry = client.xquery(queue_entry_query).first
     unless entry
       client.xquery("ROLLBACK")
       return nil
@@ -69,19 +75,23 @@ def run_benchmark(entry_id, ip_address, testset_json)
   end
   result_path = "/tmp/result.#{entry_id}.json"
   stderr_path = "/tmp/err.#{entry_id}.log"
-  scenario = "net.isucon.isucon5q.bench.scenario.Isucon5Qualification"
-  command = "cat #{source_path} | gradle -q run -Pargs='#{scenario} #{ip_address}' > #{result_path} 2>#{stderr_path}"
+  command = "cat #{source_path} | gradle -q run -Pargs='#{RUN_SCENARIO} #{ip_address}' > #{result_path} 2>#{stderr_path}"
 
+  pid = nil
   begin
-    timeout(60*5) { system(command) }
+    timeout(TIMEOUT) {
+      pid = spawn(command)
+      Process.waitpid(pid)
+    }
     obj = JSON.parse(File.open("/tmp/result.#{entry_id}.json"){|f| f.read }) rescue nil
     if obj
       obj["bench"] = File.open("/tmp/err.#{entry_id}.log"){|f| f.read }
       return obj.to_json
     end
     result_json
-  rescue Timeout::Error => e
+  rescue Timeout::Error
     # JVM stuck! remove related files and make it to be retried (on other host?)
+    Process.kill("KILL", pid) rescue nil # ignore NoSuchProcess
     File.unlink source_path, result_path, stderr_path
     raise JVMStuckError
   end
