@@ -235,10 +235,12 @@ public class Checker extends Base {
                             check.fatal("perfectsec API onetime tokenの値が不正です");
                         }
 
+                        check.exist("$.[?(@.service=='perfectsec_attacked')].data", 1);
                         check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1);
-                        if (! check.hasViolations()) {
+                        List found = check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at");
+                        if (! check.hasViolations() && found != null) {
                             // seconds from epoch
-                            long epoch = Long.getLong(String.valueOf(check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at").get(0)));
+                            long epoch = Long.getLong(String.valueOf(found.get(0)));
                             long epochMillis = epoch * 1000;
                             if (responseAt - epochMillis > I5FPerfectSecurity.VALID_CACHE_MILLIS) {
                                 check.fatal("perfectsec_attacked API レスポンスの内容が古いままです");
