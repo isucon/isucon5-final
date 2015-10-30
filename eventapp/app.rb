@@ -241,8 +241,12 @@ SQL
       return json({valid: false, message: "正しいIPアドレスを入力してください"})
     end
 
-    testset_ids = db.xquery("SELECT id FROM testsets").map{|obj| obj[:id]}
-    testset_id = testset_ids[rand(testset_ids.size)]
+    testset_ids = db.xquery("SELECT id FROM testsets ORDER BY id").map{|obj| obj[:id]}
+    testset_id = if in_mark_time?
+                   testset_ids.last # (-1)
+                 else
+                   testset_ids[rand(testset_ids.size - 1)] # [0, -1)
+                 end
 
     begin
       db.xquery("BEGIN")
