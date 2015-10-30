@@ -133,6 +133,19 @@ setInterval(function(){
   }
 }, 3100);
 
+setInterval(function(){
+  var now = new Date();
+  var toDelete = [];
+  for (var token in CONNECTED_TOKENS) {
+    if (CONNECTED_TOKENS[token] && now - CONNECTED_TOKENS[token] > 3000) {
+      toDelete.push(token);
+    }
+  }
+  toDelete.forEach(function(tk){
+    delete CONNECTED_TOKENS[tk];
+  });
+}, 1000);
+
 http2.createServer(options, function(request, response) {
   var ver = request.httpVersion;
   var token = request.headers['x-perfect-security-token'];
@@ -141,11 +154,11 @@ http2.createServer(options, function(request, response) {
       response.writeHead(403);
       response.end();
     }, 1000);
-  } else if (ver !== '2.0' && CONNECTED_TOKENS[token] === 1) {
+  } else if (ver !== '2.0' && CONNECTED_TOKENS[token]) {
     response.statusCode = 429; // Too many requests
     response.end('Too many connections for token:' + token);
   } else {
-    CONNECTED_TOKENS[token] = 1;
+    CONNECTED_TOKENS[token] = new Date();
     if (request.url.indexOf('/tokens') === 0) {
       auth_provider_handler(token, request, response);
     } else if (request.url.indexOf('/attacked_list') === 0) {
