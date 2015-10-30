@@ -19,7 +19,8 @@
         dest=/tmp/isucon5-final
         key_file=/home/isucon/.ssh/deploy_id_rsa
         accept_hostkey=yes
-    - command: rsync -avz --delete /tmp/isucon5-final/webapp /home/isucon/
+    # TODO: Add --delete option. temporal remove now.
+    - command: rsync -avz /tmp/isucon5-final/webapp /home/isucon/
     # /home/isucon/webapp/{etc,go,java,nodejs,perl,php,python,ruby,scala,sql,static}
     - command: rm -rf /tmp/isucon5-final
       args:
