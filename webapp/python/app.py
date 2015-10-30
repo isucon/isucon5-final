@@ -16,7 +16,7 @@ app.config.load_dict({
     "db": {
         "host": os.environ.get("ISUCON5_DB_HOST") or "localhost",
         "port": int(os.environ.get("ISUCON5_DB_PORT") or 5432),
-        "username": os.environ.get("ISUCON5_DB_USER") or subprocess.check_output("whoami").strip(),
+        "username": os.environ.get("ISUCON5_DB_USER") or "isucon",
         "password": os.environ.get("ISUCON5_DB_PASSWORD") or None,
         "database": os.environ.get("ISUCON5_DB_NAME") or "isucon5f",
     },

@@ -32,7 +32,7 @@ class Isucon5f::WebApp < Sinatra::Base
         db: {
           host: ENV['ISUCON5_DB_HOST'] || 'localhost',
           port: ENV['ISUCON5_DB_PORT'] && ENV['ISUCON5_DB_PORT'].to_i,
-          username: ENV['ISUCON5_DB_USER'] || `whoami`.strip,
+          username: ENV['ISUCON5_DB_USER'] || 'isucon',
           password: ENV['ISUCON5_DB_PASSWORD'],
           database: ENV['ISUCON5_DB_NAME'] || 'isucon5f',
         },

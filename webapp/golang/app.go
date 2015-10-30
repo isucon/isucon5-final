@@ -394,11 +394,7 @@ func main() {
 	}
 	user := os.Getenv("ISUCON5_DB_USER")
 	if user == "" {
-		out, err := exec.Command("whoami").Output()
-		if err != nil {
-			log.Fatalf("Failed to run command 'whoami'.\nError: %s", err)
-		}
-		user = strings.TrimSpace(string(out))
+		user = "isucon"
 	}
 	password := os.Getenv("ISUCON5_DB_PASSWORD")
 	dbname := os.Getenv("ISUCON5_DB_NAME")

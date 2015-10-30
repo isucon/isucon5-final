@@ -19,7 +19,7 @@ sub db {
         my %db = (
             host => $ENV{ISUCON5_DB_HOST} || 'localhost',
             port => $ENV{ISUCON5_DB_PORT} || 5432,
-            username => $ENV{ISUCON5_DB_USER} || trim(`whoami`),
+            username => $ENV{ISUCON5_DB_USER} || 'isucon',
             password => $ENV{ISUCON5_DB_PASSWORD},
             database => $ENV{ISUCON5_DB_NAME} || 'isucon5f',
         );

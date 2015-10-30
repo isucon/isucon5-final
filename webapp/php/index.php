@@ -8,7 +8,7 @@ $app = new \Slim\Slim(array(
     'db' => array(
         'host' => getenv('ISUCON5_DB_HOST') ?: 'localhost',
         'port' => (int)getenv('ISUCON5_DB_PORT') ?: 5432,
-        'username' => getenv('ISUCON5_DB_USER') ?: rtrim(`whoami`),
+        'username' => getenv('ISUCON5_DB_USER') ?: 'isucon',
         'password' => getenv('ISUCON5_DB_PASSWORD'),
         'database' => getenv('ISUCON5_DB_NAME') ?: 'isucon5f'
     ),

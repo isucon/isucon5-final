@@ -20,7 +20,7 @@ let config = {
   db: {
     host: process.env.ISUCON5_DB_HOST || 'localhost',
     port: process.env.ISUCON5_DB_PORT,
-    user: process.env.ISUCON5_DB_USER || execSync('whoami').toString().trim(),
+    user: process.env.ISUCON5_DB_USER || 'isucon',
     password: process.env.ISUCON5_DB_PASSWORD,
     database: process.env.ISUCON5_DB_NAME || 'isucon5f',
   },
