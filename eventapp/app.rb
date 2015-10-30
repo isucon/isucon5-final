@@ -320,10 +320,10 @@ SELECT summary, score, submitted_at FROM scores
 WHERE team_id=? AND submitted_at >= ? AND submitted_at < ?
 ORDER BY submitted_at DESC LIMIT 1
 SQL
-    all_teams = xquery(all_teams_query)
+    all_teams = db.xquery(all_teams_query)
     all_teams.each do |row|
       p1, p2 = (in_mark_time? ? MARK_TIME : PUBLIC_TIME)
-      latest = xquery(team_query, row[:id], p1, p2).first || {}
+      latest = db.xquery(team_query, row[:id], p1, p2).first || {}
       teams[row[:id]] = {
         team: row[:team],
         best: row[:best] || 0,
