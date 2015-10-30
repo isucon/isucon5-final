@@ -82,7 +82,7 @@ object Isucon5 extends WebApp with ScalateSupport {
       password = Option(System.getenv.get("ISUCON5_DB_PASSWORD")),
       name = env.getOrDefault("ISUCON5_DB_HOST", "isucon5f"),
       jdbcDriverName = "org.postgresql.Driver",
-      jdbcProperties = Map("connectTimeout" -> "3600", "stringtype" -> "unspecified")
+      jdbcProperties = Map("connectTimeout" -> "3600", "stringtype" -> "unspecified", "charSet" -> "UTF-8")
     )
 
     // Query execution helper methods
