@@ -1,5 +1,5 @@
 ---
- - hosts: guests:extras
+- hosts: guests:extras
 #- hosts: extras
   gather_facts: no
   tasks:
@@ -31,7 +31,7 @@
     - name: reload nginx
       action: service name=nginx state=restarted
 
- - hosts: guests:extras
+- hosts: guests:extras
 #- hosts: extras
   gather_facts: no
   sudo: yes
@@ -41,7 +41,7 @@
     - postgresql_db: name=isucon5f owner=isucon encoding=utf8 template=template0
     - postgresql_ext: name=pgcrypto db=isucon5f
 
- - hosts: guests:extras
+- hosts: guests:extras
 #- hosts: extras
   gather_facts: no
   sudo: yes
