@@ -133,10 +133,10 @@ func PostSignUp(w http.ResponseWriter, r *http.Request) {
 	insertSubscriptionQuery := `INSERT INTO subscriptions (user_id,arg) VALUES ($1,$2)`
 	tx, err := db.Begin()
 	checkErr(err)
-	res, err := tx.Exec(insertUserQuery, email, salt, salt, passwd, grade)
-	checkErr(err)
+	row := tx.QueryRow(insertUserQuery, email, salt, salt, passwd, grade)
 
-	userId, err := res.LastInsertId()
+	var userId int
+	err = row.Scan(&userId)
 	if err != nil {
 		tx.Rollback()
 		checkErr(err)
