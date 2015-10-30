@@ -1,8 +1,8 @@
 package isucon5
 
-import java.nio.charset.CodingErrorAction
 import java.io.BufferedInputStream
 import java.net.{HttpURLConnection, URI}
+import java.nio.charset.CodingErrorAction
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet, SQLException}
@@ -11,14 +11,12 @@ import java.util.{Calendar, TimeZone}
 import javax.net.ssl._
 
 import org.postgresql.ds.PGPoolingDataSource
-import org.postgresql.ds.jdbc4.AbstractJdbc4PoolingDataSource
 import org.slf4j.LoggerFactory
 import skinny.micro.WebApp
 import skinny.micro.contrib.ScalateSupport
 import xerial.core.util.Shell
 
-import scala.io.Codec
-import scala.io.Source
+import scala.io.{Codec, Source}
 import scala.util.Random
 
 
@@ -105,20 +103,20 @@ object Isucon5 extends WebApp with ScalateSupport {
       s.setDatabaseName(dbConfig.name)
       s.setUser(dbConfig.user)
       dbConfig.password.map(s.setPassword(_))
-      for((k, v) <- dbConfig.jdbcProperties)
+      for ((k, v) <- dbConfig.jdbcProperties) {
         s.setProperty(k, v)
+      }
       s
     }
 
-    private def withConnection[A](handler: Connection => A): A =
-    {
+    private def withConnection[A](handler: Connection => A): A = {
       withResource(dbSource.getConnection) { conn =>
         handler(conn)
       }
     }
 
     def executeQuery[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
-      withConnection{ conn => conn.executeAndGet(sql, args:_*)(resultMapper) }
+      withConnection { conn => conn.executeAndGet(sql, args: _*)(resultMapper) }
     }
 
     def execute(sql: String, args: Any*): Unit = {
@@ -144,7 +142,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         executePrep(sql, args: _*) { st =>
           val hasResult = st.execute()
           val b = Seq.newBuilder[A]
-          if(hasResult) {
+          if (hasResult) {
             val rs = st.getResultSet
             while (rs.next()) {
               b += resultMapper(rs)
@@ -359,7 +357,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         }
       }
       catch {
-        case e:Exception =>
+        case e: Exception =>
           logger.error(e)
           e.printStackTrace()
       }
@@ -422,7 +420,7 @@ object Isucon5 extends WebApp with ScalateSupport {
           val headers = Map.newBuilder[String, Any]
           val params = Map.newBuilder[String, Any]
           conf.get("params").map(params ++= _.asInstanceOf[Map[String, Any]])
-          val token = conf.getOrElse("token","")
+          val token = conf.getOrElse("token", "")
           ep.tokenType match {
             case "header" => headers += ep.tokenKey -> token
             case "param" => params += ep.tokenKey -> token
@@ -438,7 +436,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         response.writer.print(toJson(data.toSeq))
       }
       catch {
-        case e:Exception =>
+        case e: Exception =>
           logger.error(e)
           response.writer.print("[]")
       }
