@@ -10,6 +10,8 @@ import java.time.format.DateTimeFormatter
 import java.util.{Calendar, TimeZone}
 import javax.net.ssl._
 
+import org.postgresql.ds.PGPoolingDataSource
+import org.postgresql.ds.jdbc4.AbstractJdbc4PoolingDataSource
 import org.slf4j.LoggerFactory
 import skinny.micro.WebApp
 import skinny.micro.contrib.ScalateSupport
@@ -95,20 +97,32 @@ object Isucon5 extends WebApp with ScalateSupport {
       }
     }
 
-    private def withConnnection[A](handler: Connection => A): A =
+    lazy val dbSource = {
+      val s = new PGPoolingDataSource()
+      s.setDataSourceName("pgsource")
+      s.setServerName(dbConfig.host)
+      s.setPortNumber(dbConfig.port)
+      s.setDatabaseName(dbConfig.name)
+      s.setUser(dbConfig.user)
+      dbConfig.password.map(s.setPassword(_))
+      for((k, v) <- dbConfig.jdbcProperties)
+        s.setProperty(k, v)
+      s
+    }
+
+    private def withConnection[A](handler: Connection => A): A =
     {
-      Class.forName(dbConfig.jdbcDriverName)
-      withResource(DriverManager.getConnection(dbConfig.jdbcUrl)) { conn =>
+      withResource(dbSource.getConnection) { conn =>
         handler(conn)
       }
     }
 
     def executeQuery[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
-      withConnnection{ conn => conn.executeAndGet(sql, args:_*)(resultMapper) }
+      withConnection{ conn => conn.executeAndGet(sql, args:_*)(resultMapper) }
     }
 
     def execute(sql: String, args: Any*): Unit = {
-      withConnnection { conn => conn.execute(sql, args: _*) }
+      withConnection { conn => conn.execute(sql, args: _*) }
     }
 
     implicit class RichConnection(conn: Connection) {
