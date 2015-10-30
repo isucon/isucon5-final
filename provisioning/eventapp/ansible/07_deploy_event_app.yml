@@ -19,7 +19,7 @@
 - hosts: manage
   gather_facts: no
   tasks:
-    - copy: src=../files/env.eventapp.sh dest=/home/isucon/env.sh owner=isucon mode=644
+    - copy: src=../files/env.eventapp.sh dest=/home/isucon/env.sh owner=isucon mode=755
     - apt: name=supervisor state=present
     - name: ruby eventapp unicorn
       copy: src=../files/supervisor.eventapp.conf dest=/etc/supervisor/conf.d/eventapp.conf owner=root mode=644
