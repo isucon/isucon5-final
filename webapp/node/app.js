@@ -7,6 +7,7 @@ const pg = require('pg');
 const async = require('async');
 const execSync = require('child_process').execSync;
 const util = require('util');
+const path = require('path');
 const request = require('request');
 const _ = require('lodash');
 const app = express();
@@ -277,6 +278,8 @@ app.get('/data', requireLogin, (req, res, next) => {
 });
 
 app.get('/initialize', (req, res, next) => {
+  let file = path.normalize(__dirname + "/../sql/initialize.sql");
+  execSync("psql -f " + file + " isucon5f")
   req.done();
   res.sendStatus(200);
 });

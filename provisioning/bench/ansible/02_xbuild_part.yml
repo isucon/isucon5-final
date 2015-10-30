@@ -1,0 +1,27 @@
+---
+- hosts: bench
+  sudo: yes
+  sudo_user: isucon
+  gather_facts: no
+  tasks:
+    - git:
+        repo=https://github.com/tagomoris/xbuild.git
+        dest=/home/isucon/.xbuild
+        update=yes
+    # ruby
+    - command: /home/isucon/.xbuild/ruby-install 2.2.3 /home/isucon/.local/ruby
+      args:
+        creates: /home/isucon/.local/ruby/bin/ruby
+
+- hosts: bench
+  gather_facts: no
+  tasks:
+    - apt_repository: repo='ppa:webupd8team/java'
+    - name: Autoaccept license for Java8
+      debconf: name='oracle-java8-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+    - apt: name=oracle-java8-installer update_cache=yes
+    - apt: name=ca-certificates
+    - apt: name=oracle-java8-set-default
+    - apt_repository: repo='ppa:cwchien/gradle'
+    - apt: name=gradle-2.8 update_cache=yes
+    - file: src=/usr/lib/jvm/java-8-oracle dest=/usr/lib/jvm/default-java owner=root state=link

@@ -1,11 +1,19 @@
 ---
-- hosts: all
+# - hosts: guests:extras
+- hosts: extras
+  gather_facts: no
+  tasks:
+    - name: add API endpoint host to /etc/hosts
+      lineinfile: dest=/etc/hosts regexp='api\five-final.isucon\.net' line='{{api_host}} api.five-final.isucon.net' state=present
+
+# - hosts: guests:extras
+- hosts: extras
   gather_facts: no
   sudo: yes
   sudo_user: isucon
   tasks:
     - file: path=/home/isucon/.ssh state=directory owner=isucon mode=755
-    - copy: src=../keys/root_id_rsa dest=/home/isucon/.ssh/deploy_id_rsa owner=isucon mode=600
+    - copy: src=../keys/deploy_id_rsa dest=/home/isucon/.ssh/deploy_id_rsa owner=isucon mode=600
     - git:
         repo=git@github.com:tagomoris/isucon5-final.git
         dest=/tmp/isucon5-final
@@ -13,31 +21,86 @@
         accept_hostkey=yes
     - command: rsync -avz --delete /tmp/isucon5-final/webapp /home/isucon/
     # /home/isucon/webapp/{etc,go,java,nodejs,perl,php,python,ruby,scala,sql,static}
-    - command: rm -rf /tmp/isucon5-qualify
+    - command: rm -rf /tmp/isucon5-final
       args:
-        removes: /tmp/isucon5-qualify
+        removes: /tmp/isucon5-final
     - copy: src=../files/env.sh dest=/home/isucon/env.sh owner=isucon mode=755
     - name: ruby
       shell: PATH=/home/isucon/.local/ruby/bin:$PATH bundle install
       args:
         chdir: /home/isucon/webapp/ruby
-  # post_tasks:
-    # - command: sudo su - isucon /home/isucon/init.sh
+    - name: perl
+      shell: PATH=/home/isucon/.local/perl/bin:$PATH carton install
+      args:
+        chdir: /home/isucon/webapp/perl
+    - name: php
+      shell: PATH=/home/isucon/.local/php/bin:$PATH php composer.phar install
+      args:
+        chdir: /home/isucon/webapp/php
+    - name: node
+      shell: PATH=/home/isucon/.local/node/bin:$PATH npm install
+      args:
+        chdir: /home/isucon/webapp/node
+    - name: java
+      shell: ./mvnw clean package -Dmaven.test.skip=true
+      args:
+        chdir: /home/isucon/webapp/java
+    # python
+    - command: /home/isucon/.local/python3/bin/pip install bottle
+    - command: /home/isucon/.local/python3/bin/pip install pg8000
+    - command: /home/isucon/.local/python3/bin/pip install gunicorn
+    - name: go get pq
+      shell: PATH=/home/isucon/.local/go/bin:$PATH GOROOT=/home/isucon/.local/go GOPATH=/home/isucon/webapp/golang go get github.com/lib/pq
+      args:
+        chdir: /home/isucon/webapp/golang
+    - name: go get context
+      shell: PATH=/home/isucon/.local/go/bin:$PATH GOROOT=/home/isucon/.local/go GOPATH=/home/isucon/webapp/golang go get github.com/gorilla/context
+      args:
+        chdir: /home/isucon/webapp/golang
+    - name: go get mux
+      shell: PATH=/home/isucon/.local/go/bin:$PATH GOROOT=/home/isucon/.local/go GOPATH=/home/isucon/webapp/golang go get github.com/gorilla/mux
+      args:
+        chdir: /home/isucon/webapp/golang
+    - name: go get sessions
+      shell: PATH=/home/isucon/.local/go/bin:$PATH GOROOT=/home/isucon/.local/go GOPATH=/home/isucon/webapp/golang go get github.com/gorilla/sessions
+      args:
+        chdir: /home/isucon/webapp/golang
+    - name: go build
+      shell: PATH=/home/isucon/.local/go/bin:$PATH GOROOT=/home/isucon/.local/go GOPATH=/home/isucon/webapp/golang go build -o app
+      args:
+        chdir: /home/isucon/webapp/golang
+    - name: scala
+      shell: ./sbt launcher
+      args:
+        chdir: /home/isucon/webapp/scala
 
-- hosts: all
+
+# - hosts: guests:extras
+- hosts: extras
   gather_facts: no
   tasks:
     - service: name=postgresql state=restarted
-    - shell: cat sql/init-for-gce.sql | sudo -u isucon psql isucon5f
+    - shell: cat ./initialize.sql | sudo -u isucon psql isucon5f
       args:
-        chdir: /home/isucon/webapp
+        chdir: /home/isucon/webapp/sql
     - apt: name=supervisor state=present
-    # In ubuntu default /etc/supervisor/supervisord.conf
-    # [include]
-    # files = /etc/supervisor/conf.d/*.conf
     - copy: src=../files/supervisor.ruby.conf dest=/etc/supervisor/conf.d/ruby.conf
     - supervisorctl: name=ruby state=present
-    # other languages
-    #
+    - copy: src=../files/supervisor.perl.conf dest=/etc/supervisor/conf.d/perl.conf
+    - supervisorctl: name=perl state=present
+    - copy: src=../files/supervisor.php.conf dest=/etc/supervisor/conf.d/php.conf
+    - supervisorctl: name=php state=present
+    - copy: src=../files/supervisor.node.conf dest=/etc/supervisor/conf.d/node.conf
+    - supervisorctl: name=node state=present
+    - copy: src=../files/supervisor.java.conf dest=/etc/supervisor/conf.d/java.conf
+    - supervisorctl: name=java state=present
+    - copy: src=../files/supervisor.python.conf dest=/etc/supervisor/conf.d/python.conf
+    - supervisorctl: name=python state=present
+    - copy: src=../files/supervisor.golang.conf dest=/etc/supervisor/conf.d/golang.conf
+    - supervisorctl: name=golang state=present
+    - copy: src=../files/supervisor.scala.conf dest=/etc/supervisor/conf.d/scala.conf
+    - supervisorctl: name=scala state=present
     - name: default application
       supervisorctl: name=ruby state=restarted
+
+

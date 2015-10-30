@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: api
   sudo: yes
   sudo_user: isucon
   gather_facts: no
@@ -39,7 +39,7 @@
         creates: /home/isucon/.local/scala-2.11.7/bin/scala
     - file: src=/home/isucon/.local/scala-2.11.7 dest=/home/isucon/.local/scala state=link
 
-- hosts: all
+- hosts: api
   gather_facts: no
   tasks:
     - apt_repository: repo='ppa:webupd8team/java'
@@ -48,3 +48,6 @@
     - apt: name=oracle-java8-installer update_cache=yes
     - apt: name=ca-certificates
     - apt: name=oracle-java8-set-default
+    - apt_repository: repo='ppa:cwchien/gradle'
+    - apt: name=gradle-2.8 update_cache=yes
+    - file: src=/usr/lib/jvm/java-8-oracle dest=/usr/lib/jvm/default-java owner=root state=link

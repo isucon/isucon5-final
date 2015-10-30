@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: api
   gather_facts: no
   tasks:
     - apt: name=python-selinux state=present update_cache=true

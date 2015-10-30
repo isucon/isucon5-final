@@ -3,6 +3,7 @@ package net.isucon.isucon5f.bench;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Date;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -12,6 +13,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+
+import org.apache.http.client.utils.DateUtils;
 
 import net.isucon.bench.Scenario;
 import net.isucon.bench.Step;
@@ -356,7 +359,17 @@ public class Bootstrap extends Base {
                     if (grade.equals("standard") || grade.equals("premium")){
                         check.exist("$.[?(@.service=='tenki')].data", 1);
                         String date = (String) check.find("$.[?(@.service=='tenki')].data.date").get(0);
-                        // At Check, add addViolation for expired data
+                        long dataAt = DateUtils.parseDate(date).getTime();
+                        String responseDate = check.header("Date");
+                        long responseAt = new Date().getTime();
+                        if (responseDate != null) {
+                            responseAt = DateUtils.parseDate(responseDate).getTime();
+                        }
+                        if (responseAt - dataAt > I5FTenki.VALID_CACHE_MILLIS) {
+                            System.err.println(String.format("r: %s(%d), d: %s(%d)", responseDate, responseAt, date, dataAt));
+                            check.fatal("Tenki API レスポンスの内容が古いままです");
+                        }
+
                         String yoho = I5FTenki.getYoho(date);
                         check.content("$.[?(@.service=='tenki')].data.yoho", yoho);
                     } else {
@@ -365,6 +378,13 @@ public class Bootstrap extends Base {
 
                     if (grade.equals("premium")){
                         check.exist("$.[?(@.service=='perfectsec')].data", 1);
+
+                        String responseDate = check.header("Date");
+                        long responseAt = new Date().getTime();
+                        if (responseDate != null) {
+                            responseAt = DateUtils.parseDate(responseDate).getTime();
+                        }
+
                         String req = param.subscriptions.get("perfectsec").params.get("req");
                         check.content("$.[?(@.service=='perfectsec')].data.req", req);
 
@@ -372,12 +392,14 @@ public class Bootstrap extends Base {
                         check.exist("$.[?(@.service=='perfectsec')].data.key", 1);
                         String key = (String) check.find("$.[?(@.service=='perfectsec')].data.key").get(0);
 
-                        String onetime = I5FPerfectSecurity.getOneTime(token, req, key);
-                        check.content("$.[?(@.service=='perfectsec')].data.onetime_token", onetime);
+                        check.exist("$.[?(@.service=='perfectsec')].data.onetime_token", 1);
+                        String onetime = (String) check.find("$.[?(@.service=='perfectsec')].data.onetime_token").get(0);
+                        if (! I5FPerfectSecurity.isCorrectOneTime(onetime, token, req, key, responseAt)) {
+                            check.fatal("perfectsec API onetime tokenの値が不正です");
+                        }
 
                         check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1);
                         String epoch = String.valueOf(check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at").get(0));
-                        // At Check, add addViolation for expired data
                         String[] attacked = I5FPerfectSecurity.getAttacked(token, epoch);
                         check.content("$.[?(@.service=='perfectsec_attacked')].data.key1", attacked[0]);
                         check.content("$.[?(@.service=='perfectsec_attacked')].data.key2", attacked[1]);

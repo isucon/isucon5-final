@@ -89,6 +89,10 @@ public class Checker {
         return response;
     }
 
+    public String header(String header) {
+        return response.getHeaders().get(header);
+    }
+
     public String contentBody() {
         return contentBody;
     }

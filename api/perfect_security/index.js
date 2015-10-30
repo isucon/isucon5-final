@@ -4,20 +4,15 @@ var http2 = require('http2')
 
 var LISTEN_PORT = process.env.PORT || 8443;
 
+var TOKEN_CIPHER_SECRET = new Buffer("yeeeeeah! miteru-? yeeeeeah! miteru-! yeeeeeah! miteru-?", "utf8");
+
 var CONNECTED_TOKENS = {};
 
 var ATTACKED_LAST_UPDATE = Date.now()
-  , ATTACKED_NEXT_UPDATE = parseInt(ATTACKED_LAST_UPDATE + Math.random() * 60 * 1000);
+  , ATTACKED_NEXT_UPDATE = parseInt(ATTACKED_LAST_UPDATE + Math.random() * 15 * 1000);
 
 // curl --http2 -v -k -H 'x-perfect-security-token: hoge' https://localhost:8082/tokens
 // curl --http2 -v -k -H 'x-perfect-security-token: hoge' -H 'if-modified-since: Mon, 26 Oct 2015 18:22:54 GMT' https://localhost:8082/attacked_list
-
-setInterval(function(){
-  if (Date.now() >= ATTACKED_NEXT_UPDATE) {
-    ATTACKED_LAST_UPDATE = ATTACKED_NEXT_UPDATE;
-    ATTACKED_NEXT_UPDATE = parseInt(ATTACKED_LAST_UPDATE + Math.random() * 60 * 1000);
-  }
-}, 3100);
 
 var options = {
   key: fs.readFileSync('./server.key'),
@@ -40,6 +35,12 @@ function generate_random_key() {
   return ary.join('');
 }
 
+function create_onetime_token(token_string) {
+  var cipher = crypto.createCipher('aes-128-ecb', TOKEN_CIPHER_SECRET);
+  var crypted = cipher.update(token_string, 'utf8', 'hex');
+  return crypted + cipher.final('hex');
+}
+
 function auth_provider_handler(token, request, response) {
   var queries = request.url.split("?");
   queries.shift();
@@ -58,7 +59,7 @@ function auth_provider_handler(token, request, response) {
     }, 200);
   } else {
     var key = generate_random_key(token);
-    var onetime_token = crypto.createHash('sha1').update(token + 'secret word tony-morris' + key + req).digest('hex');
+    var onetime_token = create_onetime_token(token + ' ' + key + ' ' + req + ' ' + (new Date().getTime()));
     var responseJson = JSON.stringify({req: req, key: key, onetime_token: onetime_token});
     setTimeout(function(){
       response.writeHead(200, {
@@ -124,6 +125,13 @@ function attacked_tokens_handler(token, request, response) {
     }, responseDelay);
   }
 }
+
+setInterval(function(){
+  if (Date.now() >= ATTACKED_NEXT_UPDATE) {
+    ATTACKED_LAST_UPDATE = ATTACKED_NEXT_UPDATE;
+    ATTACKED_NEXT_UPDATE = parseInt(ATTACKED_LAST_UPDATE + Math.random() * 60 * 1000);
+  }
+}, 3100);
 
 http2.createServer(options, function(request, response) {
   var ver = request.httpVersion;

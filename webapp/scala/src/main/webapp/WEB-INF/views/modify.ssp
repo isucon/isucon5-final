@@ -1,0 +1,107 @@
+<%@ val user: isucon5.User %>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+<title>AirISU</title>
+<link href="/css/bootstrap.min.css" rel="stylesheet">
+<link href="/css/jumbotron-narrow.css" rel="stylesheet">
+</head>
+
+<body>
+<div class="container" data-grade="<%= user.grade.toString.toLowerCase %>">
+  <div class="header clearfix">
+    <nav>
+    <ul class="nav nav-pills pull-right">
+      <li role="presentation"><a href="/">Home</a></li>
+      <li role="presentation" class="active"><a href="#">設定</a></li>
+      <li role="presentation" class="disabled"><a href="#">解約</a></li>
+    </ul>
+    </nav>
+    <h3 class="text-muted">AirISU 設定変更: <%= user.email %></h3>
+  </div>
+
+  <!-- <div class="api-form" data-api-name="API name (example)" data-service="ken" data-param-name="ParameterName1" data-keys-description="KeysDescription2" data-token="true"></div> -->
+
+  <div class="api-form" data-grade="micro,small,standard,premium" data-api-name="郵便番号解決API" data-service="ken" data-keys-desc="郵便番号"></div>
+  <div class="api-form" data-grade="micro,small,standard,premium" data-api-name="KEN_ALL API" data-service="ken2" data-param-name="zipcode" data-param-desc="郵便番号"></div>
+  <div class="api-form" data-grade="micro,small,standard,premium" data-api-name="苗字API" data-service="surname" data-param-name="q" data-param-desc="クエリ"></div>
+  <div class="api-form" data-grade="small,standard,premium" data-api-name="名前API" data-service="givenname" data-param-name="q" data-param-desc="クエリ"></div>
+  <div class="api-form" data-grade="standard,premium" data-api-name="天気" data-service="tenki" data-token="true"></div>
+  <div class="api-form" data-grade="premium" data-api-name="PerfectSecurity" data-service="perfectsec" data-param-name="req" data-param-desc="リクエスト" data-token="true"></div>
+  <div class="api-form" data-grade="premium" data-api-name="PerfectSecurityアタックリスト" data-service="perfectsec_attacked" data-token="true"></div>
+
+  <footer class="footer">
+  <p>&copy; ISU Company 2015</p>
+  </footer>
+</div>
+
+<div id="form-item-container" style="display:none;">
+  <div class="jumbotron">
+    <h5>API name (example)</h5>
+    <form class="form-inline" method="POST" action="/modify">
+      <div class="form-group keysInput">
+        <label class="sr-only" for="innputKeys">Keys</label>
+        <input type="text" name="keys" class="form-control" id="inputKeys" placeholder="Keys">
+      </div>
+      <div class="form-group paramInput">
+        <input type="hidden" name="param_name" class="form-control" id="inputParamName" value="">
+        <label class="sr-only" for="inputParam">Parameter</label>
+        <input type="text" name="param_value" class="form-control" id="inputParam" placeholder="ParameterName">
+      </div>
+      <div class="form-group tokenInput">
+        <label class="sr-only" for="token">Token</label>
+        <input type="text" name="token" class="form-control" id="inputToken" placeholder="API Token">
+      </div>
+      <input type="hidden" name="service" value="example" />
+      <button type="submit" class="btn btn-default">更新</button>
+    </form>
+  </div>
+</div>
+
+<script src="/js/jquery-1.11.3.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script>
+$(function(){
+  var grade = $('.container').data('grade');
+  $('.api-form').each(function(){
+    var targetGrade = $(this).data('grade');
+    if (targetGrade.indexOf(grade) < 0) {
+      return;
+    }
+
+    var form = $('#form-item-container').clone();
+
+    var apiName = $(this).data('api-name');
+    $(form).find('h5').text(apiName);
+
+    var service = $(this).data('service');
+    $(form).find('input[name=service]').val(service);
+
+    var keysDescription = $(this).data('keys-desc');
+    if (keysDescription) {
+      $(form).find('input[name=keys]').attr('placeholder', keysDescription);
+    } else {
+      $(form).find('.keysInput').remove();
+    }
+
+    var paramName = $(this).data('param-name');
+    if (paramName) {
+      $(form).find('input[name=param_name]').val(paramName);
+      $(form).find('input[name=param_value]').attr('placeholder', $(this).data('param-desc'));
+    } else {
+      $(form).find('.paramInput').remove();
+    }
+
+    var token = $(this).data('token');
+    if (token === undefined) {
+      $(form).find('.tokenInput').remove();
+    }
+
+    $(this).html(form.html());
+  });
+});
+</script>
+</body>
