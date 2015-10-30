@@ -9,7 +9,6 @@
       notify:
         - reload nginx
     - copy: src=../files/nginx.php.conf dest=/etc/nginx/nginx.php.conf owner=root mode=644
-    - apt: name=libpq-dev state=present
     - apt: name=python-psycopg2 state=present
     - apt_key: url=https://www.postgresql.org/media/keys/ACCC4CF8.asc state=present
     - apt_repository: repo='deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main' state=present update_cache=yes

@@ -22,6 +22,7 @@
     - apt: name=libgdbm3 state=present
     - apt: name=libgdbm-dev state=present
     - apt: name=libmysqlclient-dev state=present
+    - apt: name=libpq-dev state=present
     - apt: name=libcurl4-openssl-dev state=present
     - apt: name=libjpeg-turbo8 state=present
     - apt: name=libjpeg-turbo8-dev state=present
