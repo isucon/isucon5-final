@@ -54,7 +54,7 @@ def create_user_data(user_id, grade)
     id: user_id,
     email: "#{user_name}#{user_id}@isucon.net",
     salt: Faker::Internet.password(8),
-    password: user_name,
+    password: "#{user_name}#{user_id}",
     grade: grade.to_s,
   }
   user_tenki = zipcode()
