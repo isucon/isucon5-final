@@ -43,7 +43,7 @@ while true
 
     # fetch queue entries stays in 'running' too long to retry...
     client.xquery(queue_entry_query, "running").each do |row|
-      if row[:acked_at] + 300 < Time.now
+      if row[:acked_at] + 180 < Time.now
         # 5min is too long to wait for bench: does something go wrong? -> retry
         client.xquery("UPDATE queue SET status='waiting' WHERE id=? ", row[:id])
       end

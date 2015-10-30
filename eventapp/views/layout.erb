@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<title>ISUCON5 予選ポータル</title>
+<title>ISUCON5 決勝ポータル</title>
 <link rel="stylesheet" href="/css/bootstrap.min.css">
 <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"> -->
 </head>
@@ -16,13 +16,13 @@
     <span class="icon-bar"></span>
     <span class="icon-bar"></span>
     </button>
-    <a class="navbar-brand" href="#">ISUCON5 予選</a>
+    <a class="navbar-brand" href="#">ISUCON5 決勝</a>
   </div>
   <div id="navbar" class="navbar-collapse collapse">
     <ul class="nav navbar-nav">
-      <li class="active"><a href="#"><% if team_id %>Team ID: <%= sprintf("%03d", team_id.to_i) %><% else %>LOGIN<% end %></a></li>
+      <li class="active"><a href="#"><%= if team_id then team_id + ": " + team_name else "LOGIN" end %></a></li>
       <li><a href="/">トップ</a></li>
-      <% if team_id %><li><a href="/team">チーム情報変更</a></li><% end %>
+      <% if team_id && team_id >= 0 %><li><a href="/team">チーム情報変更</a></li><% end %>
     </ul>
   </div><!--/.nav-collapse -->
 </div>
@@ -36,7 +36,7 @@
 
 <% if team_id %>
 <script type="text/javascript">
-  var my_team_id = <%= team_id.to_i %>;
+  var my_team_id = <%= guest_priv ? -1 : team_id.to_i %>;
 </script>
 <% end %>
 
