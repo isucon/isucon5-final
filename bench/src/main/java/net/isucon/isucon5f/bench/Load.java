@@ -63,13 +63,15 @@ public class Load extends Base {
             if (LocalDateTime.now().isAfter(stopAt))
                 break;
 
-            while (true) {
+            for (int i = 0 ; i < 10 ; i++) {
                 get(s, "/data");
+
                 if (LocalDateTime.now().isAfter(stopAt))
                     break;
             }
+
+            if (LocalDateTime.now().isAfter(stopAt))
+                break;
         }
     }
-
-    // TODO: subscenario w/ specified concurrency & subscenario-specific state
 }
