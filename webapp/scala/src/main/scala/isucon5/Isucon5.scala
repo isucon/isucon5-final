@@ -323,25 +323,33 @@ object Isucon5 extends WebApp with ScalateSupport {
 
   post("/modify") {
     ensureLogin { u =>
-      val service = params("service")
-      val token = params.get("token").map(_.trim)
-      val keys = params.get("keys").map(_.trim.split("/\\s+/"))
-      val paramName = params.get("param_name").map(_.trim)
-      val paramValue = params.get("param_value").map(_.trim)
-      val selectQuery = "SELECT arg FROM subscriptions WHERE user_id=? FOR UPDATE"
-      val updateQuery = "UPDATE subscriptions SET arg=? WHERE user_id=?"
-      transaction { conn =>
-        val argJson = conn.executeAndGet(selectQuery, u.id)(_.getString("arg")).head
-        val arg = mapper.readValue[Map[String, Any]](argJson)
-        val service = Map.newBuilder[String, Any]
-        token.map(service += "token" -> _)
-        keys.map(service += "keys" -> _)
-        for (pn <- paramName; pv <- paramValue) {
-          service += "params" -> Map(pn -> pv)
+      try {
+        val service = params("service")
+        val token = params.get("token").map(_.trim)
+        val keys = params.get("keys").map(_.trim.split("/\\s+/"))
+        val paramName = params.get("param_name").map(_.trim)
+        val paramValue = params.get("param_value").map(_.trim)
+        val selectQuery = "SELECT arg FROM subscriptions WHERE user_id=? FOR UPDATE"
+        val updateQuery = "UPDATE subscriptions SET arg=? WHERE user_id=?"
+        transaction { conn =>
+          val argJson = conn.executeAndGet(selectQuery, u.id)(_.getString("arg")).head
+          val arg = mapper.readValue[Map[String, Any]](argJson)
+          val serviceProp = Map.newBuilder[String, Any]
+          token.map(serviceProp += "token" -> _)
+          keys.map(serviceProp += "keys" -> _)
+          for (pn <- paramName; pv <- paramValue) {
+            serviceProp += "params" -> Map(pn -> pv)
+          }
+          val updated = merge(arg, Map(service -> serviceProp.result)).asInstanceOf[Map[String, Any]]
+          conn.execute(updateQuery, toJson(updated), u.id)
         }
-        val updated = merge(arg, Map("service" -> service.result)).asInstanceOf[Map[String, Any]]
-        conn.execute(updateQuery, toJson(updated), u.id)
       }
+      catch {
+        case e:Exception =>
+          logger.error(e)
+          e.printStackTrace()
+      }
+
       redirect("/modify")
     }
   }
@@ -387,32 +395,39 @@ object Isucon5 extends WebApp with ScalateSupport {
 
   get("/data") {
     ensureLogin { u =>
-      val argJson = executeQuery("SELECT arg FROM subscriptions WHERE user_id=?", u.id)(_.getString("arg"))
-                    .headOption.getOrElse("{}")
-      val arg = mapper.readValue[Map[String, Any]](argJson)
-      val data = for ((service, confObj) <- arg) yield {
-        val conf = confObj.asInstanceOf[Map[String, Any]]
-        val ep: Endpoint = executeQuery("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=?", service)(new Endpoint(_))
-                           .head
-        val headers = Map.newBuilder[String, Any]
-        val params = Map.newBuilder[String, Any]
-        conf.get("params").map(params ++= _.asInstanceOf[Map[String, Any]])
-        val token = conf.get("token")
-        ep.tokenType match {
-          case "header" => headers += ep.tokenKey -> token
-          case "param" => params += ep.tokenKey -> token
-          case _ =>
-        }
-        val uri = conf.get("keys") match {
-          case Some(l@List(_, _*)) => ep.uri.format(l:_*)
-          case _ => ep.uri
-        }
-        Map("service" -> service, "data" -> fetchApi(ep.meth, uri, headers.result, params.result))
-      }
-
       contentType = "application/json"
-      // data to json
-      response.writer.print(toJson(data.toSeq))
+      try {
+        val argJson = executeQuery("SELECT arg FROM subscriptions WHERE user_id=?", u.id)(_.getString("arg"))
+                      .headOption.getOrElse("{}")
+        val arg = mapper.readValue[Map[String, Any]](argJson)
+        val data = for ((service, confObj) <- arg) yield {
+          val conf = confObj.asInstanceOf[Map[String, Any]]
+          val ep: Endpoint = executeQuery("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=?", service)(new
+              Endpoint(_))
+                             .head
+          val headers = Map.newBuilder[String, Any]
+          val params = Map.newBuilder[String, Any]
+          conf.get("params").map(params ++= _.asInstanceOf[Map[String, Any]])
+          val token = conf.get("token")
+          ep.tokenType match {
+            case "header" => headers += ep.tokenKey -> token
+            case "param" => params += ep.tokenKey -> token
+            case _ =>
+          }
+          val uri = conf.get("keys") match {
+            case Some(l@List(_, _*)) => ep.uri.format(l: _*)
+            case _ => ep.uri
+          }
+          Map("service" -> service, "data" -> fetchApi(ep.meth, uri, headers.result, params.result))
+        }
+        // data to json
+        response.writer.print(toJson(data.toSeq))
+      }
+      catch {
+        case e:Exception =>
+          logger.error(e)
+          response.writer.print("[]")
+      }
     }
   }
 
