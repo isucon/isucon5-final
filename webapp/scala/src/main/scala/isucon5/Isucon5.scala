@@ -29,11 +29,6 @@ object Grade {
   def fromName(name: String): Grade = table(name.toLowerCase)
 }
 
-sealed trait TokenType
-object TokenType {
-  case object Header extends TokenType
-  case object Param extends TokenType
-}
 case class User(id: Int, email: String, grade: Grade) {
   def this(rs: ResultSet) = this(rs.getInt("id"), rs.getString("email"), Grade.fromName(rs.getString("grade")))
 }
@@ -98,28 +93,20 @@ object Isucon5 extends WebApp with ScalateSupport {
       }
     }
 
-    def executeQuery[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
-      executeSQL(sql, args: _*) { st =>
-        val rs = st.executeQuery
-        val b = Seq.newBuilder[A]
-        while (rs.next()) {
-          b += resultMapper(rs)
-        }
-        b.result()
-      }
-    }
-
-    def execute[A](sql: String, args: Any*): Unit = {
-      executeSQL(sql, args: _*) { st =>
-        st.execute
-      }
-    }
-
-    private def executeSQL[A](sql: String, args: Any*)(handler: PreparedStatement => A): A = {
+    private def withConnnection[A](handler: Connection => A): A =
+    {
       Class.forName(dbConfig.jdbcDriverName)
       withResource(DriverManager.getConnection(dbConfig.jdbcUrl)) { conn =>
-        conn.executePrep(sql, args: _*)(handler)
+        handler(conn)
       }
+    }
+
+    def executeQuery[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
+      withConnnection{ conn => conn.executeAndGet(sql, args:_*)(resultMapper) }
+    }
+
+    def execute(sql: String, args: Any*): Unit = {
+      withConnnection { conn => conn.execute(sql, args: _*) }
     }
 
     implicit class RichConnection(conn: Connection) {
@@ -136,28 +123,20 @@ object Isucon5 extends WebApp with ScalateSupport {
           handler(st)
         }
       }
-      def executeQuery[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
-        executePrep(sql, args: _*) { st =>
-          val rs = st.executeQuery()
-          val b = Seq.newBuilder[A]
-          while (rs.next()) {
-            b += resultMapper(rs)
-          }
-          b.result()
-        }
-      }
-      def executeUpdate[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
-        executePrep(sql, args: _*) { st =>
-          st.execute()
-          val b = Seq.newBuilder[A]
-          val rs = st.getResultSet
-          while (rs.next()) {
-            b += resultMapper(rs)
-          }
-          b.result()
-        }
-      }
 
+      def executeAndGet[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
+        executePrep(sql, args: _*) { st =>
+          val hasResult = st.execute()
+          val b = Seq.newBuilder[A]
+          if(hasResult) {
+            val rs = st.getResultSet
+            while (rs.next()) {
+              b += resultMapper(rs)
+            }
+          }
+          b.result()
+        }
+      }
     }
 
     def transaction[U](body: Connection => U): U = {
@@ -245,7 +224,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         |INSERT INTO subscriptions (user_id,arg) VALUES (?,?)
       """.stripMargin
     transaction { conn =>
-      val userId = conn.executeUpdate(insertUserQuery, email, salt, salt, password, grade) { rs: ResultSet =>
+      val userId = conn.executeAndGet(insertUserQuery, email, salt, salt, password, grade) { rs: ResultSet =>
         rs.getInt(1)
       }.head
       conn.execute(insertSubscriptionQuery, userId, "{}")
@@ -350,7 +329,7 @@ object Isucon5 extends WebApp with ScalateSupport {
       val selectQuery = "SELECT arg FROM subscriptions WHERE user_id=? FOR UPDATE"
       val updateQuery = "UPDATE subscriptions SET arg=? WHERE user_id=?"
       transaction { conn =>
-        val argJson = conn.executeQuery(selectQuery, u.id)(_.getString("arg")).head
+        val argJson = conn.executeAndGet(selectQuery, u.id)(_.getString("arg")).head
         val arg = mapper.readValue[Map[String, Any]](argJson)
         val service = Map.newBuilder[String, Any]
         token.map(service += "token" -> _)
