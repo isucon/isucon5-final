@@ -22,6 +22,8 @@ deb http://jp.archive.ubuntu.com/ubuntu/ trusty universe
 deb-src http://jp.archive.ubuntu.com/ubuntu/ trusty universe
 #deb http://jp.archive.ubuntu.com/ubuntu/ trusty-updates universe
 #deb-src http://jp.archive.ubuntu.com/ubuntu/ trusty-updates universe
+deb http://mirror.orca.med.or.jp/ubuntu/ trusty-updates main universe
+deb-src http://mirror.orca.med.or.jp/ubuntu/ trusty-updates main universe
 
 #  # N.B. software from this repository is ENTIRELY UNSUPPORTED by the Ubuntu
 #  # team, and may not be under a free licence. Please satisfy yourself as to
