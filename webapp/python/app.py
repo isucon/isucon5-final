@@ -285,7 +285,7 @@ def get_data():
     
     data = []
     for service, conf in arg.items():
-        rows = db_fetchall("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=$1", service)
+        rows = db_fetchall("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=%s", service)
         method, token_type, token_key, uri_template = rows[0]
         headers = {}
         params = conf.get("params", {})
