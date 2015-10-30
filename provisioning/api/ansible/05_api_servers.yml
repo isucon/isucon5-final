@@ -45,12 +45,12 @@
     - supervisorctl: name=ken state=restarted
 
     - copy: src=../files/supervisor.perfect_security.conf dest=/etc/supervisor/conf.d/perfect_security.conf
-    - supervisorctl: name=perfectsecurity state=present
-    - supervisorctl: name=perfectsecurity state=restarted
+    - supervisorctl: name=perfect_security state=present
+    - supervisorctl: name=perfect_security state=restarted
 
     - copy: src=../files/supervisor.search-name.conf dest=/etc/supervisor/conf.d/search-name.conf
-    - supervisorctl: name=searchname state=present
-    - supervisorctl: name=searchname state=restarted
+    - supervisorctl: name=search-name state=present
+    - supervisorctl: name=search-name state=restarted
 
     - copy: src=../files/supervisor.tenki.conf dest=/etc/supervisor/conf.d/tenki.conf
     - supervisorctl: name=tenki state=present
