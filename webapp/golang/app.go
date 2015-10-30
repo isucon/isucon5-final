@@ -444,7 +444,7 @@ func main() {
 
 	r.HandleFunc("/", GetIndex)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
-	log.Fatal(http.ListenAndServe(":9292", r))
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
 func checkErr(err error) {
