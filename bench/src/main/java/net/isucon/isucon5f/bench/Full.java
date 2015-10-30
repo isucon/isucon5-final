@@ -54,7 +54,7 @@ public class Full extends Scenario {
             Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,
             Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,
             Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,
-            Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,
+            Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class
             );
 
         return steps;
