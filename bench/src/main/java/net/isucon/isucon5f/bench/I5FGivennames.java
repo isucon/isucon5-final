@@ -28,11 +28,21 @@ public class I5FGivennames extends I5FJsonData {
 
     public static String getQuery(String key) {
         load();
+        I5FJsonData.NameEntry entry = map.get(key);
+        if (entry == null) {
+            System.err.println(String.format("Key not found for Surnames: '%s'", key));
+            return "CALL GameMaster";
+        }
         return map.get(key).query;
     }
 
     public static List<I5FJsonData.NameElement> getResult(String key) {
         load();
+        I5FJsonData.NameEntry entry = map.get(key);
+        if (entry == null) {
+            System.err.println(String.format("Key not found for Surnames: '%s'", key));
+            return Collections.emptyList();
+        }
         return map.get(key).result;
     }
 
