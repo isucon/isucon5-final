@@ -376,7 +376,7 @@ func GetInitialize(w http.ResponseWriter, r *http.Request) {
 	fname := "../sql/initialize.sql"
 	file, err := filepath.Abs(fname)
 	checkErr(err)
-	output, err := exec.Command("psql", "-f", file, "isucon5f").Output()
+	_, err = exec.Command("psql", "-f", file, "isucon5f").Output()
 	checkErr(err)
 }
 
