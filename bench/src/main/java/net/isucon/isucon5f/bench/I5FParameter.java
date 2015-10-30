@@ -134,6 +134,34 @@ public class I5FParameter extends Parameter {
         return s;
     }
 
+    public void putDummySubscription(String service, Random random) {
+        switch (service) {
+        case "perfectsec":
+            subscriptions.put("perfectsec", dummyServicePerfectSecurity(random));
+            break;
+        case "perfectsec_attacked":
+            subscriptions.put("perfectsec_attacked", dummyServicePerfectSecurityAttacked(random));
+            break;
+        case "tenki":
+            subscriptions.put("tenki", dummyServiceTenki(random));
+            break;
+        case "givenname":
+            subscriptions.put("givenname", dummyServiceGivenname(random));
+            break;
+        case "surname":
+            subscriptions.put("surname", dummyServiceSurname(random));
+            break;
+        case "ken":
+            subscriptions.put("ken", dummyServiceKen(random));
+            break;
+        case "ken2":
+            subscriptions.put("ken2", dummyServiceKen2(random));
+            break;
+        default:
+            throw new IllegalArgumentException("Undefined grade:" + grade);
+        }
+    }
+
     public void putDummySubscriptions() {
         Random rand = new Random();
         int index = rand.nextInt(4) * 3;
