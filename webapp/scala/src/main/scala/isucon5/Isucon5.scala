@@ -372,6 +372,7 @@ object Isucon5 extends WebApp with ScalateSupport {
 
   def fetchApi(method: String, uri: String, headers: Map[String, Any], params: Map[String, Any]): Map[String, Any] = {
     val urlStr = s"${uri}?${params.map { case (k, v) => s"$k=$v" }.mkString("&")}"
+    logger.trace(s"fetchApi: ${urlStr}, params:${params}")
     val c = new URI(urlStr).toURL.openConnection()
     val conn: HttpURLConnection = c match {
       case hs: HttpsURLConnection =>
@@ -403,12 +404,11 @@ object Isucon5 extends WebApp with ScalateSupport {
         val data = for ((service, confObj) <- arg) yield {
           val conf = confObj.asInstanceOf[Map[String, Any]]
           val ep: Endpoint = executeQuery("SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=?", service)(new
-              Endpoint(_))
-                             .head
+              Endpoint(_)).head
           val headers = Map.newBuilder[String, Any]
           val params = Map.newBuilder[String, Any]
           conf.get("params").map(params ++= _.asInstanceOf[Map[String, Any]])
-          val token = conf.get("token")
+          val token = conf.getOrElse("token","")
           ep.tokenType match {
             case "header" => headers += ep.tokenKey -> token
             case "param" => params += ep.tokenKey -> token
