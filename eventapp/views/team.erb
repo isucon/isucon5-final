@@ -17,6 +17,12 @@
       </div>
       <div class="form-group">
         <label for="inputDestination">ベンチマーク実行先IPアドレス</label>
+        <select class="form-control" id="inputDestination" name="destination">
+          <option value="">未指定</option>
+            <% ipaddrlist.each do |ip| %>
+          <option <%= ip == destination ? "selected" : "" %>><%= ip %></option>
+            <% end %>
+        </select>
         <input type="text" class="form-control" id="inputDestination" name="destination" value="<%= destination %>" size="30" />
       </div>
       <div class="form-group">

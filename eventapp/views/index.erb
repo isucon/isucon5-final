@@ -31,7 +31,7 @@
         <label class="sr-only" for="inputTeamID">実行対象</label>
         <div class="input-group">
           <div class="input-group-addon">Team ID</div>
-          <select id="inputTeamID">
+          <select class="form-control" id="inputAccount">
             <option value="none">ログインチーム</option>
               <% (1..28).each do |id| %>
             <option>team<%= sprintf("%02d", id) %></option>
@@ -68,8 +68,10 @@
     <tr id="leader-header">
       <th>team</th>
       <th style="text-align:center;"></th>
-      <th style="text-align:right;">latest score</th>
       <th style="text-align:right;">best score</th>
+      <th style="text-align:right;">latest at</th>
+      <th style="text-align:right;"></th>
+      <th style="text-align:right;">latest score</th>
     </tr>
   </table>
 </div>
@@ -160,9 +162,10 @@
   <table id="item-box-bench-leader">
     <tr class="bench-leader">
       <td class="bench-team"></td>
-      <td class="bench-latest-at" style="text-align:center;"></td>
-      <td class="bench-latest" style="text-align:right;"></td>
       <td class="bench-best" style="text-align:right;"></td>
+      <td class="bench-latest-at" style="text-align:center;"></td>
+      <td class="bench-latest-summary" style="text-align:center;"></td>
+      <td class="bench-latest" style="text-align:right;"></td>
     </tr>
   </table>
 

@@ -33,8 +33,8 @@ $(function(){
 function requestEnqueue(event){
   event.preventDefault();
   var data = {ip_address: $("input#inputIPAddress").val()};
-  if ($("select#inputTeamID").size() > 0 && $("select#inputTeamID").val() !== "none") {
-    data.team_id = $("select#inputTeamID").val();
+  if ($("select#inputAccount").size() > 0 && $("select#inputAccount").val() !== "none") {
+    data['account'] = $("select#inputAccount").val();
   }
   $.post("/enqueue", data, function(data){
     $("#enqueue-request-result .modal-dialog .modal-content .modal-body #result-message").text(data.message);
@@ -126,10 +126,11 @@ function updateLeaderBoard(){
     $("#leader-board table#leader-board-table tr.bench-leader").remove();
     list.forEach(function(row){
       var item = $("#item_box table#item-box-bench-leader tr.bench-leader").clone();
-      item.find("td.bench-team").text(row.shortname);
-      item.find("td.bench-latest-at").text(row.latest_at);
-      item.find("td.bench-latest").text(row.latest);
+      item.find("td.bench-team").text(row.team);
       item.find("td.bench-best").text(row.best);
+      item.find("td.bench-latest-at").text(row.latest_at);
+      item.find("td.bench-latest-summary").text(row.latest_summary);
+      item.find("td.bench-latest").text(row.latest);
       $("#leader-board table#leader-board-table").append(item);
     });
   });

@@ -6,6 +6,7 @@ require 'erubis'
 
 require 'time'
 require 'json'
+require 'ipaddr'
 
 $leader_board = nil
 $leader_board_at = nil
@@ -19,8 +20,6 @@ module Isucon5Portal
   class AuthenticationError < StandardError; end
 end
 
-require_relative 'lib/gcloud'
-
 class Isucon5Portal::WebApp < Sinatra::Base
   set :erb, escape_html: true
   set :public_folder, File.expand_path('../public', __FILE__)
@@ -32,6 +31,7 @@ class Isucon5Portal::WebApp < Sinatra::Base
 
   GAME_TIME =   [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 18:00:00")]
   PUBLIC_TIME = [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 17:45:00")]
+  MARK_TIME =   [Time.parse("2015-10-31 18:15:00"), Time.parse("2015-10-31 20:00:00")]
 
   helpers do
     def config
@@ -59,6 +59,11 @@ class Isucon5Portal::WebApp < Sinatra::Base
       client.query_options.merge!(symbolize_keys: true)
       Thread.current[:isucon5_db] = client
       client
+    end
+
+    def in_mark_time?
+      now = Time.now
+      MARK_TIME.first <= now && now <= MARK_TIME.last
     end
 
     def is_organizer?(team)
@@ -178,6 +183,7 @@ SQL
       team: team[:team],
       account: team[:account],
       destination: team[:destination],
+      ipaddrlist: team[:ipaddresses].values,
       ipaddrs: team[:ipaddrs],
     }
     erb :team, locals: data
@@ -186,6 +192,7 @@ SQL
   post '/team' do
     authenticated!
     halt 403 if is_guest?(curren_team)
+
     query = <<SQL
 UPDATE teams SET destination=? WHERE id=?
 SQL
@@ -203,28 +210,51 @@ SQL
       return json({valid: false, message: "開始時刻まで待ってネ"})
     end
 
-    ####################
-    # TODO: for organizer enqueuing
-    query = "SELECT COUNT(1) AS c FROM queue WHERE team_id=? AND status IN ('waiting','running')"
-    existing = db.xquery(query, current_team[:id]).first[:c]
-    if existing > 0 && team[:round] != 0
-      return json({valid: false, message: "既にリクエスト済みです"})
+    unless is_organizer?(team)
+      check_existing_query = "SELECT COUNT(1) AS c FROM queue WHERE team_id=? AND status IN ('waiting','running')"
+      existing = db.xquery(check_existing_query, team[:id]).first[:c]
+      if existing > 0
+        return json({valid: false, message: "既にリクエスト済みです"})
+      end
     end
 
-    # TODO: see team[:destination]
+    team_id = team[:id]
     ip_address = params[:ip_address]
+
+    if ip_address.nil? || ip_address.empty?
+      dest_ip_account = team[:account]
+      if is_organizer?(team) && params[:account]
+        dest_ip_account = params[:account]
+      end
+
+      row = db.xquery("SELECT id,destination FROM teams WHERE account=?", dest_ip_account).first
+      ip_address = row[:destination]
+      team_id = row[:id]
+    end
+
     if ip_address.nil? || ip_address.empty?
       return json({valid: false, message: "IPアドレスが取得できません"})
-    end
-    unless ip_address =~ /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/ && $1.to_i < 256 && $2.to_i < 256 && $3.to_i < 256 && $4.to_i < 256
-      return json({valid: false, message: "IPアドレスを入力してください"})
+    elsif (IPAddr.new(ip_address) rescue nil).nil?
+      return json({valid: false, message: "正しいIPアドレスを入力してください"})
     end
 
     testset_ids = db.xquery("SELECT id FROM testsets").map{|obj| obj[:id]}
     testset_id = testset_ids[rand(testset_ids.size)]
 
-    db.xquery("INSERT INTO queue (team_id,status,ip_address,testset_id) VALUES (?,'waiting',?,?)", team[:id], ip_address, testset_id)
-    ####################
+    begin
+      db.xquery("BEGIN")
+      db.xquery("INSERT INTO queue (team_id,status,ip_address,testset_id) VALUES (?,'waiting',?,?)", team_id, ip_address, testset_id)
+      num = db.xquery("SELECT COUNT(1) AS c FROM queue WHERE team_id=? AND status IN ('waiting','running')", team_id).first[:c]
+      raise "already enqueued" if num > 1
+      db.xquery("COMMIT")
+    rescue => e
+      db.xquery("ROLLBACK")
+      if e.message == "already enqueued"
+        return json({valid: false, message: "重複リクエストになったためキャンセルしました"})
+      else
+        return json({valid: false, message: "ベンチマークリクエスト登録時エラー: #{e.class}"})
+      end
+    end
 
     json({valid: true, message: "ベンチマークリクエストをキューに投入しました"})
   end
@@ -271,60 +301,48 @@ SQL
       return json($leader_board)
     end
 
-    ##########
-
-
-    current_round = in_game_round_number(current_team)
-
-    team_scores = {}
-
-    team_scores_query = <<SQL
-SELECT s.team_id AS team_id, t.team AS team_name, s.score AS score, s.submitted_at AS submitted_at
-FROM scores s
-JOIN teams t ON s.team_id = t.id
-WHERE t.round = ? AND s.summary = 'success'
+    teams = {} # id => {team: "..",  "best": 120, latest_at: "...", latest_summary: "fail", "latest": 100}
+    all_teams_query = <<SQL
+SELECT t.id AS id, t.team AS team, h.score AS best
+FROM teams t
+LEFT OUTER JOIN highscore h ON t.id = h.team_id
+WHERE t.priv = 1
 SQL
-    db.xquery(team_scores_query, current_round).each do |row|
-      team_id = row[:team_id]
-      # SATURDAY_GAMETIME = [Time.parse("2015-09-26 11:00:00"), Time.parse("2015-09-26 19:00:00")]
-      # SUNDAY_GAMETIME   = [Time.parse("2015-09-27 10:00:00"), Time.parse("2015-09-27 18:00:00")]
-      gametime_end = (current_round == 1 ? SATURDAY_GAMETIME.last : SUNDAY_GAMETIME.last)
-      if gametime_end < row[:submitted_at]
-        next
-      end
-
-      if !team_scores.has_key?(team_id)
-        team_scores[team_id] = {
-          team_id: team_id, team_name: row[:team_name], shortname: row[:team_name][0..20], latest: row[:score], latest_at: row[:submitted_at]
-        }
-      elsif team_scores[team_id][:latest_at] < row[:submitted_at]
-        team_scores[team_id][:latest] = row[:score]
-        team_scores[team_id][:latest_at] = row[:submitted_at]
-      end
+    team_query = <<SQL
+SELECT summary, score, submitted_at FROM scores
+WHERE team_id=? AND submitted_at >= ? AND submitted_at < ?
+ORDER BY submitted_at DESC LIMIT 1
+SQL
+    all_teams = xquery(all_teams_query)
+    all_teams.each do |row|
+      p1, p2 = (in_mark_time? ? MARK_TIME : PUBLIC_TIME)
+      latest = xquery(team_query, row[:id], p1, p2).first || {}
+      teams[row[:id]] = {
+        team: row[:team],
+        best: row[:best] || 0,
+        latest_at: row[:submitted_at],
+        latest_summary: row[:summary],
+        latest: row[:score] || 0,
+      }
     end
 
-    high_score_teams_query = <<SQL
-SELECT s.team_id AS team_id, t.team AS team_name, score AS highscore FROM highscores s JOIN teams t ON s.team_id = t.id
-WHERE t.round = ?
-SQL
-    db.xquery(high_score_teams_query, current_round).each do |row|
-      if team_scores[row[:team_id]]
-        team_scores[row[:team_id]][:best] = row[:highscore]
-      else
-        p "something goes wrong: highscore exists, but latest doesn't exist: #{row[:team_id]}"
-      end
-    end
-
-    if team_scores.size() < 1
+    if teams.size() < 1
+      $leader_board = []
+      $leader_board_at = Time.now
       return json([])
     end
 
-    top20 = team_scores.values.sort{|a,b| b[:latest] <=> a[:latest] }[0..20] # bigger than ealier
-
-    $leader_board = top20
+    list = if in_mark_time? # sort by latest
+             teams.keys.sort{|id1,id2| teams[id2][:latest] <=> teams[id1][:latest] }.map{|id| teams[id] }
+           else # sort by best
+             teams.keys.
+               sort{|id1,id2| (teams[id2][:best] <=> teams[id1][:best]).nonzero? || teams[id1][:latest_at] <=> teams[id2][:latest_at] }.
+               map{|id| teams[id] }
+           end
+    $leader_board = list
     $leader_board_at = Time.now
 
-    json(top20)
+    json(list)
   end
 
   get '/leader_history' do
