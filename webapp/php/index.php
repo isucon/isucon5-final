@@ -155,11 +155,11 @@ $app->post('/modify', function () use ($app) {
     $user = current_user();
     if (!$user) $app->halt(403);
     $params = $app->request->params();
-    $service = $params["service"] ? trim($params["service"]) : null;
-    $token = $params["token"] ? trim($params["token"]) : null;
-    $keys = $params["keys"] ? preg_split('/\s+/', trim($params["keys"])) : null;
-    $param_name = $params["param_name"] ? trim($params["param_name"]) : null;
-    $param_value = $params["param_value"] ? trim($params["param_value"]) : null;
+    $service = isset($params["service"]) ? trim($params["service"]) : null;
+    $token = isset($params["token"]) ? trim($params["token"]) : null;
+    $keys = isset($params["keys"]) ? preg_split('/\s+/', trim($params["keys"])) : null;
+    $param_name = isset($params["param_name"]) ? trim($params["param_name"]) : null;
+    $param_value = isset($params["param_value"]) ? trim($params["param_value"]) : null;
     $select_query = <<<SQL
 SELECT arg FROM subscriptions WHERE user_id=? FOR UPDATE
 SQL;
@@ -167,7 +167,7 @@ SQL;
 UPDATE subscriptions SET arg=? WHERE user_id=?
 SQL;
     db()->beginTransaction();
-    $arg_json = db_execute($select_query, array($user['id']))->fetch();
+    $arg_json = db_execute($select_query, array($user['id']))->fetch()['arg'];
     $arg = json_decode($arg_json, true);
     if (!isset($arg[$service])) $arg[$service] = array();
     if ($token) $arg[$service]['token'] = $token;
@@ -228,7 +228,7 @@ $app->get('/data', function () use ($app) {
 
 $app->get('/initialize', function () use ($app) {
     $file = realpath(dirname(__FILE__) . "/../sql/initialize.sql");
-    exec("/usr/local/bin/psql -f " . $file . " isucon5f");
+    exec("psql -f " . $file . " isucon5f");
 });
 
 $app->run();

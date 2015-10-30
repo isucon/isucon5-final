@@ -252,11 +252,16 @@ public class Isucon5fApplication {
                 } else {
                     keys = Arrays.asList(v);
                 }
-                String uri = String.format(row.getUri(), List.class.cast(keys).toArray());
-                return fetchApi(row.getMeth(), uri, headers, params);
+                String uri = String.format(row.getUri(), List.class.cast(keys)
+                        .toArray());
+
+                Map<String, Object> data = new HashMap<>();
+                data.put("service", service);
+                data.put("data", fetchApi(row.getMeth(), uri, headers, params));
+                return data;
             } catch (Exception ex) {
                 log.warn("!! " + conf, ex);
-                return Collections.<String, Object>emptyMap();
+                return Collections.<String, Object> emptyMap();
             }
         }).collect(Collectors.toList());
     }
