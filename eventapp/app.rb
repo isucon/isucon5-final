@@ -14,8 +14,6 @@ $leader_board_at = nil
 $leader_history = nil
 $leader_history_at = nil
 
-$gcp_team_cache = {}
-
 module Isucon5Portal
   class AuthenticationError < StandardError; end
 end
