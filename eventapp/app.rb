@@ -110,7 +110,7 @@ SQL
       unless result
         raise Isucon5Portal::AuthenticationError
       end
-      unless in_game?(team)
+      unless in_game?(result)
         raise Isucon5Portal::AuthenticationError
       end
       session[:team_id] = result[:id]
