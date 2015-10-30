@@ -167,7 +167,7 @@ SQL;
 UPDATE subscriptions SET arg=? WHERE user_id=?
 SQL;
     db()->beginTransaction();
-    $arg_json = db_execute($select_query, array($user['id']))->fetch();
+    $arg_json = db_execute($select_query, array($user['id']))->fetch()['arg'];
     $arg = json_decode($arg_json, true);
     if (!isset($arg[$service])) $arg[$service] = array();
     if ($token) $arg[$service]['token'] = $token;
