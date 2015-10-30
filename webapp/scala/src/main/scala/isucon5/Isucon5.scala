@@ -374,6 +374,7 @@ object Isucon5 extends WebApp with ScalateSupport {
     conn.setRequestMethod(method)
     headers.map { case (k, v) => conn.setRequestProperty(k, v.toString) }
     val response = withResource(new BufferedInputStream(conn.getInputStream)) { in =>
+      // TODO: java.nio.charset.MalformedInputException: Input length = 1
       Source.fromInputStream(in).mkString
     }
     mapper.readValue[Map[String, Any]](response)
