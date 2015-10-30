@@ -1,4 +1,4 @@
 <% attributes("layout") = "" %>
-#import isucon5.Grade._
+<% import isucon5.Grade._ %>
 <%@ val grade:isucon5.Grade %>
-var AIR_ISU_REFRESH_INTERVAL = <%= grade match { case Micro => 30000; case Small => 30000; case Standard => 20000; case Premium => 1000} %>;
+var AIR_ISU_REFRESH_INTERVAL = <%= grade match { case micro => "30000"; case small => "30000"; case standard => "20000"; case premium => "1000"} %>;
