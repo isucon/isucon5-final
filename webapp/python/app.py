@@ -189,7 +189,7 @@ def get_logout():
 def get_index():
     user = current_user()
     if not user:
-        bottle.abort(403)
+        bottle.redirect("/login")
     return bottle.template("main", {"user": user})
 
 
