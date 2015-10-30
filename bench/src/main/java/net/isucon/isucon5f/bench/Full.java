@@ -48,16 +48,13 @@ public class Full extends Scenario {
         steps[1] = new Step(60000L, Bootstrap.class);
         steps[2] = new Step(
             70000L,
-            Checker.class, ModifyLoader.class, Load.class, Load.class, Load.class,
-            Load.class, Load.class, Load.class, Load.class, Load.class,
-            Load.class, Load.class, Load.class, Load.class, Load.class,
-            Load.class, Load.class, Load.class, Load.class, Load.class,
-            Load.class, Load.class, Load.class, Load.class, Load.class,
-            Load.class, Load.class, Load.class, Load.class, Load.class,
-            Load.class, Load.class, Load.class, Load.class, Load.class,
-            Load.class, Load.class, Load.class, Load.class, Load.class,
-            Load.class, Load.class, Load.class, Load.class, Load.class,
-            Load.class, Load.class, Load.class, Load.class, Load.class
+            Checker.class, ModifyLoader.class,
+            Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,
+            Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,
+            Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,
+            Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,
+            Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,
+            Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,
             );
 
         return steps;
