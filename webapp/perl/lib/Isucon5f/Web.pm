@@ -173,7 +173,7 @@ post '/modify' => [qw(set_global)] => sub {
     my $params = $c->req->parameters;
     my $service = $params->{service} ? trim($params->{service}): undef;
     my $token = $params->{token} ? trim($params->{token}) : undef;
-    my $keys = $params->{keys} ? split(/\s+/, trim($params->{keys})) : undef;
+    my $keys = $params->{keys} ? [split(/\s+/, trim($params->{keys}))] : undef;
     my $param_name = $params->{param_name} ? trim($params->{param_name}) : undef;
     my $param_value = $params->{param_value} ? trim($params->{param_value}) : undef;
     my $select_query = <<SQL;
@@ -238,7 +238,7 @@ get '/data' => [qw(set_global)] => sub {
                 $params->{$token_key} = $conf->{'token'};
             }
         }
-        my $uri = sprintf($uri_template, @{$conf->{keys}});
+        my $uri = sprintf($uri_template, @{$conf->{keys} || []});
         push @$data, { service => $service, data => fetch_api($method, $uri, $headers, $params) };
     }
 
