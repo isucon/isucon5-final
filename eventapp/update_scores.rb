@@ -8,7 +8,7 @@ client = Mysql2::Client.new(
   port: nil,
   username: 'root',
   password: nil,
-  database: 'isucon5portal',
+  database: 'isucon5fportal',
   reconnect: true,
 )
 client.query_options.merge!(symbolize_keys: true)
