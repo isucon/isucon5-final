@@ -53,11 +53,19 @@ public class Step {
     public void execute(HttpClient client, Config config, List<Session> sessions) {
         LocalDateTime started = LocalDateTime.now();
         threads = new ArrayList<Thread>();
+        if (sessions.size() < list.size()) {
+            String msg = String.format("Scenario number in a step is grater than input data size: %d > %d", list.size(), sessions.size());
+            throw new RuntimeException(msg);
+        }
+        int sessionsPerScenario = sessions.size() / list.size();
+        int now = 0;
         for (Scenario sc : list) {
+            List<Session> chunk = sessions.subList(now, now + sessionsPerScenario);
+            now += sessionsPerScenario;
             Runnable task = () -> {
                 try {
                     sc.setHttpClient(client);
-                    Result r = sc.execute(config, sessions);
+                    Result r = sc.execute(config, chunk);
                     synchronized(results){
                         results.add(r);
                     }

@@ -33,9 +33,8 @@ public class Load extends Base {
     }
 
     @Override
-    public void scenario(List<Session> originalSessions) {
+    public void scenario(List<Session> sessions) {
         System.err.println("Load");
-        List<Session> sessions = originalSessions.subList(10, originalSessions.size());
         Random random = new Random();
 
         LocalDateTime stopAt = LocalDateTime.now().plus(DURATION_MILLIS, ChronoUnit.MILLIS);

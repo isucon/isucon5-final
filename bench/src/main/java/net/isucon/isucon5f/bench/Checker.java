@@ -38,10 +38,8 @@ public class Checker extends Base {
     }
 
     @Override
-    public void scenario(List<Session> originalSessions) {
+    public void scenario(List<Session> sessions) {
         System.err.println("Checker");
-        List<Session> sessions = originalSessions.subList(0, 10);
-        Collections.shuffle(sessions);
         Random random = new Random();
 
         LocalDateTime stopAt = LocalDateTime.now().plus(DURATION_MILLIS, ChronoUnit.MILLIS);
