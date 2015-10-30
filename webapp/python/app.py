@@ -297,6 +297,9 @@ def get_data():
         else:
             uri = uri_template
         data.append({"service": service, "data": fetch_api(method, uri, headers, params)})
+    
+    bottle.response.content_type = "application/json; charset=utf-8"
+    return json.dumps(data)
 
 
 @app.get("/css/<filename:path>")
