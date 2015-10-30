@@ -201,7 +201,7 @@ public class Bootstrap extends Base {
             final String interval = intervalVal;
             getAndCheck(session, "/user.js", "USER JS", (check) -> {
                     check.isStatus(200);
-                    check.contentMatch(String.format("var AIR_ISU_REFRESH_INTERVAL = %s;", interval));
+                    check.contentMatch(String.format("var\\s+AIR_ISU_REFRESH_INTERVAL\\s*=\\s*%s;", interval));
                 });
         }
 
@@ -224,16 +224,16 @@ public class Bootstrap extends Base {
                     check.content(".container .header h3", String.format("AirISU 設定変更: %s", email));
                     switch (grade) {
                     case "premium":
-                        // highest grade
+                        check.exist(".api-form[data-service=perfectsec]");
+                        check.exist(".api-form[data-service=perfectsec_attacked]");
                     case "standard":
-                        // next
+                        check.exist(".api-form[data-service=tenki]");
                     case "small":
-                        // yay
+                        check.exist(".api-form[data-service=givenname]");
                     default:
                         check.exist(".api-form[data-service=ken]");
                         check.exist(".api-form[data-service=ken2]");
                         check.exist(".api-form[data-service=surname]");
-                        check.exist(".api-form[data-service=givenname]");
                     }
                 });
             {
