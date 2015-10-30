@@ -119,10 +119,13 @@ def fetch_api(method, uri, headers, params):
     if params:
         query = urllib.parse.urlencode(params)
         uri += "?" + query
-    # TODO: unverify ssl cert
-    # ssl._create_default_https_context = ssl._create_unverified_context
+    context = None
+    if uri.startswith("https://"):
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
     req = urllib.request.Request(uri, method=method, headers=headers)
-    res = urllib.request.urlopen(req)
+    res = urllib.request.urlopen(req, context=context)
     body = res.read()
     return json.loads(body.decode("utf-8")) if body else {}
 
