@@ -19,6 +19,7 @@ require 'sinatra/contrib'
 
 get '/' do
   addrs = data[params['zipcode']]
+  sleep(0.1)
   if addrs
     json({zipcode: params['zipcode'], addresses: addrs})
   else
@@ -28,6 +29,7 @@ end
 
 get '/:zipcode' do
   addrs = data[params['zipcode']]
+  sleep(0.1)
   if addrs
     json({zipcode: params['zipcode'], addresses: addrs})
   else

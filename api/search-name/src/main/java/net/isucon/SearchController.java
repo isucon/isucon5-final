@@ -24,6 +24,7 @@ public class SearchController {
     public
     @ResponseBody
     Result searchSurname(@RequestParam(value = "q", required = true) String query) {
+        try { Thread.sleep(100); } catch (InterruptedException e) {}
         return new Result(query, surnameIndex.searchName(query, MAX_NUM));
     }
 
@@ -31,6 +32,7 @@ public class SearchController {
     public
     @ResponseBody
     Result searchGivenName(@RequestParam(value = "q", required = true) String query) {
+        try { Thread.sleep(100); } catch (InterruptedException e) {}
         return new Result(query, givennameIndex.searchName(query, MAX_NUM));
     }
 
