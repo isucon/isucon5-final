@@ -16,7 +16,6 @@ import xerial.core.util.Shell
 
 import scala.io.Source
 import scala.util.Random
-import scala.util.parsing.json.{JSONFormat, JSONArray, JSONObject}
 
 
 sealed trait Grade
@@ -119,13 +118,13 @@ object Isucon5 extends WebApp with ScalateSupport {
     private def executeSQL[A](sql: String, args: Any*)(handler: PreparedStatement => A): A = {
       Class.forName(dbConfig.jdbcDriverName)
       withResource(DriverManager.getConnection(dbConfig.jdbcUrl)) { conn =>
-        conn.executePrep(sql, args:_*)(handler)
+        conn.executePrep(sql, args: _*)(handler)
       }
     }
 
     implicit class RichConnection(conn: Connection) {
       def execute[A](sql: String, args: Any*) {
-        executePrep(sql, args:_*)(_.execute())
+        executePrep(sql, args: _*)(_.execute())
       }
 
       def executePrep[A](sql: String, args: Any*)(handler: PreparedStatement => A): A = {
@@ -138,7 +137,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         }
       }
       def executeQuery[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
-        executePrep(sql, args:_*) { st =>
+        executePrep(sql, args: _*) { st =>
           val rs = st.executeQuery()
           val b = Seq.newBuilder[A]
           while (rs.next()) {
@@ -148,7 +147,7 @@ object Isucon5 extends WebApp with ScalateSupport {
         }
       }
       def executeUpdate[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
-        executePrep(sql, args:_*) { st =>
+        executePrep(sql, args: _*) { st =>
           st.execute()
           val b = Seq.newBuilder[A]
           val rs = st.getResultSet
@@ -197,7 +196,7 @@ object Isucon5 extends WebApp with ScalateSupport {
     }
   }
 
-  private def ensureLogin[U](onSuccess: User => U) : U = {
+  private def ensureLogin[U](onSuccess: User => U): U = {
     session.get("user_id") match {
       case Some(userId) =>
         executeQuery("SELECT id,email,grade FROM users WHERE id=?", userId)(new User(_))
@@ -222,8 +221,8 @@ object Isucon5 extends WebApp with ScalateSupport {
       status = 401
       ssp("/login.ssp")
     case PermissionDenied =>
-      status = 403
-      ssp("/login.ssp")
+      status = 302
+      redirect("/login")
   }
 
 
@@ -289,7 +288,7 @@ object Isucon5 extends WebApp with ScalateSupport {
   get("/modify") {
     ensureLogin { u =>
       val arg = executeQuery("SELECT arg FROM subscriptions WHERE user_id=?", u.id)(rs => rs.getString("arg")).headOption
-      ssp("modify.ssp", "user" -> u, "arg" -> arg.getOrElse(null))
+      ssp("/modify.ssp", "user" -> u, "arg" -> arg.getOrElse(null))
     }
   }
 
@@ -307,7 +306,7 @@ object Isucon5 extends WebApp with ScalateSupport {
   private def merge(a: Any, b: Any): Any = {
     (a, b) match {
       case (m1: Map[String, Any], m2: Map[String, Any]) =>
-        val m = for (k:String <- (m1.keySet ++ m2.keySet)) yield k -> merge(m1.get(k), m2.get(k))
+        val m = for (k: String <- (m1.keySet ++ m2.keySet)) yield k -> merge(m1.get(k), m2.get(k))
         m.toMap[String, Any]
       case (Some(e1), Some(e2)) => merge(e1, e2)
       case (Some(e1), None) => e1
@@ -317,24 +316,24 @@ object Isucon5 extends WebApp with ScalateSupport {
   }
 
   // TODO: toJson still format `Map(k -> v)`. It seems match other always.
-  private def toJson(obj:Any) : Any = {
+  private def toJson(obj: Any): Any = {
     import scala.collection.JavaConversions._
     obj match {
-      case m:Map[_, _] =>
-        val kv = for((k, v) <- m) yield {
+      case m: Map[_, _] =>
+        val kv = for ((k, v) <- m) yield {
           s""""${k}":${toJson(v)}"""
         }
         s"{${kv.mkString(",")}}"
-      case a:Seq[_] =>
+      case a: Seq[_] =>
         val arr = a.map(toJson(_)).mkString(",")
         s"[${arr}]"
-      case a @ Array(hd, tl @ _*) =>
+      case a@Array(hd, tl@_*) =>
         val arr = a.map(toJson(_)).mkString(",")
         s"[${arr}]"
-      case it:java.lang.Iterable[_] =>
+      case it: java.lang.Iterable[_] =>
         val arr = it.iterator().map(toJson(_)).mkString(",")
         s"[${arr}]"
-      case s:String =>
+      case s: String =>
         s""""$s""""
       case other =>
         other.toString
@@ -367,7 +366,7 @@ object Isucon5 extends WebApp with ScalateSupport {
     }
   }
 
-  private val trustManager : Array[TrustManager] = Array(
+  private val trustManager: Array[TrustManager] = Array(
     new X509TrustManager() {
       override def getAcceptedIssuers: Array[X509Certificate] = null
       override def checkClientTrusted(x509Certificates: Array[X509Certificate], s: String): Unit = {}
@@ -384,13 +383,15 @@ object Isucon5 extends WebApp with ScalateSupport {
   }
 
   def fetchApi(method: String, uri: String, headers: Map[String, Any], params: Map[String, Any]): Map[String, Any] = {
-    val c = new URI(s"${uri}?${params.map { case (k, v) => s"$k=$v" }.mkString("&")}").toURL.openConnection()
-    val conn : HttpURLConnection = c match {
-      case hs:HttpsURLConnection =>
+    val urlStr = s"${uri}?${params.map { case (k, v) => s"$k=$v" }.mkString("&")}"
+    logger.warn("fetchApi: " + urlStr)
+    val c = new URI(urlStr).toURL.openConnection()
+    val conn: HttpURLConnection = c match {
+      case hs: HttpsURLConnection =>
         hs.setSSLSocketFactory(unsafeSSLSocketFactory)
         hs.setHostnameVerifier(unsafeHostnameVarifier)
         hs
-      case h:HttpURLConnection => h
+      case h: HttpURLConnection => h
     }
 
     conn.setRequestMethod(method)
@@ -420,7 +421,7 @@ object Isucon5 extends WebApp with ScalateSupport {
           case _ =>
         }
         val uri = conf.get("keys") match {
-          case Some(Array(hd, tl @ _*)) => ep.uri.format((Seq(hd) ++ tl):_*)
+          case Some(Array(hd, tl@_*)) => ep.uri.format((Seq(hd) ++ tl): _*)
           case _ => ep.uri
         }
         Map("service" -> service, "data" -> fetchApi(ep.meth, uri, headers.result, params.result))
