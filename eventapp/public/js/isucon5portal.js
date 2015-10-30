@@ -52,7 +52,6 @@ function showBenchDetail(event){
     if (detail !== null && detail !== undefined) {
       dialog.find("td#bench-requests").text(detail.requests);
       dialog.find("td#bench-elapsed").text(detail.elapsed / 1000);
-      dialog.find("td#bench-done").text(detail.done);
       dialog.find("td#bench-success").text(detail.responses.success);
       dialog.find("td#bench-redirect").text(detail.responses.redirect);
       dialog.find("td#bench-failure").text(detail.responses.failure);
