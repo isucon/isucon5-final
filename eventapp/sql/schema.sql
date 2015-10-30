@@ -1,6 +1,6 @@
-DROP DATABASE IF EXISTS isucon5portal;
+DROP DATABASE IF EXISTS isucon5fportal;
 
-CREATE DATABASE IF NOT EXISTS isucon5portal;
+CREATE DATABASE IF NOT EXISTS isucon5fportal;
 
 use isucon5fportal;
 
