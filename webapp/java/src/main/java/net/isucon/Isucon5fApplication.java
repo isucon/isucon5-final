@@ -67,11 +67,12 @@ public class Isucon5fApplication {
 
     @Autowired
     ObjectMapper objectMapper;
-    
+
     @Value("${initialize-script-path:classpath:/initialize.sql}")
     Resource initializeScript;
 
-    RestTemplate restTemplate = new RestTemplate();
+    @Autowired
+    RestTemplate restTemplate;
 
     @RequestMapping(method = RequestMethod.GET, path = "/signup")
     String signup() {
@@ -281,7 +282,7 @@ public class Isucon5fApplication {
                     throw new IllegalStateException("unknown method " + method);
             }
         } catch (RestClientException e) {
-            log.warn("call failure uri={},params={},error={}", uri, params, e.getMessage());
+            log.warn("call failure uri=" + uri + ",params=" + params, e);
             return Collections.emptyMap();
         }
     }
