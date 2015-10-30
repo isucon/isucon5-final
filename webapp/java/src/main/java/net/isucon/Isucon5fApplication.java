@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -16,13 +19,18 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.EncodedResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.ui.Model;
@@ -59,6 +67,9 @@ public class Isucon5fApplication {
 
     @Autowired
     ObjectMapper objectMapper;
+    
+    @Value("${initialize-script-path:classpath:/initialize.sql}")
+    Resource initializeScript;
 
     RestTemplate restTemplate = new RestTemplate();
 
@@ -228,9 +239,13 @@ public class Isucon5fApplication {
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/initialize")
-    String initialize() {
-        // TODO: Implement initialize
-        return "";
+    String initialize() throws SQLException {
+        try (Connection con = DataSourceUtils.getConnection(db
+                .getDataSource())) {
+            ScriptUtils.executeSqlScript(con,
+                    new EncodedResource(initializeScript, StandardCharsets.UTF_8));
+        }
+        return "redirect:/";
     }
 
     @ExceptionHandler(AccessDeniedException.class)
