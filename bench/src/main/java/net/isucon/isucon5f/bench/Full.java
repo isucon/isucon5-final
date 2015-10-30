@@ -31,28 +31,13 @@ public class Full extends Scenario {
 
     @Override
     public Result finishHook(Result result) {
-        /*
         long requests = result.requests;
-        // critical line:  1% for exceptions
-        //                 1% for errors
-        //                 1% for failures
         if (result.responses.exception * 100.0 / (requests * 1.0) >= 1.0)
             result.addViolation("Too many exceptions", "通信エラー等の失敗が多過ぎます(1%以上)");
         if (result.responses.error * 100.0 / (requests * 1.0) >= 1.0)
             result.addViolation("Too many errors", "ステータス 5xx のレスポンスが多過ぎます(1%以上)");
-        if (result.responses.failure * 100.0 / (requests * 1.0) >= 10.0)
-            result.addViolation("Too many failures", "ステータス 4xx のレスポンスが多過ぎます(10%以上)");
-
-        if (result.violations.size() > 0) {
-            int num = 0;
-            for (Result.Violation v : result.violations) {
-                if (! v.description.equals("アプリケーションが 3000 ミリ秒以内に応答しませんでした"))
-                    num += 1;
-            }
-            if (num > 0)
-                result.fail();
-        }
-        */
+        if (result.responses.failure * 100.0 / (requests * 1.0) >= 5.0)
+            result.addViolation("Too many failures", "ステータス 4xx のレスポンスが多過ぎます(5%以上)");
         return result;
     }
 
