@@ -187,6 +187,7 @@ SQL
       destination: team[:destination],
       ipaddrlist: team[:ipaddresses].values,
       ipaddrs: team[:ipaddrs],
+      guest_priv: is_guest?(team)
     }
     erb :team, locals: data
   end
