@@ -84,9 +84,9 @@ def run_benchmark(entry_id, ip_address, testset_json)
       pid = spawn(command)
       Process.waitpid(pid)
     }
-    obj = JSON.parse(File.open("/tmp/result.#{entry_id}.json"){|f| f.read }) rescue nil
+    obj = JSON.parse(File.open("/tmp/result.#{entry_id}.json", "r:utf-8"){|f| f.read }) rescue nil
     if obj
-      obj["bench"] = File.open("/tmp/err.#{entry_id}.log"){|f| f.read }
+      obj["bench"] = File.open("/tmp/err.#{entry_id}.log", "r:utf-8"){|f| f.read }
       return obj.to_json
     end
     result_json
