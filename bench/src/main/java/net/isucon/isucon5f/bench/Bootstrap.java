@@ -446,13 +446,16 @@ public class Bootstrap extends Base {
                                 check.fatal("perfectsec API onetime tokenの値が不正です");
                             }
 
-                            check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1);
+                            check.exist("$.[?(@.service=='perfectsec_attacked')].data", 1);
                             if (! check.hasViolations()) {
-                                String epoch = String.valueOf(check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at").get(0));
-                                String[] attacked = I5FPerfectSecurity.getAttacked(token, epoch);
-                                check.content("$.[?(@.service=='perfectsec_attacked')].data.key1", attacked[0]);
-                                check.content("$.[?(@.service=='perfectsec_attacked')].data.key2", attacked[1]);
-                                check.content("$.[?(@.service=='perfectsec_attacked')].data.key3", attacked[2]);
+                                check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1);
+                                if (! check.hasViolations()) {
+                                    String epoch = String.valueOf(check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at").get(0));
+                                    String[] attacked = I5FPerfectSecurity.getAttacked(token, epoch);
+                                    check.content("$.[?(@.service=='perfectsec_attacked')].data.key1", attacked[0]);
+                                    check.content("$.[?(@.service=='perfectsec_attacked')].data.key2", attacked[1]);
+                                    check.content("$.[?(@.service=='perfectsec_attacked')].data.key3", attacked[2]);
+                                }
                             }
                         }
                     } else {
