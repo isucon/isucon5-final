@@ -1,5 +1,6 @@
 package net.isucon.bench;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java.lang.reflect.InvocationTargetException;
@@ -57,6 +58,7 @@ public class Step {
             String msg = String.format("Scenario number in a step is grater than input data size: %d > %d", list.size(), sessions.size());
             throw new RuntimeException(msg);
         }
+        Collections.shuffle(sessions);
         int sessionsPerScenario = sessions.size() / list.size();
         int now = 0;
         for (Scenario sc : list) {
