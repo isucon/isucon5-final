@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS highscores (
 
 CREATE TABLE IF NOT EXISTS testsets (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `json` text
+  `json` mediumtext
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS messages (
