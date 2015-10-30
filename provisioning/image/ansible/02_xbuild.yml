@@ -26,7 +26,7 @@
       args:
         creates: /home/isucon/.local/perl/bin/perl
     # php
-    - command: /home/isucon/.xbuild/php-install 5.6.13 /home/isucon/.local/php -- --with-pear --with-openssl
+    - command: /home/isucon/.xbuild/php-install 5.6.13 /home/isucon/.local/php -- --with-pear --with-openssl --with-pdo-pgsql
       args:
         creates: /home/isucon/.local/php/bin/php
     - copy: src=../files/php.ini dest=/home/isucon/.local/php/etc/php.ini owner=isucon mode=644

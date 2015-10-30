@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -311,10 +310,10 @@ func fetchApi(method, uri string, headers, params map[string]string) map[string]
 
 	defer resp.Body.Close()
 
-	b, err := ioutil.ReadAll(resp.Body)
-	checkErr(err)
 	var data map[string]interface{}
-	checkErr(json.Unmarshal(b, &data))
+	d := json.NewDecoder(resp.Body)
+	d.UseNumber()
+	checkErr(d.Decode(&data))
 	return data
 }
 
@@ -411,7 +410,7 @@ func main() {
 		ssecret = "tonymoris"
 	}
 
-	db, err = sql.Open("postgres", "host="+host+" port="+strconv.Itoa(port)+" user="+user+" dbname="+dbname+" password="+password)
+	db, err = sql.Open("postgres", "host="+host+" port="+strconv.Itoa(port)+" user="+user+" dbname="+dbname+" sslmode=disable password="+password)
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %s.", err.Error())
 	}
@@ -450,6 +449,6 @@ func main() {
 
 func checkErr(err error) {
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
