@@ -320,9 +320,9 @@ SQL
       teams[row[:id]] = {
         team: row[:team],
         best: row[:best] || 0,
-        latest_at: row[:submitted_at],
-        latest_summary: row[:summary],
-        latest: row[:score] || 0,
+        latest_at: latest[:submitted_at],
+        latest_summary: latest[:summary],
+        latest: latest[:score] || 0,
       }
     end
 

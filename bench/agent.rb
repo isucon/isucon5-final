@@ -89,7 +89,7 @@ def run_benchmark(entry_id, ip_address, testset_json)
       return obj.to_json
     end
     result_json
-  rescue Timeout::Error => e
+  rescue Timeout::Error
     # JVM stuck! remove related files and make it to be retried (on other host?)
     Process.kill("KILL", pid) rescue nil # ignore NoSuchProcess
     File.unlink source_path, result_path, stderr_path
