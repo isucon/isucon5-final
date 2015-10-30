@@ -47,6 +47,10 @@
             <version>3.4</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.bgee.log4jdbc-log4j2</groupId>
             <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
             <version>1.16</version>
