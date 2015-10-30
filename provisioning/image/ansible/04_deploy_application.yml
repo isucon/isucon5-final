@@ -1,13 +1,13 @@
 ---
-# - hosts: guests:extras
-- hosts: extras
+- hosts: guests:extras
+# - hosts: extras
   gather_facts: no
   tasks:
     - name: add API endpoint host to /etc/hosts
       lineinfile: dest=/etc/hosts regexp='api\five-final.isucon\.net' line='{{api_host}} api.five-final.isucon.net' state=present
 
-# - hosts: guests:extras
-- hosts: extras
+- hosts: guests:extras
+# - hosts: extras
   gather_facts: no
   sudo: yes
   sudo_user: isucon
@@ -19,8 +19,7 @@
         dest=/tmp/isucon5-final
         key_file=/home/isucon/.ssh/deploy_id_rsa
         accept_hostkey=yes
-    # TODO: Add --delete option. temporal remove now.
-    - command: rsync -avz /tmp/isucon5-final/webapp /home/isucon/
+    - command: rsync -avz --delete /tmp/isucon5-final/webapp /home/isucon/
     # /home/isucon/webapp/{etc,go,java,nodejs,perl,php,python,ruby,scala,sql,static}
     - command: rm -rf /tmp/isucon5-final
       args:
@@ -76,8 +75,8 @@
         chdir: /home/isucon/webapp/scala
 
 
-# - hosts: guests:extras
-- hosts: extras
+- hosts: guests:extras
+# - hosts: extras
   gather_facts: no
   tasks:
     - service: name=postgresql state=restarted
