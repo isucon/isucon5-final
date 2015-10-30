@@ -229,6 +229,7 @@ public class Isucon5fApplication {
 
     @RequestMapping(method = RequestMethod.GET, path = "/initialize")
     String initialize() {
+        // TODO: Implement initialize
         return "";
     }
 
@@ -247,6 +248,7 @@ public class Isucon5fApplication {
     Map<String, Object> fetchApi(String method, String uri, Map<String, Object> headers, Map<String, Object> params) {
         try {
             switch (method) {
+                // TODO: turn off SSL verify
                 case "GET": {
                     return restTemplate.exchange(
                             UriComponentsBuilder.fromUriString(uri).queryParams(
