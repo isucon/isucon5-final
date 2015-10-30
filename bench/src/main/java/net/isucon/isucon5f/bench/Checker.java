@@ -126,6 +126,9 @@ public class Checker extends Base {
                 check.isStatus(200);
                 check.isContentType("application/json");
                 check.isValidJson();
+                if (check.hasViolations()) {
+                    return;
+                }
 
                 String kenValue = I5FZipcodes.address(param.subscriptions.get("ken").keys.get(0));
                 String ken2Value = I5FZipcodes.address(param.subscriptions.get("ken2").params.get("zipcode"));

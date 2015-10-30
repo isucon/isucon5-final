@@ -324,6 +324,10 @@ public class Bootstrap extends Base {
                     check.isContentType("application/json");
                     check.isValidJson();
 
+                    if (check.hasViolations()) {
+                        return;
+                    }
+
                     check.exist("$.[?(@.service=='ken')]", 1);
                     check.contentMatch("$.[?(@.service=='ken')].data.addresses.*", kenValue);
 
