@@ -239,6 +239,7 @@ public class Isucon5fApplication {
         }).collect(Collectors.toList());
     }
 
+    @ResponseBody
     @RequestMapping(method = RequestMethod.GET, path = "/initialize")
     String initialize() throws SQLException {
         try (Connection con = DataSourceUtils.getConnection(db
@@ -246,7 +247,7 @@ public class Isucon5fApplication {
             ScriptUtils.executeSqlScript(con,
                     new EncodedResource(initializeScript, StandardCharsets.UTF_8));
         }
-        return "redirect:/";
+        return "OK";
     }
 
     @ExceptionHandler(AccessDeniedException.class)
