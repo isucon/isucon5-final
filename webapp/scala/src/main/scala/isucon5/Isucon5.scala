@@ -1,7 +1,7 @@
 package isucon5
 
 import java.io.BufferedInputStream
-import java.net.{HttpURLConnection, URI}
+import java.net.{HttpURLConnection, URI, URLEncoder}
 import java.nio.charset.CodingErrorAction
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -383,8 +383,7 @@ object Isucon5 extends WebApp with ScalateSupport {
   }
 
   def fetchApi(method: String, uri: String, headers: Map[String, Any], params: Map[String, Any]): Map[String, Any] = {
-    val urlStr = s"${uri}?${params.map { case (k, v) => s"$k=$v" }.mkString("&")}"
-    logger.trace(s"fetchApi: ${urlStr}, params:${params}")
+    val urlStr = s"${uri}?${params.map { case (k, v) => s"$k=${URLEncoder.encode(v.toString, "UTF-8")}" }.mkString("&")}"
     val c = new URI(urlStr).toURL.openConnection()
     val conn: HttpURLConnection = c match {
       case hs: HttpsURLConnection =>
@@ -394,11 +393,11 @@ object Isucon5 extends WebApp with ScalateSupport {
       case h: HttpURLConnection => h
     }
 
-    implicit val codec = Codec("UTF-8")
+    implicit val codec = Codec.UTF8
     codec.onMalformedInput(CodingErrorAction.IGNORE)
     codec.onUnmappableCharacter(CodingErrorAction.IGNORE)
-
     conn.setRequestMethod(method)
+
     headers.map { case (k, v) => conn.setRequestProperty(k, v.toString) }
     val response = withResource(new BufferedInputStream(conn.getInputStream)) { in =>
       Source.fromInputStream(in).mkString
