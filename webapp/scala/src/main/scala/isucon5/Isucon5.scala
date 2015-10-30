@@ -315,7 +315,6 @@ object Isucon5 extends WebApp with ScalateSupport {
     }
   }
 
-  // TODO: toJson still format `Map(k -> v)`. It seems match other always.
   private def toJson(obj: Any): Any = {
     import scala.collection.JavaConversions._
     obj match {
@@ -384,7 +383,6 @@ object Isucon5 extends WebApp with ScalateSupport {
 
   def fetchApi(method: String, uri: String, headers: Map[String, Any], params: Map[String, Any]): Map[String, Any] = {
     val urlStr = s"${uri}?${params.map { case (k, v) => s"$k=$v" }.mkString("&")}"
-    logger.warn("fetchApi: " + urlStr)
     val c = new URI(urlStr).toURL.openConnection()
     val conn: HttpURLConnection = c match {
       case hs: HttpsURLConnection =>
@@ -421,7 +419,7 @@ object Isucon5 extends WebApp with ScalateSupport {
           case _ =>
         }
         val uri = conf.get("keys") match {
-          case Some(Array(hd, tl@_*)) => ep.uri.format((Seq(hd) ++ tl): _*)
+          case Some(l@List(_, _*)) => ep.uri.format(l:_*)
           case _ => ep.uri
         }
         Map("service" -> service, "data" -> fetchApi(ep.meth, uri, headers.result, params.result))
