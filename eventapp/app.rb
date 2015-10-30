@@ -312,7 +312,7 @@ SQL
     all_teams_query = <<SQL
 SELECT t.id AS id, t.team AS team, h.score AS best
 FROM teams t
-LEFT OUTER JOIN highscore h ON t.id = h.team_id
+LEFT OUTER JOIN highscores h ON t.id = h.team_id
 WHERE t.priv = 1
 SQL
     team_query = <<SQL
