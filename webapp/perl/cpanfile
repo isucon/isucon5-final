@@ -5,4 +5,5 @@ requires "DBD::Pg";
 requires "Starman";
 requires "Plack::Session";
 requires "Furl";
+requires "IO::Socket::SSL";
 requires "String::Util";

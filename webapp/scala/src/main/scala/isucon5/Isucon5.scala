@@ -246,6 +246,9 @@ object Isucon5 extends WebApp with ScalateSupport {
         |INSERT INTO subscriptions (user_id,arg) VALUES (?,?)
       """.stripMargin
     transaction { conn =>
+      // TODO: Error occurred:
+      // ERROR: column "grade" is of type grades but expression is of type character varying Hint: You will need to rewrite or cast the expression. Position: 93
+      // org.postgresql.util.PSQLException: ERROR: column "grade" is of type grades but expression is of type character varying Hint: You will need to rewrite or cast the expression. Position: 93
       val userId = conn.executeUpdate(insertUserQuery, email, salt, salt, password, grade) { rs: ResultSet =>
         rs.getInt(1)
       }.head
@@ -281,6 +284,9 @@ object Isucon5 extends WebApp with ScalateSupport {
   get("/user.js") {
     ensureLogin { u =>
       contentType = "application/javascript"
+      // TODO: Error occurred:
+      // error: not found: value Premium
+      // in /WEB-INF/views/userjs.ssp near line 4 col 121
       ssp("/userjs.ssp", "grade" -> u.grade.toString)
     }
   }
@@ -315,6 +321,7 @@ object Isucon5 extends WebApp with ScalateSupport {
     }
   }
 
+  // TODO: toJson still format `Map(k -> v)`. It seems match other always.
   private def toJson(obj:Any) : Any = {
     import scala.collection.JavaConversions._
     obj match {
@@ -417,6 +424,7 @@ object Isucon5 extends WebApp with ScalateSupport {
           case "param" => params += ep.tokenKey -> token
           case _ =>
         }
+        // TODO: Format ep.uri with conf("keys")
         val uri = conf.get("keys") match {
           case k:Option[Array[Any]] => ep.uri.format(k.get(0))
           case _ => ep.uri
