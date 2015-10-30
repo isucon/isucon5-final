@@ -6,7 +6,7 @@ require 'json'
 client = Mysql2::Client.new(
   host: 'localhost',
   username: 'root',
-  database: 'isucon5fportal'
+  database: 'isucon5fportal',
   reconnect: true,
 )
 client.query_options.merge!(symbolize_keys: true)
