@@ -1,5 +1,6 @@
 package isucon5
 
+import java.nio.charset.CodingErrorAction
 import java.io.BufferedInputStream
 import java.net.{HttpURLConnection, URI}
 import java.security.SecureRandom
@@ -14,6 +15,7 @@ import skinny.micro.WebApp
 import skinny.micro.contrib.ScalateSupport
 import xerial.core.util.Shell
 
+import scala.io.Codec
 import scala.io.Source
 import scala.util.Random
 
@@ -371,10 +373,13 @@ object Isucon5 extends WebApp with ScalateSupport {
       case h: HttpURLConnection => h
     }
 
+    implicit val codec = Codec("UTF-8")
+    codec.onMalformedInput(CodingErrorAction.IGNORE)
+    codec.onUnmappableCharacter(CodingErrorAction.IGNORE)
+
     conn.setRequestMethod(method)
     headers.map { case (k, v) => conn.setRequestProperty(k, v.toString) }
     val response = withResource(new BufferedInputStream(conn.getInputStream)) { in =>
-      // TODO: java.nio.charset.MalformedInputException: Input length = 1
       Source.fromInputStream(in).mkString
     }
     mapper.readValue[Map[String, Any]](response)
