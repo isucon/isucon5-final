@@ -57,6 +57,7 @@ def db_fetchone(query, *args):
         return cursor.fetchone()
     finally:
         cursor.close()
+        db().commit()
 
 
 def db_fetchall(query, *args):
@@ -67,6 +68,7 @@ def db_fetchall(query, *args):
         return cursor.fetchall()
     finally:
         cursor.close()
+        db().commit()
 
 
 def db_execute(query, *args):
