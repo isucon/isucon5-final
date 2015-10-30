@@ -30,6 +30,9 @@ public class Checker {
 
     public static Checker create(Result result, String type, Config config, long responseTime, Response response) {
         String contentType = response.getHeaders().get("Content-Type");
+        if (contentType == null)
+            return new Checker(result, type, config, responseTime, response);
+
         if (contentType.indexOf(";") > -1) {
             contentType = contentType.substring(0, contentType.indexOf(";"));
         }
@@ -48,7 +51,7 @@ public class Checker {
         this.response = response;
 
         this.contentType = response.getHeaders().get("Content-Type");
-        if (contentType.indexOf(";") > -1) {
+        if (contentType != null && contentType.indexOf(";") > -1) {
             contentType = contentType.substring(0, contentType.indexOf(";"));
         }
 
