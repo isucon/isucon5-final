@@ -93,6 +93,9 @@
                         <configuration>
                             <resources>
                                 <resource>
+                                    <directory>${basedir}/../sql</directory>
+                                </resource>
+                                <resource>
                                     <directory>${basedir}/../static</directory>
                                     <targetPath>static</targetPath>
                                 </resource>
