@@ -176,7 +176,7 @@ SQL
 
   get '/team' do
     authenticated!
-    halt 403 if is_guest?(curren_team)
+    halt 403 if is_guest?(current_team)
     team = current_team()
     data = {
       enable_actions: false,
