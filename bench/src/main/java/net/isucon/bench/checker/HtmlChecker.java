@@ -15,6 +15,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import net.isucon.bench.Checker;
+import net.isucon.bench.CheckAbortException;
 
 import net.isucon.bench.Result;
 import net.isucon.bench.Config;

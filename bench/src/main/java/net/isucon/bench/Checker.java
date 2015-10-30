@@ -117,6 +117,7 @@ public class Checker {
         if (response.getStatus() != status) {
             String msg = "パス '%s' へのレスポンスコード %d が期待されていましたが %d でした";
             addViolation(String.format(msg, response.getRequest().getPath(), status, response.getStatus()));
+            throw new CheckAbortException();
         }
     }
 
@@ -124,13 +125,13 @@ public class Checker {
         int status = response.getStatus();
         if (status != 302 && status != 303 && status != 307) {
             addViolation(String.format("レスポンスコードが一時リダイレクトのもの(302, 303, 307)ではなく %d でした", status));
-            return;
+            throw new CheckAbortException();
         }
 
         String value = response.getHeaders().get("Location");
         if (value == null) {
             addViolation(String.format("Location ヘッダがありません"));
-            return;
+            throw new CheckAbortException();
         } else if (value.equals(config.uri(path)) || value.equals(config.uriDefaultPort(path))) {
             return; // ok
         }
@@ -150,6 +151,7 @@ public class Checker {
                 return; // ok
         }
         addViolation(String.format("リダイレクト先が %s でなければなりませんが %s でした", path, value));
+        throw new CheckAbortException();
     }
 
     public void isContentLength(long bytes) {

@@ -246,7 +246,11 @@ public class Driver {
             Consumer<Checker> wrapperCallback = (check) -> {
                 check.setContentBodyChecksum(DatatypeConverter.printHexBinary(md.digest()));
                 check.setContentBody(stream.toString()); // system default encoding
-                checkerCallback.accept(check);
+                try {
+                    checkerCallback.accept(check);
+                } catch (CheckAbortException e) {
+                    // nothing to do
+                }
             };
 
             requestAndCheck(req, session, type, true, hookCallback, wrapperCallback);
@@ -311,7 +315,11 @@ public class Driver {
                 }
                 if (checkerCallback != null) {
                     Checker check = Checker.create(r, type, config, args.responseTime(), res);
-                    checkerCallback.accept(check);
+                    try {
+                        checkerCallback.accept(check);
+                    } catch (CheckAbortException e) {
+                        // nothing to do
+                    }
                 }
             }
 

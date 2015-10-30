@@ -16,6 +16,7 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidJsonException;
 
 import net.isucon.bench.Checker;
+import net.isucon.bench.CheckAbortException;
 
 import net.isucon.bench.Result;
 import net.isucon.bench.Config;
@@ -43,6 +44,7 @@ public class JsonChecker extends Checker {
     public void isValidJson() {
         if (parsed() == null) {
             addViolation("Content bodyが有効なJSONではありません");
+            throw new CheckAbortException();
         }
     }
 

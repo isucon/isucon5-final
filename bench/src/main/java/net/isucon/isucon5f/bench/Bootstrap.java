@@ -47,10 +47,6 @@ public class Bootstrap extends Base {
         return true;
     }
 
-    private class CheckingStatus {
-        //TODO: fixit
-    }
-
     private static String[][] BOOTSTRAP_TEST_DATA = new String[][]{
         { "tony1@moris.io", "tonyny31", "micro" },
         { "tony2@moris.io", "tonyny32", "small" },
