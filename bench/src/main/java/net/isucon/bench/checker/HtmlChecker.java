@@ -115,12 +115,12 @@ public class HtmlChecker extends Checker {
     public void contentMatch(String selector, String regexp) {
         Elements es = document().select(selector);
         if (es.size() == 1) {
-            lastMatch = (Pattern.compile(regexp)).matcher(es.first().text());
+            lastMatch = (Pattern.compile(regexp, Pattern.MULTILINE)).matcher(es.first().text());
             if (! lastMatch.matches()) {
                 addViolation(String.format("DOM要素 '%s' のテキストが正規表現 '%s' にマッチしません", selector, regexp));
             }
         } else {
-            Pattern p = Pattern.compile(regexp);
+            Pattern p = Pattern.compile(regexp, Pattern.MULTILINE);
             boolean match = false;
             for (Element e : es) {
                 if (p.matcher(e.text()).matches()) {
