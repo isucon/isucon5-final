@@ -176,16 +176,18 @@ SQL
 
   get '/team' do
     authenticated!
-    halt 403 if is_guest?(curren_team)
+    halt 403 if is_guest?(current_team)
     team = current_team()
     data = {
       enable_actions: false,
       team_id: team[:id],
+      team_name: team[:team],
       team: team[:team],
       account: team[:account],
       destination: team[:destination],
       ipaddrlist: team[:ipaddresses].values,
       ipaddrs: team[:ipaddrs],
+      guest_priv: is_guest?(team)
     }
     erb :team, locals: data
   end

@@ -20,7 +20,7 @@
   </div>
   <div id="navbar" class="navbar-collapse collapse">
     <ul class="nav navbar-nav">
-      <li class="active"><a href="#"><%= if team_id then team_id + ": " + team_name else "LOGIN" end %></a></li>
+      <li class="active"><a href="#"><%= if team_id then "team: " + team_name else "LOGIN" end %></a></li>
       <li><a href="/">トップ</a></li>
       <% if team_id && team_id >= 0 %><li><a href="/team">チーム情報変更</a></li><% end %>
     </ul>
