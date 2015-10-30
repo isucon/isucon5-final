@@ -181,6 +181,7 @@ SQL
     data = {
       enable_actions: false,
       team_id: team[:id],
+      team_name: team[:team],
       team: team[:team],
       account: team[:account],
       destination: team[:destination],
