@@ -194,7 +194,7 @@ SQL
 
   post '/team' do
     authenticated!
-    halt 403 if is_guest?(curren_team)
+    halt 403 if is_guest?(current_team)
 
     query = <<SQL
 UPDATE teams SET destination=? WHERE id=?
@@ -205,7 +205,7 @@ SQL
 
   post '/enqueue' do
     authenticated!
-    halt 403 if is_guest?(curren_team)
+    halt 403 if is_guest?(current_team)
 
     team = current_team()
 
@@ -268,7 +268,7 @@ SQL
 
   get '/bench_detail/:id' do
     authenticated!
-    halt 403 if is_guest?(curren_team)
+    halt 403 if is_guest?(current_team)
     query = "SELECT id, team_id, summary, score, submitted_at, json FROM scores WHERE id=? AND team_id=?"
     data = db.xquery(query, params[:id], current_team[:id]).first()
     detail = JSON.parse(data[:json]) rescue nil
@@ -282,7 +282,7 @@ SQL
 
   get '/history' do
     authenticated!
-    halt 403 if is_guest?(curren_team)
+    halt 403 if is_guest?(current_team)
 
     query = "SELECT id, summary, score, submitted_at FROM scores WHERE team_id = ? ORDER BY submitted_at DESC"
     json(db.xquery(query, current_team[:id]).map{|row| { id: row[:id], team_id: current_team[:id], success: (row[:summary] == 'success'), score: row[:score], submitted_at: row[:submitted_at].strftime("%H:%M:%S") } })
