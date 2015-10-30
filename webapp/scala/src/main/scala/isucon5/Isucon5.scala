@@ -21,12 +21,12 @@ import scala.util.parsing.json.{JSONFormat, JSONArray, JSONObject}
 
 sealed trait Grade
 object Grade {
-  case object Micro extends Grade
-  case object Small extends Grade
-  case object Standard extends Grade
-  case object Premium extends Grade
+  case object micro extends Grade
+  case object small extends Grade
+  case object standard extends Grade
+  case object premium extends Grade
 
-  private val table = Seq(Micro, Small, Standard, Premium).map(v => v.toString.toLowerCase() -> v).toMap
+  private val table = Seq(micro, small, standard, premium).map(v => v.toString -> v).toMap
   def fromName(name: String): Grade = table(name.toLowerCase)
 }
 
@@ -86,7 +86,7 @@ object Isucon5 extends WebApp with ScalateSupport {
       password = Option(System.getenv.get("ISUCON5_DB_PASSWORD")),
       name = env.getOrDefault("ISUCON5_DB_HOST", "isucon5f"),
       jdbcDriverName = "org.postgresql.Driver",
-      jdbcProperties = Map("connectTimeout" -> "3600")
+      jdbcProperties = Map("connectTimeout" -> "3600", "stringtype" -> "unspecified")
     )
 
     // Query execution helper methods
@@ -149,7 +149,7 @@ object Isucon5 extends WebApp with ScalateSupport {
       }
       def executeUpdate[A](sql: String, args: Any*)(resultMapper: ResultSet => A): Seq[A] = {
         executePrep(sql, args:_*) { st =>
-          st.executeUpdate()
+          st.execute()
           val b = Seq.newBuilder[A]
           val rs = st.getResultSet
           while (rs.next()) {
@@ -239,21 +239,19 @@ object Isucon5 extends WebApp with ScalateSupport {
     val salt = generateSalt
     val insertUserQuery =
       """INSERT INTO users (email,salt,passhash,grade)
-        |VALUES ( ?, ?,digest( ? ||  ?, 'sha512'), ?) RETURNING id
+        |VALUES (?,?,digest(? || ?, 'sha512'),?) RETURNING id
       """.stripMargin
     val insertSubscriptionQuery =
       """
         |INSERT INTO subscriptions (user_id,arg) VALUES (?,?)
       """.stripMargin
     transaction { conn =>
-      // TODO: Error occurred:
-      // ERROR: column "grade" is of type grades but expression is of type character varying Hint: You will need to rewrite or cast the expression. Position: 93
-      // org.postgresql.util.PSQLException: ERROR: column "grade" is of type grades but expression is of type character varying Hint: You will need to rewrite or cast the expression. Position: 93
       val userId = conn.executeUpdate(insertUserQuery, email, salt, salt, password, grade) { rs: ResultSet =>
         rs.getInt(1)
       }.head
       conn.execute(insertSubscriptionQuery, userId, "{}")
     }
+    redirect("/login")
   }
 
   post("/cancel") {
@@ -284,10 +282,7 @@ object Isucon5 extends WebApp with ScalateSupport {
   get("/user.js") {
     ensureLogin { u =>
       contentType = "application/javascript"
-      // TODO: Error occurred:
-      // error: not found: value Premium
-      // in /WEB-INF/views/userjs.ssp near line 4 col 121
-      ssp("/userjs.ssp", "grade" -> u.grade.toString)
+      ssp("/userjs.ssp", "grade" -> u.grade)
     }
   }
 
@@ -333,7 +328,7 @@ object Isucon5 extends WebApp with ScalateSupport {
       case a:Seq[_] =>
         val arr = a.map(toJson(_)).mkString(",")
         s"[${arr}]"
-      case a:Array[String] =>
+      case a @ Array(hd, tl @ _*) =>
         val arr = a.map(toJson(_)).mkString(",")
         s"[${arr}]"
       case it:java.lang.Iterable[_] =>
@@ -424,9 +419,8 @@ object Isucon5 extends WebApp with ScalateSupport {
           case "param" => params += ep.tokenKey -> token
           case _ =>
         }
-        // TODO: Format ep.uri with conf("keys")
         val uri = conf.get("keys") match {
-          case k:Option[Array[Any]] => ep.uri.format(k.get(0))
+          case Some(Array(hd, tl @ _*)) => ep.uri.format((Seq(hd) ++ tl):_*)
           case _ => ep.uri
         }
         Map("service" -> service, "data" -> fetchApi(ep.meth, uri, headers.result, params.result))
