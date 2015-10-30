@@ -1,6 +1,6 @@
 ---
-# - hosts: guests:extras
-- hosts: extras
+ - hosts: guests:extras
+#- hosts: extras
   gather_facts: no
   tasks:
     - name: change timezone to JST
