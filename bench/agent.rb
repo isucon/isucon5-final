@@ -47,6 +47,7 @@ SQL
   rescue => e
     STDERR.puts "Exception #{e.class}: #{e.message}"
     e.backtrace.each{|bt| STDERR.puts "\t" + bt }
+    return nil
   ensure
     client.xquery("ROLLBACK")
   end

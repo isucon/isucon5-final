@@ -36,8 +36,7 @@ public class RestClientConfig {
             }
         };
         SSLContext sslContext = SSLContext.getInstance("SSL");
-        sslContext.init(null, new X509TrustManager[] { trustManager },
-                SecureRandom.getInstanceStrong());
+        sslContext.init(null, new X509TrustManager[] { trustManager }, new SecureRandom());
 
         SSLSocketFactory socketFactory = sslContext.getSocketFactory();
         HostnameVerifier verifier = (h, s) -> true;

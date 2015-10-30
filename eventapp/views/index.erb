@@ -61,13 +61,12 @@
 <% end %>
 
 <div class="page-header">
-  <h2>Latest Top 20</h2>
+  <h2>Ranking</h2>
 </div>
 <div id="leader-board">
   <table id="leader-board-table" class="table">
     <tr id="leader-header">
       <th>team</th>
-      <th style="text-align:center;"></th>
       <th style="text-align:right;">best score</th>
       <th style="text-align:right;">latest at</th>
       <th style="text-align:right;"></th>
@@ -106,9 +105,10 @@
         <p id="score-message">スコア詳細取得に失敗しました(ID:33302, TEAM:127)</p>
         <table class="table" id="table-bench-detail">
           <tr>
-            <th style="text-align:right;">リクエスト数</th><td id="bench-requests" style="text-align:center;">5</td>
-            <th style="text-align:right;">経過秒数</th><td id="bench-elapsed" style="text-align:center;">0.413</td>
-            <th style="text-align:right;">実行内容</th><td id="bench-done" style="text-align:left;" colspan="3">BootstrapChecker</td>
+            <th style="text-align:right;" colspan="2">リクエスト数</th>
+            <td id="bench-requests" style="text-align:center;" colspan="2">5</td>
+            <th style="text-align:right;" colspan="2">経過秒数</th>
+            <td id="bench-elapsed" style="text-align:center;" colspan="2">0.413</td>
           </tr>
           <tr>
             <th style="text-align:right;">2xx</th><td id="bench-success" style="text-align:center;">2</td>
@@ -163,8 +163,8 @@
     <tr class="bench-leader">
       <td class="bench-team"></td>
       <td class="bench-best" style="text-align:right;"></td>
-      <td class="bench-latest-at" style="text-align:center;"></td>
-      <td class="bench-latest-summary" style="text-align:center;"></td>
+      <td class="bench-latest-at" style="text-align:right;"></td>
+      <td class="bench-latest-summary" style="text-align:right;"></td>
       <td class="bench-latest" style="text-align:right;"></td>
     </tr>
   </table>
