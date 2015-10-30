@@ -228,7 +228,7 @@ $app->get('/data', function () use ($app) {
 
 $app->get('/initialize', function () use ($app) {
     $file = realpath(dirname(__FILE__) . "/../sql/initialize.sql");
-    exec("/usr/local/bin/psql -f " . $file . " isucon5f");
+    exec("psql -f " . $file . " isucon5f");
 });
 
 $app->run();
