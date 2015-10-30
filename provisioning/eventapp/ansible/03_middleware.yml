@@ -9,7 +9,7 @@
         - reload nginx
     - apt: name=mysql-server-5.6 state=present
     - file: path=/var/run/mysqld state=directory owner=mysql mode=775
-    - lineinfile: dest=/etc/mysql/mysql.conf.d/mysqld.cnf regexp='^#?.*bind-address.*=.*127.0.0.1' line='bind-address = 0.0.0.0'
+    - lineinfile: dest=/etc/mysql/my.cnf regexp='^#?.*bind-address.*=.*127.0.0.1' line='bind-address = 0.0.0.0'
       notify:
         - restart mysqld
     - service: name=mysql state=running enabled=true
