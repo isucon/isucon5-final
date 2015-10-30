@@ -11,9 +11,10 @@ client = Mysql2::Client.new(
 )
 client.query_options.merge!(symbolize_keys: true)
 
-# TODO: for first message
 MESSAGES = [
-  # { priority: 'alert-info', content: '', show_at: '', hide_at: '' },
+  { priority: 'alert-info', content: 'ISUCON5決勝レギュレーション https://gist.github.com/tagomoris/2be8751d8c13f5e78e61', show_at: '2015-10-31 11:00:00', hide_at: '2015-10-31 18:00:00' },
+  { priority: 'alert-warning', content: '17:45 以降、自チーム以外の成績は更新されません', show_at: '2015-10-31 17:00:00', hide_at: '2015-10-31 17:45:00' },
+  { priority: 'alert-danger', content: '18:00 の時点でベンチマーク実行先IPアドレスが登録されていない場合、計測は行われず失格となります', show_at: '2015-10-31 17:30:00', hide_at: '18:00:00' },
 ]
 
 MESSAGES.each do |msg|
