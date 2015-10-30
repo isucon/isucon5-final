@@ -373,10 +373,10 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetInitialize(w http.ResponseWriter, r *http.Request) {
-	fname := "../../sql/initialize.sql"
+	fname := "../sql/initialize.sql"
 	file, err := filepath.Abs(fname)
 	checkErr(err)
-	_, err = exec.Command("psql", "-f", file, "isocon5f").Output()
+	output, err := exec.Command("psql", "-f", file, "isucon5f").Output()
 	checkErr(err)
 }
 
@@ -395,7 +395,7 @@ func main() {
 	}
 	user := os.Getenv("ISUCON5_DB_USER")
 	if user == "" {
-		out, err := exec.Command("whomai").Output()
+		out, err := exec.Command("whoami").Output()
 		if err != nil {
 			log.Fatalf("Failed to run command 'whoami'.\nError: %s", err)
 		}
