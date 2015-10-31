@@ -30,7 +30,7 @@ class Isucon5Portal::WebApp < Sinatra::Base
   ALL_TIME =    [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 20:00:00")]
   GAME_TIME =   [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 18:00:00")]
   PUBLIC_TIME = [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 17:45:00")]
-  MARK_TIME =   [Time.parse("2015-10-31 18:10:00"), Time.parse("2015-10-31 20:00:00")]
+  MARK_TIME =   [Time.parse("2015-10-31 18:05:00"), Time.parse("2015-10-31 20:00:00")]
 
   helpers do
     def config
