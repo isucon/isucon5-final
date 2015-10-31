@@ -134,6 +134,8 @@ public class Checker extends Base {
                     check.isStatus(200);
                     if (! check.hasViolations()) {
                         check.contentMatch(String.format("var AIR_ISU_REFRESH_INTERVAL = %s;", interval));
+                        if (check.hasViolations())
+                            check.fatal("user.jsの内容が正しくありません");
                     }
                 });
 
