@@ -327,10 +327,10 @@ SQL
       latest = db.xquery(team_query, row[:id], p1, p2).first || {}
       teams[row[:id]] = {
         team: row[:team],
-        best: row[:best] || 0,
+        best: row[:best].to_i || 0,
         latest_at: latest[:submitted_at],
         latest_summary: latest[:summary],
-        latest: latest[:score] || 0,
+        latest: latest[:score].to_i || 0,
       }
     end
 
