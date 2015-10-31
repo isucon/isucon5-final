@@ -77,6 +77,7 @@ public class Checker {
 
     public void fatal(String message) {
         addViolation(message);
+        result.fail();
         throw new Driver.ScenarioAbortException();
     }
 
