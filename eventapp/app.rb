@@ -30,7 +30,7 @@ class Isucon5Portal::WebApp < Sinatra::Base
   ALL_TIME =    [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 20:00:00")]
   GAME_TIME =   [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 18:00:00")]
   PUBLIC_TIME = [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 17:45:00")]
-  MARK_TIME =   [Time.parse("2015-10-31 18:15:00"), Time.parse("2015-10-31 20:00:00")]
+  MARK_TIME =   [Time.parse("2015-10-31 18:10:00"), Time.parse("2015-10-31 20:00:00")]
 
   helpers do
     def config
@@ -224,6 +224,7 @@ SQL
 
     team_id = team[:id]
     ip_address = params[:ip_address]
+    benchgroup = team[:benchgroup]
 
     if ip_address.nil? || ip_address.empty?
       dest_ip_account = team[:account]
@@ -231,8 +232,9 @@ SQL
         dest_ip_account = params[:account]
       end
 
-      row = db.xquery("SELECT id,destination FROM teams WHERE account=?", dest_ip_account).first
+      row = db.xquery("SELECT id,benchgroup,destination FROM teams WHERE account=?", dest_ip_account).first
       ip_address = row[:destination]
+      benchgroup = row[:benchgroup]
       team_id = row[:id]
     end
 
@@ -252,7 +254,7 @@ SQL
     begin
       db.xquery("BEGIN")
       insert_query = "INSERT INTO queue (team_id,benchgroup,status,ip_address,testset_id) VALUES (?,?,'waiting',?,?)"
-      db.xquery(insert_query, team_id, team[:benchgroup], ip_address, testset_id)
+      db.xquery(insert_query, team_id, benchgroup, ip_address, testset_id)
       num = db.xquery("SELECT COUNT(1) AS c FROM queue WHERE team_id=? AND status IN ('waiting','running')", team_id).first[:c]
       raise "already enqueued" if num > 1
       db.xquery("COMMIT")
