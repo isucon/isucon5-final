@@ -240,7 +240,14 @@ public class Checker extends Base {
                         List found = check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at");
                         if (! check.hasViolations() && found != null && found.get(0) != null) {
                             // seconds from epoch
-                            long epoch = Long.getLong(String.valueOf(found.get(0)));
+                            long epoch = 0;
+                            try {
+                                epoch = Long.getLong(String.valueOf(found.get(0)));
+                            } catch (NullPointerException e) {
+                                Object obj = found.get(0);
+                                System.err.println(String.format("NullPointerException, class: %s, value: %s", obj.getClass(), obj));
+                            }
+                                
                             long epochMillis = epoch * 1000;
                             if (responseAt - epochMillis > I5FPerfectSecurity.VALID_CACHE_MILLIS) {
                                 check.fatal("perfectsec_attacked API レスポンスの内容が古いままです");
