@@ -27,6 +27,7 @@ class Isucon5Portal::WebApp < Sinatra::Base
 
   IN_PROCESS_CACHE_TIMEOUT = 30
 
+  ALL_TIME =    [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 20:00:00")]
   GAME_TIME =   [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 18:00:00")]
   PUBLIC_TIME = [Time.parse("2015-10-31 11:00:00"), Time.parse("2015-10-31 17:45:00")]
   MARK_TIME =   [Time.parse("2015-10-31 18:15:00"), Time.parse("2015-10-31 20:00:00")]
@@ -323,7 +324,7 @@ ORDER BY submitted_at DESC LIMIT 1
 SQL
     all_teams = db.xquery(all_teams_query).to_a
     all_teams.each do |row|
-      p1, p2 = (in_mark_time? ? MARK_TIME : PUBLIC_TIME)
+      p1, p2 = (in_mark_time? ? MARK_TIME : (is_organizer?(current_team) ? ALL_TIME : PUBLIC_TIME))
       latest = db.xquery(team_query, row[:id], p1, p2).first || {}
       entry = {
         team: row[:team],
@@ -372,7 +373,7 @@ ORDER BY submitted_at ASC
 SQL
     all_teams = db.xquery(all_teams_query).to_a
     all_teams.each do |row|
-      p1, p2 = PUBLIC_TIME
+      p1, p2 = (is_organizer?(current_team) ? ALL_TIME : PUBLIC_TIME)
       scores = db.xquery(team_query, row[:id], p1, p2, current_team[:id]).map do |score|
         [score[:submitted_at].to_i * 1000, score[:score]]
       end
