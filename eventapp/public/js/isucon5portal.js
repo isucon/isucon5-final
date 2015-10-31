@@ -4,6 +4,8 @@ var ISUCON5_UPDATE_HISTORY_INTERVAL = 10 * 1000;
 var ISUCON5_UPDATE_LEADER_BOARD_INTERVAL = 120 * 1000;
 var ISUCON5_UPDATE_CHART_INTERVAL = 120 * 1000;
 
+Highcharts.setOptions({ global : { useUTC : false }});
+
 // my_team_id: set in html
 
 $(function(){
