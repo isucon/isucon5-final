@@ -250,7 +250,8 @@ SQL
 
     begin
       db.xquery("BEGIN")
-      db.xquery("INSERT INTO queue (team_id,status,ip_address,testset_id) VALUES (?,'waiting',?,?)", team_id, ip_address, testset_id)
+      insert_query = "INSERT INTO queue (team_id,benchgroup,status,ip_address,testset_id) VALUES (?,?,'waiting',?,?)"
+      db.xquery(insert_query, team_id, team[:benchgroup], ip_address, testset_id)
       num = db.xquery("SELECT COUNT(1) AS c FROM queue WHERE team_id=? AND status IN ('waiting','running')", team_id).first[:c]
       raise "already enqueued" if num > 1
       db.xquery("COMMIT")
