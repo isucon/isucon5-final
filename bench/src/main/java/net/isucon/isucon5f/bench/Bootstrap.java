@@ -403,6 +403,8 @@ public class Bootstrap extends Base {
 
                     if (grade.equals("standard") || grade.equals("premium")){
                         check.exist("$.[?(@.service=='tenki')].data", 1);
+                        if (! check.hasViolations())
+                            check.exist("$.[?(@.service=='tenki')].data.date", 1);
                         if (! check.hasViolations()) {
                             String date = (String) check.find("$.[?(@.service=='tenki')].data.date").get(0);
                             long dataAt = DateUtils.parseDate(date).getTime();
