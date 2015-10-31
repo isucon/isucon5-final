@@ -367,13 +367,13 @@ WHERE t.priv = 1
 SQL
     team_query = <<SQL
 SELECT score, submitted_at FROM scores
-WHERE team_id=? AND submitted_at >= ? AND submitted_at < ? AND summary = 'success'
+WHERE team_id=? AND ((submitted_at >= ? AND submitted_at < ?) OR team_id = ?) AND summary = 'success'
 ORDER BY submitted_at ASC
 SQL
     all_teams = db.xquery(all_teams_query).to_a
     all_teams.each do |row|
-      p1, p2 = (in_mark_time? ? MARK_TIME : PUBLIC_TIME)
-      scores = db.xquery(team_query, row[:id], p1, p2).map do |score|
+      p1, p2 = PUBLIC_TIME
+      scores = db.xquery(team_query, row[:id], p1, p2, current_team[:id]).map do |score|
         [score[:submitted_at].to_i, score[:score]]
       end
       teams << { name: row[:team], data: scores }
