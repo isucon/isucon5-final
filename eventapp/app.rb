@@ -309,7 +309,7 @@ SQL
       return json($leader_board)
     end
 
-    teams = {} # id => {team: "..",  "best": 120, latest_at: "...", latest_summary: "fail", "latest": 100}
+    teams = [] # [ {team: "..",  "best": 120, latest_at: "...", latest_summary: "fail", "latest": 100}, ...]
     all_teams_query = <<SQL
 SELECT t.id AS id, t.team AS team, h.score AS best
 FROM teams t
@@ -325,13 +325,14 @@ SQL
     all_teams.each do |row|
       p1, p2 = (in_mark_time? ? MARK_TIME : PUBLIC_TIME)
       latest = db.xquery(team_query, row[:id], p1, p2).first || {}
-      teams[row[:id]] = {
+      entry = {
         team: row[:team],
         best: row[:best].to_i || 0,
         latest_at: latest[:submitted_at],
         latest_summary: latest[:summary],
         latest: latest[:score].to_i || 0,
       }
+      teams << entry
     end
 
     if teams.size() < 1
@@ -341,11 +342,9 @@ SQL
     end
 
     list = if in_mark_time? # sort by latest
-             teams.keys.sort{|id1,id2| teams[id2][:latest] <=> teams[id1][:latest] }.map{|id| teams[id] }
+             teams.sort{|t1,t2| t2[:latest] <=> t1[:latest] }
            else # sort by best
-             teams.keys.
-               sort{|id1,id2| (teams[id2][:best] <=> teams[id1][:best]).nonzero? || teams[id1][:latest_at] <=> teams[id2][:latest_at] }.
-               map{|id| teams[id] }
+             teams.sort{|t1,t2| (t2[:best] <=> t1[:best]).nonzero? || t1[:latest_at] <=> t2[:latest_at] }
            end
     $leader_board = list
     $leader_board_at = Time.now
