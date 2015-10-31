@@ -306,7 +306,7 @@ SQL
   get '/leader_board' do
     authenticated!
 
-    if $leader_board && $leader_board_at && Time.now < $leader_board_at + IN_PROCESS_CACHE_TIMEOUT
+    if !is_organizer?(current_team) && $leader_board && $leader_board_at && Time.now < $leader_board_at + IN_PROCESS_CACHE_TIMEOUT
       return json($leader_board)
     end
 
@@ -347,8 +347,10 @@ SQL
            else # sort by best
              teams.sort{|t1,t2| (t2[:best] <=> t1[:best]).nonzero? || t1[:latest_at] <=> t2[:latest_at] }
            end
-    $leader_board = list
-    $leader_board_at = Time.now
+    if !is_organizer?(current_team)
+      $leader_board = list
+      $leader_board_at = Time.now
+    end
 
     json(list)
   end
