@@ -140,6 +140,9 @@ function updateLeaderBoard(){
 }
 
 function updateChart(){
+  var el = $('#leader-history');
+  if (el.length === 0) return;
+
   $.get("/leader_history", function(list) {
     $('#leader-history').empty().highcharts({
       title: null,
