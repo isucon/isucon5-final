@@ -238,7 +238,7 @@ public class Checker extends Base {
                         check.exist("$.[?(@.service=='perfectsec_attacked')].data", 1);
                         check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1);
                         List found = check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at");
-                        if (! check.hasViolations() && found != null) {
+                        if (! check.hasViolations() && found != null && found.get(0) != null) {
                             // seconds from epoch
                             long epoch = Long.getLong(String.valueOf(found.get(0)));
                             long epochMillis = epoch * 1000;
