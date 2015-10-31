@@ -434,15 +434,21 @@ public class Bootstrap extends Base {
                             }
 
                             String req = param.subscriptions.get("perfectsec").params.get("req");
-                            check.content("$.[?(@.service=='perfectsec')].data.req", req);
+                            check.exist("$.[?(@.service=='perfectsec')].data.req", 1);
+                            if (! check.hasViolations())
+                                check.content("$.[?(@.service=='perfectsec')].data.req", req);
 
                             String token = param.subscriptions.get("perfectsec").token;
                             check.exist("$.[?(@.service=='perfectsec')].data.key", 1);
-                            String key = (String) check.find("$.[?(@.service=='perfectsec')].data.key").get(0);
+                            String key = null;
+                            if (! check.hasViolations())
+                                key = (String) check.find("$.[?(@.service=='perfectsec')].data.key").get(0);
 
                             check.exist("$.[?(@.service=='perfectsec')].data.onetime_token", 1);
-                            String onetime = (String) check.find("$.[?(@.service=='perfectsec')].data.onetime_token").get(0);
-                            if (! I5FPerfectSecurity.isCorrectOneTime(onetime, token, req, key, responseAt)) {
+                            String onetime = null;
+                            if (! check.hasViolations())
+                                onetime = (String) check.find("$.[?(@.service=='perfectsec')].data.onetime_token").get(0);
+                            if (key != null && onetime != null && ! I5FPerfectSecurity.isCorrectOneTime(onetime, token, req, key, responseAt)) {
                                 check.fatal("perfectsec API onetime tokenの値が不正です");
                             }
 
