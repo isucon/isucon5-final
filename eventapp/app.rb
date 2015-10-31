@@ -374,7 +374,7 @@ SQL
     all_teams.each do |row|
       p1, p2 = PUBLIC_TIME
       scores = db.xquery(team_query, row[:id], p1, p2, current_team[:id]).map do |score|
-        [score[:submitted_at].to_i, score[:score]]
+        [score[:submitted_at].to_i * 1000, score[:score]]
       end
       teams << { name: row[:team], data: scores }
     end
