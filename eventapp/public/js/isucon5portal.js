@@ -2,12 +2,14 @@ var ISUCON5_UPDATE_MESSAGE_INTERVAL = 120 * 1000;
 var ISUCON5_UPDATE_QUEUE_INTERVAL = 20 * 1000;
 var ISUCON5_UPDATE_HISTORY_INTERVAL = 10 * 1000;
 var ISUCON5_UPDATE_LEADER_BOARD_INTERVAL = 120 * 1000;
+var ISUCON5_UPDATE_CHART_INTERVAL = 120 * 1000;
 
 // my_team_id: set in html
 
 $(function(){
   updateMessage();
   updateLeaderBoard();
+  updateChart();
 
   if (my_team_id >= 0) { // non-guest
 
@@ -21,11 +23,13 @@ $(function(){
     setInterval(updateQueue,   ISUCON5_UPDATE_QUEUE_INTERVAL);
     setInterval(updateHistory, ISUCON5_UPDATE_HISTORY_INTERVAL);
     setInterval(updateLeaderBoard, ISUCON5_UPDATE_LEADER_BOARD_INTERVAL);
+    setInterval(updateChart, ISUCON5_UPDATE_CHART_INTERVAL);
 
   } else { // guest
 
     setInterval(updateMessage, ISUCON5_UPDATE_MESSAGE_INTERVAL);
     setInterval(updateLeaderBoard, ISUCON5_UPDATE_LEADER_BOARD_INTERVAL);
+    setInterval(updateChart, ISUCON5_UPDATE_CHART_INTERVAL);
   }
 
 });
@@ -131,6 +135,20 @@ function updateLeaderBoard(){
       item.find("td.bench-latest-summary").text(row.latest_summary);
       item.find("td.bench-latest").text(row.latest);
       $("#leader-board table#leader-board-table").append(item);
+    });
+  });
+}
+
+function updateChart(){
+  var el = $('#leader-history');
+  if (el.length === 0) return;
+
+  $.get("/leader_history", function(list) {
+    $('#leader-history').empty().highcharts({
+      title: null,
+      yAxis: { title: { text: 'Score' } },
+      xAxis: { type: 'datetime' },
+      series: list
     });
   });
 }

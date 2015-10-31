@@ -353,7 +353,41 @@ SQL
   end
 
   get '/leader_history' do
-    authorized!
-    raise NotImplementedError
+    authenticated!
+
+    if $leader_history && $leader_history_at && Time.now < $leader_history_at + IN_PROCESS_CACHE_TIMEOUT
+      return json($leader_history)
+    end
+
+    teams = [] # [ {team: "..",  scores: [[1446258157,2000],[1446261757,3000], ...]}, ... ]
+    all_teams_query = <<SQL
+SELECT t.id AS id, t.team AS team
+FROM teams t
+WHERE t.priv = 1
+SQL
+    team_query = <<SQL
+SELECT score, submitted_at FROM scores
+WHERE team_id=? AND ((submitted_at >= ? AND submitted_at < ?) OR team_id = ?) AND summary = 'success'
+ORDER BY submitted_at ASC
+SQL
+    all_teams = db.xquery(all_teams_query).to_a
+    all_teams.each do |row|
+      p1, p2 = PUBLIC_TIME
+      scores = db.xquery(team_query, row[:id], p1, p2, current_team[:id]).map do |score|
+        [score[:submitted_at].to_i, score[:score]]
+      end
+      teams << { name: row[:team], data: scores }
+    end
+
+    if teams.size() < 1
+      $leader_history = []
+      $leader_history_at = Time.now
+      return json([])
+    end
+
+    $leader_history = teams
+    $leader_history_at = Time.now
+
+    json(teams)
   end
 end
