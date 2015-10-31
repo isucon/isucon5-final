@@ -3,6 +3,7 @@ package net.isucon.bench.checker;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Arrays;
 import java.util.function.Predicate;
@@ -14,6 +15,7 @@ import org.eclipse.jetty.client.api.Response;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidJsonException;
+import com.jayway.jsonpath.PathNotFoundException;
 
 import net.isucon.bench.Checker;
 
@@ -47,34 +49,57 @@ public class JsonChecker extends Checker {
     }
 
     public List find(String selector) {
-        return JsonPath.read(parsed(), selector);
+        try{
+            return JsonPath.read(parsed(), selector);
+        } catch (PathNotFoundException e) {
+            return Collections.emptyList();
+        }
     }
 
     public void exist(String selector) {
-        if (((List) JsonPath.read(parsed(), selector)).size() > 0) {
-            addViolation(String.format("要素 %s が存在するはずですが、存在しません", selector));
+        try {
+            List list = (List) JsonPath.read(parsed(), selector);
+            if (list.size() > 0) {
+                addViolation(String.format("要素 %s が存在するはずですが、存在しません", selector));
+            }
+        } catch (PathNotFoundException e) {
+            addViolation(String.format("要素 %s が存在するはずですが存在しません", selector));
         }
     }
 
     public void exist(String selector, int num) {
-        if (((List) JsonPath.read(parsed(), selector)).size() != num) {
-            addViolation(String.format("要素 %s が %d オブジェクト存在するはずですが、異なっています", selector, num));
-            System.err.println(contentBody());
+        try {
+            List list = (List) JsonPath.read(parsed(), selector);
+            if (list.size() != num) {
+                addViolation(String.format("要素 %s が %d オブジェクト存在するはずですが、異なっています", selector, num));
+                System.err.println(contentBody());
+            }
+        } catch (PathNotFoundException e) {
+            addViolation(String.format("要素 %s が %d オブジェクト存在するはずですが異なっています", selector, num));
         }
     }
 
     public void missing(String selector) {
-        if (((List) JsonPath.read(parsed(), selector)).size() != 0) {
-            addViolation(String.format("要素 %s が存在しないはずですが、存在します", selector));
+        try {
+            List list = (List) JsonPath.read(parsed(), selector);
+            if (list.size() != 0) {
+                addViolation(String.format("要素 %s が存在しないはずですが、存在します", selector));
+            }
+        } catch (PathNotFoundException e) {
+            // missing is ok
         }
     }
 
     public void content(String selector, String text) {
-        List<String> list = JsonPath.read(parsed(), selector);
-        if (list.size() == 1 && list.get(0).equals(text)) {
-            // ok
-        } else {
-            addViolation(String.format("要素 %s の内容が %s ではありません", selector, text));
+        try {
+            List<String> list = JsonPath.read(parsed(), selector);
+            if (list.size() == 1 && list.get(0).equals(text)) {
+                // ok
+            } else {
+                addViolation(String.format("要素 %s の内容が %s ではありません", selector, text));
+            }
+        } catch (PathNotFoundException e) {
+            addViolation(String.format("要素 %s の内容が %s のはずですが要素が存在しません", selector, text));
         }
     }
 
@@ -82,21 +107,25 @@ public class JsonChecker extends Checker {
     // }
 
     public void contentMatch(String selector, String value) {
-        List<String> list = JsonPath.read(parsed(), selector);
-        if (list.size() == 1) {
-            if (! list.get(0).equals(value)) {
-                addViolation(String.format("リスト %s の要素が '%s' と一致しません", selector, value));
-            }
-        } else {
-            boolean match = false;
-            for (String s : list) {
-                if (s.equals(value)) {
-                    match = true;
-                    break;
+        try {
+            List<String> list = JsonPath.read(parsed(), selector);
+            if (list.size() == 1) {
+                if (! list.get(0).equals(value)) {
+                    addViolation(String.format("リスト %s の要素が '%s' と一致しません", selector, value));
                 }
+            } else {
+                boolean match = false;
+                for (String s : list) {
+                    if (s.equals(value)) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (! match)
+                    addViolation(String.format("リスト %s の要素の中に '%s' と一致するものがありません", selector, value));
             }
-            if (! match)
-                addViolation(String.format("リスト %s の要素の中に '%s' と一致するものがありません", selector, value));
+        } catch (PathNotFoundException e) {
+            addViolation(String.format("リスト %s の要素の中に '%s' がありません", selector, value));
         }
     }
 }
