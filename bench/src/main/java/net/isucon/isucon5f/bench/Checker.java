@@ -271,12 +271,9 @@ public class Checker extends Base {
             if (LocalDateTime.now().isAfter(stopAt))
                 break;
 
-            while (true) {
+            for (int i = 0 ; i < 4 ; i++) {
                 if (LocalDateTime.now().isAfter(stopAt))
                     break;
-                if (random.nextInt(4) == 0) { // 25%
-                    // modify session data
-                }
 
                 getAndCheck(s, "/data", "GET DATAx", callback);
 
