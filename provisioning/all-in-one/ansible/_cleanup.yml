@@ -1,0 +1,11 @@
+---
+- hosts: guests:extras
+  gather_facts: no
+  tasks:
+    - shell: rm -rf /tmp/*; true
+    - file: state=absent path=/home/isucon/.ssh/deploy_id_rsa
+    - file: path=/root/.ansible state=absent
+    - file: path=/root/.bash_history state=absent
+    - file: path=/root/.viminfo state=absent
+    - file: path=/home/isucon/.bash_history state=absent
+    - file: path=/home/isucon/.viminfo state=absent

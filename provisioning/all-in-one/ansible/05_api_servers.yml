@@ -1,0 +1,54 @@
+---
+- hosts: all
+  gather_facts: no
+  sudo: yes
+  sudo_user: isucon
+  tasks:
+    - file: path=/home/isucon/.ssh state=directory owner=isucon mode=755
+    - git:
+        repo=https://github.com/isucon/isucon5-final.git
+        dest=/home/isucon/isucon5-final
+    - copy: src=../files/env.sh dest=/home/isucon/env.sh owner=isucon mode=755
+
+    - name: KEN_ALL API
+      shell: PATH=/home/isucon/.local/ruby/bin:$PATH bundle install
+      args:
+        chdir: /home/isucon/isucon5-final/api/ken
+
+    - name: PerfectSequrity API
+      shell: PATH=/home/isucon/.local/node/bin:$PATH npm install
+      args:
+        chdir: /home/isucon/isucon5-final/api/perfect_security
+
+    - name: Search Name API
+      shell: gradle wrapper
+      args:
+        chdir: /home/isucon/isucon5-final/api/search-name
+
+    - name: Tenki API
+      shell: PATH=/home/isucon/.local/go/bin:$PATH GOROOT=/home/isucon/.local/go GOPATH=/home/isucon/isucon5-final/api/go go build
+      args:
+        chdir: /home/isucon/isucon5-final/api/go/tenki
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - apt: name=supervisor state=present
+    # In ubuntu default /etc/supervisor/supervisord.conf
+    # [include]
+    # files = /etc/supervisor/conf.d/*.conf
+    - copy: src=../files/supervisor.ken.conf dest=/etc/supervisor/conf.d/ken.conf
+    - supervisorctl: name=ken state=present
+    - supervisorctl: name=ken state=restarted
+
+    - copy: src=../files/supervisor.perfect_security.conf dest=/etc/supervisor/conf.d/perfect_security.conf
+    - supervisorctl: name=perfect_security state=present
+    - supervisorctl: name=perfect_security state=restarted
+
+    - copy: src=../files/supervisor.search-name.conf dest=/etc/supervisor/conf.d/search-name.conf
+    - supervisorctl: name=search-name state=present
+    - supervisorctl: name=search-name state=restarted
+
+    - copy: src=../files/supervisor.tenki.conf dest=/etc/supervisor/conf.d/tenki.conf
+    - supervisorctl: name=tenki state=present
+    - supervisorctl: name=tenki state=restarted
