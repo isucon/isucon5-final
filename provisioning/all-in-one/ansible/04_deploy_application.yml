@@ -19,6 +19,9 @@
     - command: rm -rf /tmp/isucon5-final
       args:
         removes: /tmp/isucon5-final
+    - shell: mv ./initialize_all.sql ./initialize.sql
+      args:
+        chdir: /home/isucon/webapp/sql
     - copy: src=../files/env.sh dest=/home/isucon/env.sh owner=isucon mode=755
     - name: ruby
       shell: PATH=/home/isucon/.local/ruby/bin:$PATH bundle install
@@ -74,7 +77,7 @@
   gather_facts: no
   tasks:
     - service: name=postgresql state=restarted
-    - shell: cat ./initialize_all.sql | sudo -u isucon psql isucon5f
+    - shell: cat ./initialize.sql | sudo -u isucon psql isucon5f
       args:
         chdir: /home/isucon/webapp/sql
     - apt: name=supervisor state=present
