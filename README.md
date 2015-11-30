@@ -1,5 +1,7 @@
 # ISUCON5 決勝
 
+決勝イベント時レギュレーション: https://gist.github.com/tagomoris/2be8751d8c13f5e78e61
+
 ## ライセンス
 
 The MIT License (MIT)
