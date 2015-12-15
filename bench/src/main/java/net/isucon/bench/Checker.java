@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -27,6 +28,14 @@ public class Checker {
 
     private String contentBodyChecksum;
     private String contentBody;
+
+    public enum States {
+        MODERATE,
+        CRITICAL,
+        FATAL,
+    }
+
+    private States state;
 
     public static Checker create(Result result, String type, Config config, long responseTime, Response response) {
         String contentType = response.getHeaders().get("Content-Type");
@@ -57,6 +66,8 @@ public class Checker {
 
         this.contentBodyChecksum = null; // SHA-1 checksum
         this.contentBody = null;
+
+        this.state = States.CRITICAL;
     }
 
     public Checker checkerAs(String format) {
@@ -65,6 +76,70 @@ public class Checker {
         case "json": return new JsonChecker(this.result, this.type, this.config, this.responseTime, this.response);
         }
         throw new IllegalArgumentException("unknown format for checker: " + format);
+    }
+
+    public void fatal() {
+        this.state = States.FATAL;
+    }
+
+    public void critical() {
+        this.state = States.CRITICAL;
+    }
+
+    public void moderate() {
+        this.state = States.MODERATE;
+    }
+
+    protected boolean wrap(boolean success) {
+        if (state == States.FATAL && !success) {
+            throw new Driver.ScenarioAbortException();
+        }
+        if (state == States.CRITICAL && !success) {
+            throw new Driver.CheckerCriticalFailureException();
+        }
+        return success;
+    }
+
+    public class Depender {
+        private boolean success;
+        private Checker checker;
+
+        public Depender(Checker checker, boolean[] tests) {
+            this.checker = checker;
+            this.success = true;
+            for (boolean b : tests) {
+                if (!b) {
+                    this.success = false;
+                    break;
+                }
+            }
+        }
+
+        public Depender(Checker checker, Supplier<Boolean>[] tests) {
+            this.checker = checker;
+            this.success = true;
+            for (Supplier<Boolean> s : tests) {
+                if (! s.get().booleanValue()) {
+                    this.success = false;
+                    break;
+                }
+            }
+        }
+
+        public boolean then(Runnable nested) {
+            if (success) {
+                nested.run();
+            }
+            return success;
+        }
+    }
+
+    public Depender depends(boolean... successes) {
+        return new Depender(this, successes);
+    }
+
+    public Depender depends(Supplier<Boolean>... funcs) {
+        return new Depender(this, funcs);
     }
 
     public boolean hasViolations() {
@@ -114,26 +189,28 @@ public class Checker {
         }
     }
 
-    public void isStatus(int status) {
+    public boolean isStatus(int status) {
         if (response.getStatus() != status) {
             String msg = "パス '%s' へのレスポンスコード %d が期待されていましたが %d でした";
             addViolation(String.format(msg, response.getRequest().getPath(), status, response.getStatus()));
+            return wrap(false);
         }
+        return wrap(true);
     }
 
-    public void isRedirect(String path) {
+    public boolean isRedirect(String path) {
         int status = response.getStatus();
         if (status != 302 && status != 303 && status != 307) {
             addViolation(String.format("レスポンスコードが一時リダイレクトのもの(302, 303, 307)ではなく %d でした", status));
-            return;
+            return wrap(false);
         }
 
         String value = response.getHeaders().get("Location");
         if (value == null) {
             addViolation(String.format("Location ヘッダがありません"));
-            return;
+            return wrap(false);
         } else if (value.equals(config.uri(path)) || value.equals(config.uriDefaultPort(path))) {
-            return; // ok
+            return wrap(true);
         }
 
         URI uri = null;
@@ -148,47 +225,58 @@ public class Checker {
             if (p.isEmpty())
                 p = "/";
             if ((h == null || h.equals(config.host)) && p.equals(path))
-                return; // ok
+                return wrap(true);
         }
         addViolation(String.format("リダイレクト先が %s でなければなりませんが %s でした", path, value));
+        return wrap(false);
     }
 
-    public void isContentLength(long bytes) {
+    public boolean isContentLength(long bytes) {
         String value = response.getHeaders().get("Content-Length");
         if (value == null) {
             addViolation(String.format("リクエストパス %s に対して Content-Length がありませんでした", response.getRequest().getPath()));
+            return wrap(false);
         } else if (Long.parseLong(value) == bytes) {
-            // ok
+            return wrap(true);
         } else {
             addViolation(String.format("パス %s に対するレスポンスのサイズが正しくありません: %s bytes", response.getRequest().getPath(), value));
+            return wrap(false);
         }
     }
 
-    public void isContentType(String type) {
+    public boolean isContentType(String type) {
         if (! contentType().equals(type)) {
             addViolation(String.format("Content-Type ヘッダが %s になっていません: %s", type, contentType()));
+            return wrap(false);
         }
+        return wrap(true);
     }
 
-    public void isContentBodyChecksum(String checksum) {
+    public boolean isContentBodyChecksum(String checksum) {
         if (! contentBodyChecksum.toUpperCase().equals(checksum.toUpperCase())) {
             addViolation(String.format("パス %s のcontent bodyの内容が一致しません", response.getRequest().getPath()));
+            return wrap(false);
         }
+        return wrap(true);
     }
 
-    public void isValidHtml() {
+    public boolean isValidHtml() {
         addViolation("正しいHTMLコンテンツではありません");
+        return wrap(false);
     }
 
-    public void isValidJson() {
+    public boolean isValidJson() {
         addViolation("正しいJSONコンテンツではありません");
+        return wrap(false);
     }
 
-    public void contentMatch(String pattern) {
+    public boolean contentMatch(String pattern) {
         String contentBody = contentBody();
         if (contentBody.indexOf(pattern) < 0 && ! Pattern.compile(pattern).matcher(contentBody()).matches()) {
             addViolation(String.format("Content bodyに文字列パターン '%s' がみつかりません", pattern));
+            return wrap(false);
         }
+        return wrap(true);
     }
 
     // checker methods for subclasses
@@ -200,15 +288,15 @@ public class Checker {
     public Document document() { throw notSupportedException(); }
     public Matcher lastMatch() { throw notSupportedException(); }
     public List find(String selector) { throw notSupportedException(); }
-    public void hasStyleSheet(String path) { throw notSupportedException(); }
-    public void hasJavaScript(String path) { throw notSupportedException(); }
-    public void exist(String selector) { throw notSupportedException(); }
-    public void exist(String selector, int num) { throw notSupportedException(); }
-    public void missing(String selector) { throw notSupportedException(); }
-    public void content(String selector, String text) { throw notSupportedException(); }
-    public void contentMissing(String selector, String text) { throw notSupportedException(); }
-    public void contentLongText(String selector, String text) { throw notSupportedException(); }
-    public void contentMatch(String selector, String regexp) { throw notSupportedException(); }
-    public void contentCheck(String selector, String message, Predicate<Element> callback) { throw notSupportedException(); }
-    public void attribute(String selector, String attributeName, String text) { throw notSupportedException(); }
+    public boolean hasStyleSheet(String path) { throw notSupportedException(); }
+    public boolean hasJavaScript(String path) { throw notSupportedException(); }
+    public boolean exist(String selector) { throw notSupportedException(); }
+    public boolean exist(String selector, int num) { throw notSupportedException(); }
+    public boolean missing(String selector) { throw notSupportedException(); }
+    public boolean content(String selector, String text) { throw notSupportedException(); }
+    public boolean contentMissing(String selector, String text) { throw notSupportedException(); }
+    public boolean contentLongText(String selector, String text) { throw notSupportedException(); }
+    public boolean contentMatch(String selector, String regexp) { throw notSupportedException(); }
+    public boolean contentCheck(String selector, String message, Predicate<Element> callback) { throw notSupportedException(); }
+    public boolean attribute(String selector, String attributeName, String text) { throw notSupportedException(); }
 }

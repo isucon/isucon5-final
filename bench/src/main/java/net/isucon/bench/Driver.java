@@ -51,6 +51,8 @@ public class Driver {
 
     public static class ScenarioAbortException extends RuntimeException {
     }
+    public static class CheckerCriticalFailureException extends RuntimeException {
+    }
 
     public void setHttpClient(HttpClient client) {
         this.client = client;
@@ -311,7 +313,11 @@ public class Driver {
                 }
                 if (checkerCallback != null) {
                     Checker check = Checker.create(r, type, config, args.responseTime(), res);
-                    checkerCallback.accept(check);
+                    try {
+                        checkerCallback.accept(check);
+                    } catch (CheckerCriticalFailureException e) {
+                        // it's just for jump to here
+                    }
                 }
             }
 
