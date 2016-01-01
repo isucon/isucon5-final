@@ -15,6 +15,8 @@ public class Result {
     public Responses responses;
     public ArrayList<Violation> violations; // content check errors, response time errors, ...
 
+    // TODO: responses per methods+paths (or labels?)
+
     public enum MergeType {
         PARALLEL,
         SEQUENTIAL,
