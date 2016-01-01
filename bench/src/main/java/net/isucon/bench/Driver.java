@@ -43,6 +43,8 @@ public class Driver {
 
     private State state;
 
+    private boolean strictCheck = false;
+
     private long DRIVER_WATCH_BLOCK_INTERVAL = 3;
 
     private int DRIVER_CONTENT_BUFFER_SIZE = 1 * 1024 * 1024;
@@ -52,6 +54,14 @@ public class Driver {
     public static class ScenarioAbortException extends RuntimeException {
     }
     public static class CheckerCriticalFailureException extends RuntimeException {
+    }
+
+    public boolean inStrictCheck() {
+        return strictCheck;
+    }
+
+    public void setStrictCheck(boolean b) {
+        this.strictCheck = b;
     }
 
     public void setHttpClient(HttpClient client) {
@@ -311,7 +321,7 @@ public class Driver {
                 } else {
                     r.addResponse(ResponseType.ERROR);
                 }
-                if (checkerCallback != null) {
+                if (checkerCallback != null && this.strictCheck) {
                     Checker check = Checker.create(r, type, config, args.responseTime(), res);
                     try {
                         checkerCallback.accept(check);
