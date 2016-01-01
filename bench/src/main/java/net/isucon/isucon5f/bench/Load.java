@@ -3,7 +3,6 @@ package net.isucon.isucon5f.bench;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Random;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,8 +22,8 @@ public class Load extends Base {
 
     private static long DURATION_MILLIS = 60 * 1000;
 
-    public Load(Long timeout) {
-        super(timeout);
+    public Load() {
+        super(DURATION_MILLIS);
     }
 
     @Override
@@ -35,22 +34,17 @@ public class Load extends Base {
     @Override
     public void scenario(List<Session> sessions) {
         System.err.println("Load");
-        Random random = new Random();
-
-        LocalDateTime stopAt = LocalDateTime.now().plus(DURATION_MILLIS, ChronoUnit.MILLIS);
 
         while (true) {
-            if (LocalDateTime.now().isAfter(stopAt))
-                break;
-            Session s = sessions.get(random.nextInt((int) sessions.size()));
+            stopCheck();
+            Session s = pick(sessions);
 
             get(s, "/login");
             get(s, "/css/bootstrap.min.css");
             get(s, "/css/signin.css");
             post(s, "/login", formLogin(s));
 
-            if (LocalDateTime.now().isAfter(stopAt))
-                break;
+            stopCheck();
 
             get(s, "/");
             get(s, "/css/bootstrap.min.css");
@@ -60,18 +54,13 @@ public class Load extends Base {
             get(s, "/js/airisu.js");
             get(s, "/user.js");
 
-            if (LocalDateTime.now().isAfter(stopAt))
-                break;
+            stopCheck();
 
             for (int i = 0 ; i < 10 ; i++) {
                 get(s, "/data");
 
-                if (LocalDateTime.now().isAfter(stopAt))
-                    break;
+                stopCheck();
             }
-
-            if (LocalDateTime.now().isAfter(stopAt))
-                break;
         }
     }
 }

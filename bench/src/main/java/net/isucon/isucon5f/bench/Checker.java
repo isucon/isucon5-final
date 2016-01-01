@@ -28,8 +28,8 @@ public class Checker extends Base {
 
     private static long DURATION_MILLIS = 60 * 1000;
 
-    public Checker(Long timeout) {
-        super(timeout);
+    public Checker() {
+        super(DURATION_MILLIS);
     }
 
     @Override
@@ -38,89 +38,80 @@ public class Checker extends Base {
     }
 
     @Override
+    public Result finishHook(Result result) {
+        if (result.responses.exception > 0 || result.violations.size() > 0) {
+            result.fail();
+        }
+        return result;
+    }
+
+    @Override
     public void scenario(List<Session> sessions) {
         System.err.println("Checker");
-        Random random = new Random();
-
-        LocalDateTime stopAt = LocalDateTime.now().plus(DURATION_MILLIS, ChronoUnit.MILLIS);
 
         while (true) {
-            if (LocalDateTime.now().isAfter(stopAt))
-                break;
-            Session s = sessions.get(random.nextInt((int) sessions.size()));
+            stopCheck();
+            Session s = pick(sessions);
             I5FParameter param = (I5FParameter) s.param();
 
             getAndCheck(s, "/login", "GET LOGIN", (check) -> {
                     check.isStatus(200);
-                    if (! check.hasViolations()) {
-                        check.isContentType("text/html");
-                        check.hasStyleSheet("/css/bootstrap.min.css");
-                        check.hasStyleSheet("/css/signin.css");
-                    }
+                    check.isContentType("text/html");
+
+                    check.moderate();
+
+                    check.hasStyleSheet("/css/bootstrap.min.css");
+                    check.hasStyleSheet("/css/signin.css");
                 });
             getAndCheck(s, "/css/bootstrap.min.css", "GET BOOTSTRAP CSS", (check) -> {
                     check.isStatus(200);
-                    if (! check.hasViolations()) {
-                        check.isContentBodyChecksum("08df9a96752852f2cbd310c30facd934e348c2c5");
-                    }
+                    check.isContentBodyChecksum("08df9a96752852f2cbd310c30facd934e348c2c5");
                 });
             getAndCheck(s, "/css/signin.css", "GET SIGNIN CSS", (check) -> {
                     check.isStatus(200);
-                    if (! check.hasViolations()) {
-                        check.isContentBodyChecksum("702783cc5eff3d8d3532e339ddd15c57f7a08776");
-                    }
+                    check.isContentBodyChecksum("702783cc5eff3d8d3532e339ddd15c57f7a08776");
                 });
             postAndCheck(s, "/login", formLogin(s), "POST LOGIN", (check) -> {
                     check.isRedirect("/");
                 });
 
-            if (LocalDateTime.now().isAfter(stopAt))
-                break;
+            stopCheck();
 
             getAndCheck(s, "/", "GET INDEX", (check) -> {
                     check.isStatus(200);
                     check.isContentType("text/html");
-                    if (! check.hasViolations()) {
-                        check.exist(".container .header.clearfix nav ul.nav li a[href=/modify]");
-                        check.content(".container .header h3", String.format("AirISU: %s", param.email));
 
-                        check.hasStyleSheet("/css/bootstrap.min.css");
-                        check.hasStyleSheet("/css/jumbotron-narrow.css");
-                        check.hasJavaScript("/js/jquery-1.11.3.js");
-                        check.hasJavaScript("/js/bootstrap.js");
-                        check.hasJavaScript("/user.js");
-                        check.hasJavaScript("/js/airisu.js");
-                    }
+                    check.moderate();
+
+                    check.exist(".container .header.clearfix nav ul.nav li a[href=/modify]");
+                    check.content(".container .header h3", String.format("AirISU: %s", param.email));
+
+                    check.hasStyleSheet("/css/bootstrap.min.css");
+                    check.hasStyleSheet("/css/jumbotron-narrow.css");
+                    check.hasJavaScript("/js/jquery-1.11.3.js");
+                    check.hasJavaScript("/js/bootstrap.js");
+                    check.hasJavaScript("/user.js");
+                    check.hasJavaScript("/js/airisu.js");
                 });
             getAndCheck(s, "/css/bootstrap.min.css", "GET BOOTSTRAP CSS", (check) -> {
                     check.isStatus(200);
-                    if (! check.hasViolations()) {
-                        check.isContentBodyChecksum("08df9a96752852f2cbd310c30facd934e348c2c5");
-                    }
+                    check.isContentBodyChecksum("08df9a96752852f2cbd310c30facd934e348c2c5");
                 });
             getAndCheck(s, "/css/jumbotron-narrow.css", "GET JUMBOTRON CSS", (check) -> {
                     check.isStatus(200);
-                    if (! check.hasViolations()) {
-                        check.isContentBodyChecksum("d55e584b9bb64d574c09ab02e361a4e49a1e6b5f");
-                    }
+                    check.isContentBodyChecksum("d55e584b9bb64d574c09ab02e361a4e49a1e6b5f");
                 });
             getAndCheck(s, "/js/jquery-1.11.3.js", "GET JQUERY JS", (check) -> {
                     check.isStatus(200);
-                    if (! check.hasViolations()) {
-                        check.isContentBodyChecksum("96c73f3774471cc8378c77a64ecf09b7f625d8b7");
-                    }
+                    check.isContentBodyChecksum("96c73f3774471cc8378c77a64ecf09b7f625d8b7");
                 });
             getAndCheck(s, "/js/bootstrap.js", "GET BOOTSTRAP JS", (check) -> {
                     check.isStatus(200);
-                    if (! check.hasViolations()) {
-                        check.isContentBodyChecksum("bbf55e20f1ebb6368522799f29db39830a08ef93");
-                    }
+                    check.isContentBodyChecksum("bbf55e20f1ebb6368522799f29db39830a08ef93");
                 });
             getAndCheck(s, "/js/airisu.js", "GET AIR-ISU JS", (check) -> {
                     check.isStatus(200);
-                    if (! check.hasViolations()) {
-                        check.isContentBodyChecksum("2a7e762957979ed3b2bf7ba3503a471b8ed76437");
-                    }
+                    check.isContentBodyChecksum("2a7e762957979ed3b2bf7ba3503a471b8ed76437");
                 });
             String intervalVal = null;
             switch (param.grade) {
@@ -132,15 +123,10 @@ public class Checker extends Base {
             final String interval = intervalVal;
             getAndCheck(s, "/user.js", "GET USER JS", (check) -> {
                     check.isStatus(200);
-                    if (! check.hasViolations()) {
-                        check.contentMatch(String.format("var AIR_ISU_REFRESH_INTERVAL = %s;", interval));
-                        if (check.hasViolations())
-                            check.fatal("user.jsの内容が正しくありません");
-                    }
+                    check.contentMatch(String.format("var AIR_ISU_REFRESH_INTERVAL = %s;", interval));
                 });
 
-            if (LocalDateTime.now().isAfter(stopAt))
-                break;
+            stopCheck();
 
             String grade = param.grade;
 
@@ -148,118 +134,115 @@ public class Checker extends Base {
                 check.isStatus(200);
                 check.isContentType("application/json");
                 check.isValidJson();
-                if (check.hasViolations()) {
-                    return;
-                }
+
+                check.moderate();
 
                 String kenValue = I5FZipcodes.address(param.subscriptions.get("ken").keys.get(0));
                 String ken2Value = I5FZipcodes.address(param.subscriptions.get("ken2").params.get("zipcode"));
 
-                check.exist("$.[?(@.service=='ken')]", 1);
-                if (! check.hasViolations())
-                    check.contentMatch("$.[?(@.service=='ken')].data.addresses.*", kenValue);
+                check.depends(check.exist("$.[?(@.service=='ken')]", 1)).then(
+                    () -> check.contentMatch("$.[?(@.service=='ken')].data.addresses.*", kenValue));
 
-                check.exist("$.[?(@.service=='ken2')]", 1);
-                if (! check.hasViolations())
-                    check.contentMatch("$.[?(@.service=='ken2')].data.addresses.*", ken2Value);
+                check.depends(check.exist("$.[?(@.service=='ken2')]", 1)).then(
+                    () -> check.contentMatch("$.[?(@.service=='ken2')].data.addresses.*", ken2Value));
 
-                check.exist("$.[?(@.service=='surname')].data.query", 1);
-                if (! check.hasViolations()) {
-                    String qKey = param.subscriptions.get("surname").params.get("q");
-                    String query = I5FSurnames.getQuery(qKey);
-                    String queryCheck = String.format("$.[?(@.service=='surname')].data.[?(@.query=='%s')]", query);
-                    check.exist(queryCheck, 1);
-                    List<I5FJsonData.NameElement> result = I5FSurnames.getResult(qKey);
-                    for (I5FJsonData.NameElement r : result) {
-                        check.contentMatch("$.[?(@.service=='surname')].data.result..name", r.name);
-                    }
-                }
+                check.depends(check.exist("$.[?(@.service=='surname')].data.query", 1)).then(
+                    () -> {
+                        String qKey = param.subscriptions.get("surname").params.get("q");
+                        String query = I5FSurnames.getQuery(qKey);
+                        String queryCheck = String.format("$.[?(@.service=='surname')].data.[?(@.query=='%s')]", query);
+                        check.exist(queryCheck, 1);
+                        List<I5FJsonData.NameElement> result = I5FSurnames.getResult(qKey);
+                        for (I5FJsonData.NameElement r : result) {
+                            check.contentMatch("$.[?(@.service=='surname')].data.result..name", r.name);
+                        }
+                    });
 
                 if (grade.equals("small") || grade.equals("standard") || grade.equals("premium")){
-                    check.exist("$.[?(@.service=='givenname')].data.query", 1);
-                    if (! check.hasViolations()) {
-                        String qKey = param.subscriptions.get("givenname").params.get("q");
-                        String query = I5FGivennames.getQuery(qKey);
-                        String queryCheck = String.format("$.[?(@.service=='givenname')].data.[?(@.query=='%s')]", query);
-                        check.exist(queryCheck, 1);
-                        if (! check.hasViolations()) {
-                            List<I5FJsonData.NameElement> result = I5FGivennames.getResult(qKey);
-                            for (I5FJsonData.NameElement r : result) {
-                                check.contentMatch("$.[?(@.service=='givenname')].data.result..name", r.name);
-                            }
-                        }
-                    }
+                    check.depends(check.exist("$.[?(@.service=='givenname')].data.query", 1)).then(
+                        () -> {
+                            String qKey = param.subscriptions.get("givenname").params.get("q");
+                            String query = I5FGivennames.getQuery(qKey);
+                            String queryCheck = String.format("$.[?(@.service=='givenname')].data.[?(@.query=='%s')]", query);
+                            check.depends(check.exist(queryCheck, 1)).then(
+                                () -> {
+                                    List<I5FJsonData.NameElement> result = I5FGivennames.getResult(qKey);
+                                    for (I5FJsonData.NameElement r : result) {
+                                        check.contentMatch("$.[?(@.service=='givenname')].data.result..name", r.name);
+                                    }
+                                });
+                        });
                 } else {
                     check.missing("$.[?(@.service=='givenname')].data.query");
                 }
 
                 if (grade.equals("standard") || grade.equals("premium")){
-                    check.exist("$.[?(@.service=='tenki')].data", 1);
+                    check.depends(check.exist("$.[?(@.service=='tenki')].data", 1)).then(
+                        () -> {
+                            String date = (String) check.find("$.[?(@.service=='tenki')].data.date").get(0);
+                            long dataAt = DateUtils.parseDate(date).getTime();
+                            String responseDate = check.header("Date");
+                            long responseAt = new Date().getTime();
+                            if (responseDate != null) {
+                                responseAt = DateUtils.parseDate(responseDate).getTime();
+                            }
+                            if (responseAt - dataAt > I5FTenki.VALID_CACHE_MILLIS) {
+                                check.fatal("Tenki API レスポンスの内容が古いままです");
+                            }
 
-                    if (! check.hasViolations()) {
-                        String date = (String) check.find("$.[?(@.service=='tenki')].data.date").get(0);
-                        long dataAt = DateUtils.parseDate(date).getTime();
-                        String responseDate = check.header("Date");
-                        long responseAt = new Date().getTime();
-                        if (responseDate != null) {
-                            responseAt = DateUtils.parseDate(responseDate).getTime();
-                        }
-                        if (responseAt - dataAt > I5FTenki.VALID_CACHE_MILLIS) {
-                            check.fatal("Tenki API レスポンスの内容が古いままです");
-                        }
-
-                        String yoho = I5FTenki.getYoho(date);
-                        check.content("$.[?(@.service=='tenki')].data.yoho", yoho);
-                    }
+                            String yoho = I5FTenki.getYoho(date);
+                            check.content("$.[?(@.service=='tenki')].data.yoho", yoho);
+                        });
                 } else {
                     check.missing("$.[?(@.service=='tenki')].data");
                 }
 
                 if (grade.equals("premium")){
                     String responseDate = check.header("Date");
-                    long responseAt = new Date().getTime();
-                    if (responseDate != null) {
-                        responseAt = DateUtils.parseDate(responseDate).getTime();
-                    }
+                    long responseAt = (responseDate == null ? new Date().getTime() : DateUtils.parseDate(responseDate).getTime());
 
-                    check.exist("$.[?(@.service=='perfectsec')].data", 1);
-                    if (! check.hasViolations()) {
-                        String req = param.subscriptions.get("perfectsec").params.get("req");
-                        check.content("$.[?(@.service=='perfectsec')].data.req", req);
+                    check.depends(check.exist("$.[?(@.service=='perfectsec')].data", 1)).then(
+                        () -> {
+                            String req = param.subscriptions.get("perfectsec").params.get("req");
+                            check.content("$.[?(@.service=='perfectsec')].data.req", req);
 
-                        String token = param.subscriptions.get("perfectsec").token;
-                        check.exist("$.[?(@.service=='perfectsec')].data.key", 1);
-                        String key = (String) check.find("$.[?(@.service=='perfectsec')].data.key").get(0);
+                            String token = param.subscriptions.get("perfectsec").token;
+                            check.exist("$.[?(@.service=='perfectsec')].data.key", 1);
+                            String key = (String) check.find("$.[?(@.service=='perfectsec')].data.key").get(0);
 
-                        check.exist("$.[?(@.service=='perfectsec')].data.onetime_token", 1);
-                        String onetime = (String) check.find("$.[?(@.service=='perfectsec')].data.onetime_token").get(0);
-                        if (! I5FPerfectSecurity.isCorrectOneTime(onetime, token, req, key, responseAt)) {
-                            check.fatal("perfectsec API onetime tokenの値が不正です");
-                        }
-
-                        check.exist("$.[?(@.service=='perfectsec_attacked')].data", 1);
-                        check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1);
-                        List found = check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at");
-                        if (! check.hasViolations() && found != null && found.get(0) != null) {
-                            // seconds from epoch
-                            long epoch = 0;
-                            try {
-                                epoch = Long.getLong(String.valueOf(found.get(0)));
-                            } catch (NullPointerException e) {
-                                Object obj = found.get(0);
-                                System.err.println(String.format("NullPointerException, class: %s, value: %s", obj.getClass(), obj));
+                            check.exist("$.[?(@.service=='perfectsec')].data.onetime_token", 1);
+                            String onetime = (String) check.find("$.[?(@.service=='perfectsec')].data.onetime_token").get(0);
+                            if (! I5FPerfectSecurity.isCorrectOneTime(onetime, token, req, key, responseAt)) {
+                                check.fatal("perfectsec API onetime tokenの値が不正です");
                             }
+
+                            check.depends(
+                                check.exist("$.[?(@.service=='perfectsec_attacked')].data", 1),
+                                check.exist("$.[?(@.service=='perfectsec_attacked')].data.updated_at", 1)
+                                ).then(
+                                    () -> {
+                                        List found = check.find("$.[?(@.service=='perfectsec_attacked')].data.updated_at");
+                                        if (found == null || found.get(0) == null)
+                                            return;
+                                        long epoch = 0;
+                                        try {
+                                            epoch = Long.getLong(String.valueOf(found.get(0)));
+                                        } catch (NullPointerException e) {
+                                            Object obj = found.get(0);
+                                            String NPE = String.format("NullPointerException, class: %s, value: %s", obj.getClass(), obj);
+                                            System.err.println();
+                                        }
                                 
-                            long epochMillis = epoch * 1000;
-                            if (responseAt - epochMillis > I5FPerfectSecurity.VALID_CACHE_MILLIS) {
-                                check.fatal("perfectsec_attacked API レスポンスの内容が古いままです");
-                            }
-                            String[] attacked = I5FPerfectSecurity.getAttacked(token, Long.toString(epoch));
-                            check.content("$.[?(@.service=='perfectsec_attacked')].data.key1", attacked[0]);
-                            check.content("$.[?(@.service=='perfectsec_attacked')].data.key2", attacked[1]);
-                            check.content("$.[?(@.service=='perfectsec_attacked')].data.key3", attacked[2]);
-                        }
-                    }
+                                        long epochMillis = epoch * 1000;
+                                        if (responseAt - epochMillis > I5FPerfectSecurity.VALID_CACHE_MILLIS) {
+                                            check.fatal("perfectsec_attacked API レスポンスの内容が古いままです");
+                                        }
+                                        String[] attacked = I5FPerfectSecurity.getAttacked(token, Long.toString(epoch));
+                                        check.content("$.[?(@.service=='perfectsec_attacked')].data.key1", attacked[0]);
+                                        check.content("$.[?(@.service=='perfectsec_attacked')].data.key2", attacked[1]);
+                                        check.content("$.[?(@.service=='perfectsec_attacked')].data.key3", attacked[2]);
+                                    });
+                        });
                 } else {
                     check.missing("$.[?(@.service=='perfectsec')].data");
                     check.missing("$.[?(@.service=='perfectsec_attacked')].data");
@@ -268,17 +251,14 @@ public class Checker extends Base {
 
             getAndCheck(s, "/data", "GET DATA", callback);
 
-            if (LocalDateTime.now().isAfter(stopAt))
-                break;
+            stopCheck();
 
             for (int i = 0 ; i < 4 ; i++) {
-                if (LocalDateTime.now().isAfter(stopAt))
-                    break;
+                stopCheck();
 
                 getAndCheck(s, "/data", "GET DATAx", callback);
 
-                if (LocalDateTime.now().isAfter(stopAt))
-                    break;
+                stopCheck();
                 sleep(800);
             }
         }

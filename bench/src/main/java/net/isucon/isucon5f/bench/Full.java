@@ -14,9 +14,10 @@ public class Full extends Scenario {
     private static final String PARAMETER_CLASS = "net.isucon.isucon5f.bench.I5FParameter";
 
     private static long DURATION_MILLIS = 120 * 1000;
+    private static long TERMINATE_MILLIS = 125 * 1000;
 
-    public Full(Long timeout) {
-        super(timeout);
+    public Full() {
+        super(DURATION_MILLIS, TERMINATE_MILLIS);
     }
 
     @Override
@@ -50,10 +51,9 @@ public class Full extends Scenario {
     @Override
     public Step[] steps() {
         Step[] steps = new Step[3];
-        steps[0] = new Step(35000L, Init.class);
-        steps[1] = new Step(60000L, Bootstrap.class);
+        steps[0] = new Step(Init.class);
+        steps[1] = new Step(Bootstrap.class);
         steps[2] = new Step(
-            70000L,
             Checker.class, ModifyLoader.class,
             Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,
             Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class, Load.class,

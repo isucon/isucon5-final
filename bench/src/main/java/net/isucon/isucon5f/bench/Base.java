@@ -13,8 +13,10 @@ import net.isucon.bench.Parameter;
 import net.isucon.bench.Session;
 
 public class Base extends Scenario {
-    public Base(Long timeout) {
-        super(timeout);
+    private static long DEFAULT_HARD_TIMEOUT_WAIT = 5 * 1000;
+
+    public Base(long softTimeout) {
+        super(softTimeout, softTimeout + DEFAULT_HARD_TIMEOUT_WAIT);
     }
 
     protected Map formLogin(Session session) {

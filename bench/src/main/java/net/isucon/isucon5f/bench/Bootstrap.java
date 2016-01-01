@@ -25,8 +25,10 @@ import net.isucon.bench.Session;
 public class Bootstrap extends Base {
     private static final String PARAMETER_CLASS = "net.isucon.isucon5f.bench.I5FParameter";
 
-    public Bootstrap(Long timeout) {
-        super(timeout);
+    private static long DURATION_MILLIS = 30 * 1000;
+
+    public Bootstrap() {
+        super(DURATION_MILLIS);
     }
 
     @Override
@@ -68,6 +70,7 @@ public class Bootstrap extends Base {
 
     @Override
     public void scenario(List<Session> originalSessions) {
+        setStrictCheck(true);
         for (int i = 0 ; i < 4 ; i++) {
             scenarioOnce(testData(i));
         }

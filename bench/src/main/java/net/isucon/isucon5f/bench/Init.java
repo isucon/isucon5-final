@@ -8,13 +8,13 @@ import net.isucon.bench.Result;
 import net.isucon.bench.Parameter;
 import net.isucon.bench.Session;
 
-public class Init extends Scenario {
+public class Init extends Base {
     private static final String PARAMETER_CLASS = "net.isucon.isucon5f.bench.I5FParameter";
 
     private static long DURATION_MILLIS = 33 * 1000;
 
-    public Init(Long timeout) {
-        super(timeout);
+    public Init() {
+        super(DURATION_MILLIS);
     }
 
     @Override
