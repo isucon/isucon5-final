@@ -34,8 +34,6 @@ public class Runner {
         Options options = new Options();
         options.addOption("a", true, "User-Agent string");
         options.addOption("p", true, "Port number");
-        options.addOption("P", true, "Parameter class specification");
-        options.addOption("t", true, "Timeout seconds for benchmark (default: 120)");
         options.addOption("h", "help", false, "Show this message");
 
         return options;
@@ -72,9 +70,6 @@ public class Runner {
         if (cmd.hasOption("a")) {
             runner.config.agent = cmd.getOptionValue("a");
         }
-        if (cmd.hasOption("t")) {
-            runner.config.runningTime = Long.parseLong(cmd.getOptionValue("t"));
-        }
 
         Scenario root = getRootInstance(rootClass, runner.config);
         if (root == null) {
@@ -84,9 +79,7 @@ public class Runner {
 
         System.err.println("Scenario class:" + root.getClass().getName());
         String paramClassName = root.parameterClassName();
-        if (cmd.hasOption("P")) {
-            paramClassName = cmd.getOptionValue("P");
-        }
+
         System.err.println("reading stdin");
         String jsonInput = readFromStdIn();
         System.err.println("got data");
@@ -128,6 +121,7 @@ public class Runner {
     private HttpClient client() {
         HttpField agent = new HttpField("User-Agent", config.agent);
 
+        // TODO: non-keepalived client connections
         HttpClient httpClient = new HttpClient();
         httpClient.setFollowRedirects(false);
         httpClient.setMaxConnectionsPerDestination(MAX_CONNECTIONS_PER_DEST);
@@ -138,10 +132,9 @@ public class Runner {
     }
 
     private static Scenario getRootInstance(Class root, Config config) {
-        Long timeout = new Long(config.runningTime);
         Scenario sc = null;
         try {
-            sc = (Scenario) root.getConstructor(Long.class).newInstance(timeout);
+            sc = (Scenario) root.getConstructor(Long.class).newInstance();
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             System.err.format("Failed to create instance of Scenario: %s%n", root);
             System.err.format("Error %s: %s", e.getClass(), e.getMessage());
