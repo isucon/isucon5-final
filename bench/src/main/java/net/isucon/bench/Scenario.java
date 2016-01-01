@@ -2,6 +2,7 @@ package net.isucon.bench;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Random;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -29,9 +30,12 @@ import org.eclipse.jetty.client.HttpClient;
 //   scenario will stop and don't execute next step (before timeout) if any scenario returns invalid status
 
 public abstract class Scenario extends Driver {
-    private long timeout;
+    private long softTimeout;
+    private long hardTimeout;
 
+    private LocalDateTime stopAt;
     private State state;
+    private Random random;
 
     // override this method for complex scenario class
     protected boolean complex() {
@@ -55,9 +59,24 @@ public abstract class Scenario extends Driver {
         return result;
     }
 
-    public Scenario(Long timeout) {
-        this.timeout = timeout.longValue();
+    public Scenario() {
+        // must be overwritten to set soft/hard timeouts
+        throw new AbstractMethodError();
+    }
+
+    public Scenario(long softTimeout, long hardTimeout) {
+        this.softTimeout = softTimeout;
+        this.hardTimeout = hardTimeout;
         this.state = new State();
+        this.random = new Random();
+    }
+
+    public long getSoftTimeout() {
+        return this.softTimeout;
+    }
+
+    public long getHardTimeout() {
+        return this.hardTimeout;
     }
 
     public String parameterClassName() {
@@ -83,7 +102,8 @@ public abstract class Scenario extends Driver {
         setHttpClient(client);
 
         LocalDateTime started = LocalDateTime.now();
-        LocalDateTime stopAt = started.plus(timeout, ChronoUnit.MILLIS);
+        this.stopAt = started.plus(softTimeout, ChronoUnit.MILLIS);
+        LocalDateTime terminateAt = started.plus(hardTimeout, ChronoUnit.MILLIS);
     
         List<Session> sessions = createSessions(params);
         Result result = new Result();
@@ -106,8 +126,8 @@ public abstract class Scenario extends Driver {
 
         LocalDateTime now = LocalDateTime.now();
 
-        while (state.isRunning() && stopAt.isAfter(now)) {
-            long sleepTime = now.until(stopAt, ChronoUnit.MILLIS);
+        while (state.isRunning() && terminateAt.isAfter(now)) {
+            long sleepTime = now.until(terminateAt, ChronoUnit.MILLIS);
             try {
                 t.join(sleepTime);
             } catch (InterruptedException e) {
@@ -134,12 +154,10 @@ public abstract class Scenario extends Driver {
         ArrayList<String> doneList = new ArrayList<String>();
 
         LocalDateTime started = LocalDateTime.now();
-        LocalDateTime shutdownAt = started.plus(timeout, ChronoUnit.MILLIS);
 
         for (Step s : steps()) {
-            long stepTimeout = LocalDateTime.now().until(shutdownAt, ChronoUnit.MILLIS);
             s.execute(client, config, sessions);
-            s.join(stepTimeout);
+            s.join();
 
             if (s.isFinished()) {
                 doneList.add(s.name());
@@ -167,5 +185,22 @@ public abstract class Scenario extends Driver {
         Result r = new Result(false, timeoutElapsed);
         r.addViolation(label, "Blocking bench step didn't finish");
         return r;
+    }
+
+    public Random getRandom() {
+        return this.random;
+    }
+
+    public boolean diceRoll(int percentage) {
+        return (random.nextInt(100) <= percentage);
+    }
+
+    public Session pick(List<Session> sessions) {
+        return sessions.get(random.nextInt((int) sessions.size()));
+    }
+
+    public void stopCheck() {
+        if (LocalDateTime.now().isAfter(stopAt))
+            throw new Driver.ScenarioAbortException();
     }
 }

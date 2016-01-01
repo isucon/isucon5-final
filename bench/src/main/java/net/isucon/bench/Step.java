@@ -11,31 +11,29 @@ import java.time.temporal.ChronoUnit;
 import org.eclipse.jetty.client.HttpClient;
 
 public class Step {
-    private long timeout;
+    private long stepHardTimeout;
     private ArrayList<Scenario> list;
     private ArrayList<Result> results;
     private ArrayList<Thread> threads;
 
     private long STEP_WATCHER_INTERVAL_MS = 200;
+    private long TIMEOUT_ADDITIONAL = 5000;
 
-    public Step(long timeout) {
-        this.timeout = timeout;
+    public Step(Class<? extends Scenario>... klasses) {
         this.list = new ArrayList<Scenario>();
-        this.results = new ArrayList<Result>();
-    }
-
-    public Step(Long timeout, Class<? extends Scenario>... klasses) {
-        this.timeout = timeout.longValue();
-        this.list = new ArrayList<Scenario>();
+        long maxHardTimeout = 0;
         for (Class<? extends Scenario> klass : klasses) {
             try {
-                Scenario item = klass.getConstructor(Long.class).newInstance(timeout);
+                Scenario item = klass.getConstructor(Long.class).newInstance();
                 list.add(item);
+                if (maxHardTimeout < item.getHardTimeout())
+                    maxHardTimeout = item.getHardTimeout();
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 System.err.format("Failed to create instance of Scenario: %s%n", klass);
                 System.exit(1);
             }
         }
+        this.stepHardTimeout = maxHardTimeout + TIMEOUT_ADDITIONAL;
         this.results = new ArrayList<Result>();
     }
 
@@ -45,10 +43,6 @@ public class Step {
             names.add(s.name());
         }
         return "{" + String.join(",", names) + "}";
-    }
-
-    public void addStep(Scenario s) {
-        list.add(s);
     }
 
     public void execute(HttpClient client, Config config, List<Session> sessions) {
@@ -84,9 +78,9 @@ public class Step {
         }
     }
 
-    public void join(long waitTimeout) { // ms
+    public void join() {
         LocalDateTime started = LocalDateTime.now();
-        LocalDateTime timeoutAt = started.plus(waitTimeout, ChronoUnit.MILLIS);
+        LocalDateTime timeoutAt = started.plus(stepHardTimeout, ChronoUnit.MILLIS);
         while (timeoutAt.isAfter(LocalDateTime.now())) {
             boolean completed = true;
             boolean interrupted = false;
