@@ -24,7 +24,7 @@ public class Step {
         long maxHardTimeout = 0;
         for (Class<? extends Scenario> klass : klasses) {
             try {
-                Scenario item = klass.getConstructor(Long.class).newInstance();
+                Scenario item = klass.getConstructor().newInstance();
                 list.add(item);
                 if (maxHardTimeout < item.getHardTimeout())
                     maxHardTimeout = item.getHardTimeout();
