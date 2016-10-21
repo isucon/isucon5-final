@@ -134,7 +134,7 @@ public class Runner {
     private static Scenario getRootInstance(Class root, Config config) {
         Scenario sc = null;
         try {
-            sc = (Scenario) root.getConstructor(Long.class).newInstance();
+            sc = (Scenario) root.getConstructor().newInstance();
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             System.err.format("Failed to create instance of Scenario: %s%n", root);
             System.err.format("Error %s: %s", e.getClass(), e.getMessage());
